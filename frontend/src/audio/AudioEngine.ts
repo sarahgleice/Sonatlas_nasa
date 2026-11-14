@@ -85,8 +85,8 @@ export class AudioEngine {
 
   public pause(): void {
     this.isPlaying = false;
-    if (this.ctx && this.ctx.state === 'running') {
-      this.ctx.suspend();
+    if (this.ctx && this.ctx.state === 'running' && typeof this.ctx.suspend === 'function') {
+      void this.ctx.suspend();
     }
     if (this.scheduleTimer) {
       window.clearTimeout(this.scheduleTimer);
@@ -151,7 +151,7 @@ export class AudioEngine {
     if (!this.ctx) return;
     for (const oscillator of this.activeOscillators) {
       try {
-        oscillator.stop();
+        oscillator.stop(this.ctx.currentTime);
         oscillator.disconnect();
       } catch {
         // Oscillatoros que já terminaram
