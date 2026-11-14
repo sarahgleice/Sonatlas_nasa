@@ -5,6 +5,7 @@ import { createObservationSonificationParams } from './sonificationMapping';
  * Motor nativo de áudio para síntese em tempo real via Web Audio API.
  * Implementa agendamento preciso (Lookahead) para sequências temporais.
  */
+
 export class AudioEngine {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
@@ -18,9 +19,12 @@ export class AudioEngine {
   private scheduleTimer: number | null = null;
   private speedMultiplier: number = 1.0;
   
+  // Rastreio de nós ativos para podermos interrompê-los ao pular passos
+  private activeOscillators: OscillatorNode[] = [];
+  
   // Parâmetros de agendamento (A Tale of Two Clocks)
-  private readonly LOOKAHEAD_MS = 25; // Frequência da checagem do loop
-  private readonly SCHEDULE_AHEAD_SEC = 0.1; // Antecedência para agendar o nó de áudio
+  private readonly LOOKAHEAD_MS = 25; 
+  private readonly SCHEDULE_AHEAD_SEC = 0.1; 
 
   private initContext(): AudioContext {
     if (!this.ctx) {
@@ -51,6 +55,8 @@ export class AudioEngine {
     this.speedMultiplier = Math.max(0.1, multiplier);
   }
 
+  // --- CONTROLES DE REPRODUÇÃO ---
+
   public pause(): void {
     this.isPlaying = false;
     if (this.ctx && this.ctx.state === 'running') {
@@ -63,47 +69,90 @@ export class AudioEngine {
   }
 
   public async resume(): Promise<void> {
-    if (!this.ctx) return;
+    if (!this.ctx || this.currentSequence.length === 0) return;
     this.isPlaying = true;
     await this.ctx.resume();
-    // Reprograma o próximo segmento para iniciar logo após o resume
     this.nextSegmentTime = this.ctx.currentTime + 0.1;
     this.scheduler();
   }
 
-  /**
-   * Inicia a reprodução de uma sequência de dados da NASA (IMERG).
-   */
   public async playSequence(sequence: TemporalObservation[]): Promise<void> {
-    if (this.isMuted) return;
-    const ctx = this.initContext();
-    
     this.currentSequence = sequence;
     this.currentIndex = 0;
+    
+    if (this.isMuted) return;
+    const ctx = this.initContext();
     this.isPlaying = true;
     
+    this.stopActiveSounds();
     await ctx.resume();
     this.nextSegmentTime = ctx.currentTime + 0.1;
     this.scheduler();
   }
 
+  // --- CONTROLES DE NAVEGAÇÃO (PULAR E VOLTAR) ---
+
+  public next(): void {
+    if (this.currentIndex < this.currentSequence.length - 1) {
+      this.goToIndex(this.currentIndex + 1);
+    }
+  }
+
+  public previous(): void {
+    if (this.currentIndex > 0) {
+      this.goToIndex(this.currentIndex - 1);
+    }
+  }
+
+  public goToIndex(index: number): void {
+    if (index >= 0 && index < this.currentSequence.length) {
+      this.currentIndex = index;
+      
+      // Interrompe o som atual imediatamente para não sobrepor
+      this.stopActiveSounds();
+      
+      if (this.ctx) {
+        // Força o scheduler a tocar o novo índice imediatamente
+        this.nextSegmentTime = this.ctx.currentTime; 
+      }
+      
+      // Se estava pausado e o usuário clicou para avançar, podemos manter pausado 
+      // ou forçar o play. Aqui mantemos o comportamento de apenas atualizar o cursor,
+      // mas se estiver tocando, chamamos o scheduler para continuar.
+      if (this.isPlaying) {
+        if (this.scheduleTimer) window.clearTimeout(this.scheduleTimer);
+        this.scheduler();
+      }
+    }
+  }
+
   /**
-   * Loop de agendamento que mantém a UI livre e delega a precisão para o Web Audio API.
-   * Pedro (Player) vai consumir o estado currentIndex para sincronizar a linha do tempo.
+   * Interrompe todos os osciladores em andamento para evitar sobreposição de áudio
    */
+  private stopActiveSounds(): void {
+    this.activeOscillators.forEach(osc => {
+      try {
+        osc.stop();
+        osc.disconnect();
+      } catch (e) {
+        // Ignora erros caso o nó já tenha sido finalizado pelo tempo
+      }
+    });
+    this.activeOscillators = [];
+  }
+
+  // --- LOOP DE AGENDAMENTO ---
+
   private scheduler = (): void => {
     if (!this.isPlaying || !this.ctx) return;
 
     while (this.nextSegmentTime < this.ctx.currentTime + this.SCHEDULE_AHEAD_SEC && this.currentIndex < this.currentSequence.length) {
       const obs = this.currentSequence[this.currentIndex];
       
-      // Duração base de 1.5s ajustada pela velocidade atual
       const baseDurationMs = 1500; 
       const adjustedDurationMs = baseDurationMs / this.speedMultiplier;
       
-      // Mapeamento extrai os parâmetros da observação atual
       const params = createObservationSonificationParams(obs, adjustedDurationMs);
-      
       this.scheduleParams(params, this.nextSegmentTime);
       
       this.nextSegmentTime += (adjustedDurationMs / 1000);
@@ -118,12 +167,14 @@ export class AudioEngine {
     }
   }
 
-  /**
-   * Executa a sonificação distribuindo os pulsos no tempo agendado.
-   */
+  // --- SÍNTESE DE ÁUDIO ---
+
   private scheduleParams(params: SonificationParams, startTime: number): void {
     if (!this.ctx) return;
     const totalDurationSec = params.durationMs / 1000;
+
+    // Limpa array de nós inativos para não vazar memória
+    this.activeOscillators = this.activeOscillators.filter(osc => osc.context.currentTime < startTime + totalDurationSec + 1);
 
     if (params.isMissing) {
       this.playAlertTone(this.ctx, startTime);
@@ -139,9 +190,6 @@ export class AudioEngine {
     }
   }
 
-  /**
-   * Sintetiza um pulso tonal individual com envoltória suave de ganho.
-   */
   private synthesizePulse(
     ctx: AudioContext,
     frequency: number,
@@ -165,17 +213,14 @@ export class AudioEngine {
     gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
 
     osc.connect(gain);
-    if (this.masterGain) {
-      gain.connect(this.masterGain);
-    }
+    if (this.masterGain) gain.connect(this.masterGain);
 
     osc.start(startTime);
     osc.stop(startTime + duration + 0.05);
+    
+    this.activeOscillators.push(osc);
   }
 
-  /**
-   * Sinal acústico de advertência para dados faltantes.
-   */
   private playAlertTone(ctx: AudioContext, startTime: number): void {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -189,16 +234,17 @@ export class AudioEngine {
     gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
 
     osc.connect(gain);
-    if (this.masterGain) {
-      gain.connect(this.masterGain);
-    }
+    if (this.masterGain) gain.connect(this.masterGain);
 
     osc.start(startTime);
     osc.stop(startTime + 0.4);
+    
+    this.activeOscillators.push(osc);
   }
 
   public dispose(): void {
     this.pause();
+    this.stopActiveSounds();
     if (this.ctx && this.ctx.state !== 'closed') {
       this.ctx.close();
       this.ctx = null;
