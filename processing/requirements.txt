@@ -21,6 +21,7 @@ python-dotenv>=1.0.0
 # API geoespacial
 fastapi>=0.110.0
 uvicorn>=0.29.0
+httpx>=0.27.0
 
 # Testes e Garantia de Qualidade
 pytest>=7.4.0
