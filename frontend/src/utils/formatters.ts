@@ -6,7 +6,10 @@ export function formatPrecipitationRate(rate: number | null | undefined): string
   if (rate === null || rate === undefined) {
     return 'Não disponível';
   }
-  return `${rate.toFixed(1)} mm/h`;
+  const formatted = rate > 0 && rate < 0.1
+    ? new Intl.NumberFormat('pt-BR', { maximumSignificantDigits: 3 }).format(rate)
+    : rate.toFixed(1);
+  return `${formatted} mm/h`;
 }
 
 export function formatAreaFraction(fraction: number | null | undefined): string {
@@ -31,8 +34,16 @@ export function formatTimestamp(isoString: string): string {
 
 export function getIntensityLabel(rate: number | null | undefined): string {
   if (rate === null || rate === undefined) return 'Indisponível';
-  if (rate < 0.1) return 'Sem precipitação mensurável';
+  if (rate === 0) return 'Taxa média registrada como zero';
+  if (rate < 0.1) return 'Abaixo do limiar operacional do som';
   if (rate < 2.5) return 'Chuva fraca';
   if (rate < 10.0) return 'Chuva moderada';
   return 'Chuva forte / tempestade';
+}
+
+export function getRatePresentationNote(rate: number | null | undefined): string | null {
+  if (rate === null || rate === undefined) return 'Taxa média indisponível; dado ausente não equivale a taxa zero.';
+  if (rate === 0) return `Taxa média registrada: ${formatPrecipitationRate(rate)}. O áudio usa o tom de repouso pela regra operacional de 0,1 mm/h.`;
+  if (rate > 0 && rate < 0.1) return `Taxa média registrada: ${formatPrecipitationRate(rate)}. O valor é positivo e está abaixo do limiar operacional sonoro de 0,1 mm/h; por isso, o áudio usa o tom de repouso. O som não altera a medição.`;
+  return null;
 }

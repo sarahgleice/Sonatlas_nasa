@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { DataService } from '../src/services/dataService';
+import { AVAILABLE_REGIONS, DataService } from '../src/services/dataService';
+import { createObservationSonificationParams } from '../src/audio/sonificationMapping';
 
 const fixture = {
   dataset_version: '1.0.0', region_id: 'sample', region_name: 'Sample', country: 'BR',
@@ -29,6 +30,41 @@ async function load(payload: unknown) {
 afterEach(() => { vi.unstubAllGlobals(); });
 
 describe('DataService.loadRegionDataset', () => {
+  it('loads and validates the published Central Amazon IMERG dataset for frontend use', async () => {
+    const published = JSON.parse(readFileSync('public/data/amazon/observations.json', 'utf8'));
+    const region = AVAILABLE_REGIONS.find(({ id }) => id === 'amazon_central');
+    expect(region?.filePath).toBe('/data/amazon/observations.json');
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => published }));
+    const dataset = await DataService.loadRegionDataset(region!.filePath);
+
+    expect(fetch).toHaveBeenCalledWith('/data/amazon/observations.json');
+    expect(dataset).toMatchObject({
+      region_id: 'amazon_central',
+      product_name: 'GPM_3IMERGHHE',
+      product_version: '07B',
+      is_sample: false,
+      validation_status: 'preliminary_verified'
+    });
+    expect(dataset.observations).toHaveLength(6);
+
+    dataset.observations.forEach((observation, index) => {
+      expect(observation.timestamp_utc).toMatch(/^2024-01-01T\d{2}:\d{2}:\d{2}Z$/);
+      expect(Date.parse(observation.timestamp_utc) % (30 * 60 * 1000)).toBe(0);
+      expect(observation.scientific_indicators.mean_precipitation_rate.unit).toBe('mm/h');
+      expect(observation.scientific_indicators.rain_area_fraction.unit).toBe('fraction');
+      expect(observation.scientific_indicators.rain_area_fraction.value).toBeGreaterThanOrEqual(0);
+      expect(observation.scientific_indicators.rain_area_fraction.value).toBeLessThanOrEqual(1);
+      expect(observation.visual_frame_reference.synchronization_status).toBe('pending_official_validation');
+      expect(createObservationSonificationParams(observation).isMissing).toBe(false);
+
+      if (index > 0) {
+        expect(Date.parse(observation.timestamp_utc) - Date.parse(dataset.observations[index - 1].timestamp_utc))
+          .toBe(30 * 60 * 1000);
+      }
+    });
+  });
+
   it.each(['amazon_central_series.json', 'international_candidate_series.json'])(
     'accepts the current pipeline export %s without changing its sample status', async (filename) => {
       const exported = JSON.parse(readFileSync(`public/data/${filename}`, 'utf8'));
@@ -52,6 +88,31 @@ describe('DataService.loadRegionDataset', () => {
         availability: { status: 'partial', valid_cells_ratio: 0.667, missing_cells_count: 1, total_cells_count: 3 }
       }]
     })).resolves.toMatchObject({ region_id: 'sample' });
+  });
+
+  it.each([
+    ['available', 0.8, 2, 10],
+    ['partial', 0.1, 9, 10],
+    ['missing', 0.099, 901, 1000]
+  ] as const)('applies the current availability threshold for %s data', async (status, ratio, missing, total) => {
+    const baseObservation = fixture.observations[0];
+    const indicators = status === 'missing'
+      ? {
+          ...baseObservation.scientific_indicators,
+          mean_precipitation_rate: { ...baseObservation.scientific_indicators.mean_precipitation_rate, value: null },
+          rain_area_fraction: { ...baseObservation.scientific_indicators.rain_area_fraction, value: null }
+        }
+      : baseObservation.scientific_indicators;
+    const payload = {
+      ...fixture,
+      observations: [{
+        ...baseObservation,
+        availability: { status, valid_cells_ratio: ratio, missing_cells_count: missing, total_cells_count: total },
+        scientific_indicators: indicators
+      }]
+    };
+
+    await expect(load(payload)).resolves.toMatchObject({ observations: [{ availability: { status } }] });
   });
 
   it.each([

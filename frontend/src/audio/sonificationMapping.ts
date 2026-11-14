@@ -48,7 +48,8 @@ export function createObservationSonificationParams(
   stepDurationMs: number = 1500
 ): SonificationParams {
   const isMissing = observation.availability.status === 'missing' ||
-    observation.scientific_indicators.mean_precipitation_rate.value === null;
+    observation.scientific_indicators.mean_precipitation_rate.value === null ||
+    observation.scientific_indicators.rain_area_fraction.value === null;
 
   if (isMissing) {
     return {

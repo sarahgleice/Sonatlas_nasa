@@ -8,6 +8,8 @@ import {
 describe('formatters', () => {
   it('formata taxa de precipitação com unidade estrita mm/h', () => {
     expect(formatPrecipitationRate(5.24)).toBe('5.2 mm/h');
+    expect(formatPrecipitationRate(0.001347697)).toBe('0,00135 mm/h');
+    expect(formatPrecipitationRate(0)).toBe('0.0 mm/h');
     expect(formatPrecipitationRate(null)).toBe('Não disponível');
   });
 
@@ -18,7 +20,8 @@ describe('formatters', () => {
 
   it('classifica rótulo de intensidade corretamente', () => {
     expect(getIntensityLabel(null)).toBe('Indisponível');
-    expect(getIntensityLabel(0.0)).toBe('Sem precipitação mensurável');
+    expect(getIntensityLabel(0.0)).toBe('Taxa média registrada como zero');
+    expect(getIntensityLabel(0.04)).toBe('Abaixo do limiar operacional do som');
     expect(getIntensityLabel(1.5)).toBe('Chuva fraca');
     expect(getIntensityLabel(5.0)).toBe('Chuva moderada');
     expect(getIntensityLabel(25.0)).toBe('Chuva forte / tempestade');

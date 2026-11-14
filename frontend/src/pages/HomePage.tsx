@@ -10,7 +10,7 @@ import { RegionDataset } from '../types/dataset';
 import { DataService, AVAILABLE_REGIONS } from '../services/dataService';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
-import { formatPrecipitationRate, formatTimestamp } from '../utils/formatters';
+import { formatAreaFraction, formatPrecipitationRate, formatTimestamp, getRatePresentationNote } from '../utils/formatters';
 import { Header } from '../components/Header';
 import { EducationalPanel } from '../components/EducationalPanel';
 import { Footer } from '../components/Footer';
@@ -123,8 +123,18 @@ export const HomePage: React.FC = () => {
     const observation = observations[index];
     if (!observation) return;
     const rate = observation.scientific_indicators.mean_precipitation_rate.value;
+    const availability = observation.availability;
+    const quality = availability.status === 'missing'
+      ? 'Observação ausente; ausência não significa precipitação zero.'
+      : availability.status === 'partial'
+        ? `Observação parcial, ${Math.round(availability.valid_cells_ratio * 100)}% de células válidas.`
+        : `Observação disponível, ${Math.round(availability.valid_cells_ratio * 100)}% de células válidas.`;
+    const sample = dataset?.is_sample ? ' Dataset demonstrativo (is_sample: true), não é observação NASA verificada.' : '';
     setLiveAnnouncement(
-      `Passo ${index + 1} de ${observations.length}. ${rate === null ? 'Dados não disponíveis.' : `${rate} milímetros por hora.`}`
+      `Passo ${index + 1} de ${observations.length}. ${formatTimestamp(observation.timestamp_utc)}. ` +
+      `Precipitação média: ${formatPrecipitationRate(rate)}. ` +
+      `${getRatePresentationNote(rate) ?? ''} ` +
+      `Área com chuva: ${formatAreaFraction(observation.scientific_indicators.rain_area_fraction.value)}. ${quality}${sample}`
     );
   };
 
@@ -151,12 +161,15 @@ export const HomePage: React.FC = () => {
 
   const {
     isPlaying,
+    isPreviewing,
     currentIndex,
     isMuted,
     audioError,
     analyser,
     currentObservation,
     togglePlay,
+    previewStep,
+    previewParams,
     nextStep,
     prevStep,
     setStep,
@@ -170,6 +183,10 @@ export const HomePage: React.FC = () => {
     onToggleMute: toggleMute,
     enabled: !isEducationalOpen
   });
+
+  const currentRateNote = currentObservation
+    ? getRatePresentationNote(currentObservation.scientific_indicators.mean_precipitation_rate.value)
+    : null;
 
   return (
     <div className="app-layout">
@@ -260,6 +277,7 @@ export const HomePage: React.FC = () => {
                         ? 'Dados ausentes neste período'
                         : `${currentObservation.availability.status === 'partial' ? 'Disponibilidade parcial' : 'Dados disponíveis'} · ${Math.round(currentObservation.availability.valid_cells_ratio * 100)}% de células válidas`}
                     </p>
+                    {currentRateNote && <p className="availability-status">{currentRateNote}</p>}
                     <details className="details-disclosure">
                       <summary>Detalhes da observação e fonte</summary>
                       <ScientificSummary observation={currentObservation} regionName={dataset.region_name} />
@@ -278,10 +296,12 @@ export const HomePage: React.FC = () => {
               <section id="playback" className="sonification-section" aria-label="Controles de sonificação">
                 <AudioPlayer
                   isPlaying={isPlaying}
+                  isPreviewing={isPreviewing}
                   isMuted={isMuted}
                   currentIndex={currentIndex}
                   totalSteps={observations.length}
                   onTogglePlay={togglePlay}
+                  onPreview={() => previewStep(currentIndex)}
                   onNextStep={nextStep}
                   onPrevStep={prevStep}
                   onToggleMute={toggleMute}
@@ -293,7 +313,10 @@ export const HomePage: React.FC = () => {
 
               <details className="details-disclosure sound-disclosure">
                 <summary><Waves size={15} aria-hidden="true" /> Calibração sonora</summary>
-                <SoundLegend />
+                <SoundLegend onPreviewParams={(params) => {
+                  previewParams(params);
+                  setLiveAnnouncement('Prévia de calibração sonora. Não representa uma observação científica selecionada.');
+                }} />
               </details>
             </div>
           </section>

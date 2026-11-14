@@ -4,7 +4,8 @@ import {
   formatPrecipitationRate,
   formatAreaFraction,
   formatTimestamp,
-  getIntensityLabel
+  getIntensityLabel,
+  getRatePresentationNote
 } from '../utils/formatters';
 import { Activity, AlertTriangle, CheckCircle } from 'lucide-react';
 
@@ -30,6 +31,7 @@ export const ScientificSummary: React.FC<ScientificSummaryProps> = ({
   const isMissing = availability.status === 'missing';
   const meanRate = scientific_indicators.mean_precipitation_rate.value;
   const areaFraction = scientific_indicators.rain_area_fraction.value;
+  const rateNote = getRatePresentationNote(meanRate);
 
   return (
     <section className="card scientific-summary-card" aria-labelledby="summary-title">
@@ -97,7 +99,7 @@ export const ScientificSummary: React.FC<ScientificSummaryProps> = ({
 
       <div className="textual-summary-box" aria-label="Audiodescrição resumida da observação">
         <h3>Descrição Textual Acessível</h3>
-        <p>{textual_summary}</p>
+        <p>{rateNote ?? textual_summary}</p>
       </div>
     </section>
   );

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { TemporalObservation } from '../types/dataset';
+import { SonificationParams, TemporalObservation } from '../types/dataset';
 import { globalAudioEngine } from '../audio/AudioEngine';
 import { createObservationSonificationParams } from '../audio/sonificationMapping';
 
@@ -9,136 +9,158 @@ interface UseAudioPlayerProps {
   onStepChange?: (index: number) => void;
 }
 
-export function useAudioPlayer({
-  observations,
-  stepDurationMs = 1500,
-  onStepChange
-}: UseAudioPlayerProps) {
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [currentIndex, setCurrentIndex] = useState<number>(0);
-  const [isMuted, setIsMuted] = useState<boolean>(false);
+type PlaybackMode = 'paused' | 'continuous' | 'preview';
+
+export function useAudioPlayer({ observations, stepDurationMs = 1500, onStepChange }: UseAudioPlayerProps) {
+  const [mode, setMode] = useState<PlaybackMode>('paused');
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isMuted, setIsMuted] = useState(() => globalAudioEngine.getIsMuted());
   const [audioError, setAudioError] = useState<string | null>(null);
-
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
   const totalSteps = observations.length;
 
-  const playStep = useCallback((index: number): boolean => {
-    if (index >= 0 && index < observations.length) {
-      const obs = observations[index];
-      const params = createObservationSonificationParams(obs, stepDurationMs);
-      try {
-        globalAudioEngine.playParams(params);
-        setAudioError(null);
-      } catch (error) {
-        globalAudioEngine.reportError(error);
-        return false;
-      }
-      if (onStepChange) {
-        onStepChange(index);
-      }
-      return true;
-    }
-    return false;
-  }, [observations, stepDurationMs, onStepChange]);
-
-  const togglePlay = useCallback(() => {
-    if (isPlaying) {
-      globalAudioEngine.stopPlayback();
-      setIsPlaying(false);
-    } else if (playStep(currentIndex)) {
-      setIsPlaying(true);
-    }
-  }, [currentIndex, isPlaying, playStep]);
-
-  useEffect(() => globalAudioEngine.subscribeError((error) => {
-    setAudioError(error);
-    if (error) {
-      setIsPlaying(false);
-      if (timerRef.current) clearInterval(timerRef.current);
-      timerRef.current = null;
-      globalAudioEngine.stopPlayback();
-    }
-  }), []);
-  useEffect(() => () => globalAudioEngine.dispose(), []);
-
-  const nextStep = useCallback(() => {
-    setCurrentIndex((prev) => {
-      if (totalSteps === 0) return 0;
-      const next = (prev + 1) % totalSteps;
-      playStep(next);
-      return next;
-    });
-  }, [totalSteps, playStep]);
-
-  const prevStep = useCallback(() => {
-    setCurrentIndex((prev) => {
-      if (totalSteps === 0) return 0;
-      const next = (prev - 1 + totalSteps) % totalSteps;
-      playStep(next);
-      return next;
-    });
-  }, [totalSteps, playStep]);
-
-  const setStep = useCallback((index: number) => {
-    if (index >= 0 && index < totalSteps) {
-      setCurrentIndex(index);
-      playStep(index);
-    }
-  }, [totalSteps, playStep]);
-
-  const toggleMute = useCallback(() => {
-    setIsMuted((prev) => {
-      const next = !prev;
-      globalAudioEngine.setMuted(next);
-      return next;
-    });
+  const clearTimers = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
+    timerRef.current = null;
+    previewTimerRef.current = null;
   }, []);
 
-  // Loop contínuo quando isPlaying = true
-  useEffect(() => {
-    if (isPlaying && totalSteps > 0) {
-      timerRef.current = setInterval(() => {
-        setCurrentIndex((prev) => {
-          const next = (prev + 1) % totalSteps;
-          playStep(next);
-          return next;
-        });
-      }, stepDurationMs);
-    } else {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
+  const playParams = useCallback((params: SonificationParams): boolean => {
+    try {
+      globalAudioEngine.playParams(params);
+      setAudioError(null);
+      return true;
+    } catch (error) {
+      globalAudioEngine.reportError(error);
+      return false;
     }
+  }, []);
 
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, [isPlaying, totalSteps, stepDurationMs, playStep]);
+  const playStep = useCallback((index: number): boolean => {
+    if (index < 0 || index >= observations.length) return false;
+    const ok = playParams(createObservationSonificationParams(observations[index], stepDurationMs));
+    if (ok) onStepChange?.(index);
+    return ok;
+  }, [observations, stepDurationMs, onStepChange, playParams]);
 
-  // Resetar quando a lista de observações mudar (ex: troca de região)
-  useEffect(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = null;
-    setIsPlaying(false);
-    setCurrentIndex(0);
+  const finish = useCallback(() => {
+    clearTimers();
     globalAudioEngine.stopPlayback();
-  }, [observations]);
+    modeRef.current = 'paused';
+    setMode('paused');
+  }, [clearTimers]);
+
+  const togglePlay = useCallback(() => {
+    if (modeRef.current !== 'paused') { finish(); return; }
+    if (!totalSteps) return;
+    clearTimers();
+    globalAudioEngine.stopPlayback();
+    if (playStep(currentIndex)) {
+      modeRef.current = 'continuous';
+      setMode('continuous');
+    }
+  }, [clearTimers, currentIndex, finish, playStep, totalSteps]);
+
+  const pause = useCallback(() => finish(), [finish]);
+
+  const previewParams = useCallback((params: SonificationParams) => {
+    clearTimers();
+    globalAudioEngine.stopPlayback();
+    if (!playParams({ ...params, durationMs: stepDurationMs })) { finish(); return; }
+    modeRef.current = 'preview';
+    setMode('preview');
+    previewTimerRef.current = setTimeout(finish, stepDurationMs);
+  }, [clearTimers, finish, playParams, stepDurationMs]);
+
+  const previewStep = useCallback((index: number) => {
+    if (index < 0 || index >= observations.length) return;
+    clearTimers();
+    globalAudioEngine.stopPlayback();
+    if (!playStep(index)) { finish(); return; }
+    setCurrentIndex(index);
+    modeRef.current = 'preview';
+    setMode('preview');
+    previewTimerRef.current = setTimeout(finish, stepDurationMs);
+  }, [clearTimers, finish, observations.length, playStep, stepDurationMs]);
+
+  const selectStep = useCallback((index: number, delta: number) => {
+    if (!totalSteps) return;
+    const next = (index + delta + totalSteps) % totalSteps;
+    setCurrentIndex(next);
+    if (modeRef.current === 'continuous') {
+      globalAudioEngine.stopPlayback();
+      if (!playStep(next)) finish();
+    } else {
+      if (modeRef.current === 'preview') {
+        clearTimers();
+        globalAudioEngine.stopPlayback();
+        modeRef.current = 'paused';
+        setMode('paused');
+      }
+      onStepChange?.(next);
+    }
+  }, [clearTimers, finish, onStepChange, playStep, totalSteps]);
+  const nextStep = useCallback(() => selectStep(currentIndex, 1), [currentIndex, selectStep]);
+  const prevStep = useCallback(() => selectStep(currentIndex, -1), [currentIndex, selectStep]);
+  const setStep = useCallback((index: number) => {
+    if (index < 0 || index >= totalSteps) return;
+    setCurrentIndex(index);
+    if (modeRef.current === 'continuous') {
+      globalAudioEngine.stopPlayback();
+      if (!playStep(index)) finish();
+    } else {
+      if (modeRef.current === 'preview') {
+        clearTimers();
+        globalAudioEngine.stopPlayback();
+        modeRef.current = 'paused';
+        setMode('paused');
+      }
+      onStepChange?.(index);
+    }
+  }, [clearTimers, finish, onStepChange, playStep, totalSteps]);
+
+  const toggleMute = useCallback(() => {
+    const next = !globalAudioEngine.getIsMuted();
+    globalAudioEngine.setMuted(next);
+    setIsMuted(next);
+  }, []);
+
+  useEffect(() => globalAudioEngine.subscribeError(error => {
+    setAudioError(error);
+    if (error) finish();
+  }), [finish]);
+
+  useEffect(() => {
+    clearTimers();
+    globalAudioEngine.stopPlayback();
+    modeRef.current = 'paused';
+    setMode('paused');
+    setCurrentIndex(0);
+    setIsMuted(globalAudioEngine.getIsMuted());
+    return () => { clearTimers(); globalAudioEngine.stopPlayback(); };
+  }, [observations, clearTimers]);
+
+  useEffect(() => {
+    if (mode !== 'continuous' || !totalSteps) return;
+    timerRef.current = setInterval(() => {
+      const next = (currentIndex + 1) % totalSteps;
+      globalAudioEngine.stopPlayback();
+      setCurrentIndex(next);
+      if (!playStep(next)) finish();
+    }, stepDurationMs);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); timerRef.current = null; };
+  }, [mode, currentIndex, totalSteps, stepDurationMs, playStep, finish]);
+
+  useEffect(() => () => { clearTimers(); globalAudioEngine.stopPlayback(); }, [clearTimers]);
 
   return {
-    isPlaying,
-    currentIndex,
-    isMuted,
-    audioError,
-    analyser: globalAudioEngine.getAnalyser(),
+    mode, isPlaying: mode === 'continuous', isPreviewing: mode === 'preview',
+    currentIndex, isMuted, audioError, analyser: globalAudioEngine.getAnalyser(),
     currentObservation: observations[currentIndex] || null,
-    togglePlay,
-    nextStep,
-    prevStep,
-    setStep,
-    toggleMute
+    togglePlay, pause, nextStep, prevStep, setStep, toggleMute, previewStep, previewParams
   };
 }

@@ -107,4 +107,29 @@ describe('integração do AudioEngine com o visualizador', () => {
     expect(onError).toHaveBeenLastCalledWith('retomada bloqueada');
     engine.dispose();
   });
+
+  it('plays two attenuated triangle alert pulses at the mapping frequency inside the step window', () => {
+    const parameter = () => ({ setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() });
+    const oscillators: Array<{ type: string; frequency: ReturnType<typeof parameter>; connect: ReturnType<typeof vi.fn>; disconnect: ReturnType<typeof vi.fn>; start: ReturnType<typeof vi.fn>; stop: ReturnType<typeof vi.fn>; addEventListener: ReturnType<typeof vi.fn> }> = [];
+    const gain = { gain: parameter(), connect: vi.fn(), disconnect: vi.fn() };
+    const analyser = { connect: vi.fn(), disconnect: vi.fn(), fftSize: 32 };
+    const context = {
+      state: 'running', currentTime: 2, destination: {}, createGain: vi.fn(() => gain),
+      createAnalyser: vi.fn(() => analyser), createOscillator: vi.fn(() => {
+        const oscillator = { type: '', frequency: parameter(), connect: vi.fn(), disconnect: vi.fn(), start: vi.fn(), stop: vi.fn(), addEventListener: vi.fn() };
+        oscillators.push(oscillator);
+        return oscillator;
+      }), close: vi.fn().mockResolvedValue(undefined)
+    };
+    vi.stubGlobal('window', { AudioContext: vi.fn(() => context) });
+    const engine = new AudioEngine();
+    engine.playParams({ frequency: 300, pulseCount: 2, durationMs: 1500, isMissing: true });
+
+    expect(oscillators).toHaveLength(2);
+    expect(oscillators.map(({ type }) => type)).toEqual(['triangle', 'triangle']);
+    expect(oscillators.map(({ frequency }) => frequency.setValueAtTime.mock.calls[0][0])).toEqual([300, 300]);
+    expect(oscillators.map(({ start }) => start.mock.calls[0][0])).toEqual([2, 2.5]);
+    expect(oscillators.every(({ stop }) => stop.mock.calls[0][0] <= 3.5)).toBe(true);
+    engine.dispose();
+  });
 });

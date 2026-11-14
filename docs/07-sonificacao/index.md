@@ -45,7 +45,7 @@ graph LR
 | **Taxa Média de Chuva ($\text{mm/h}$)** | **Frequência Fundamental ($f_0$)** | Menor taxa &rarr; som grave.<br>Maior taxa &rarr; som agudo. | Associação intuitiva universal entre maior energia/pressão e elevação da frequência. |
 | **Fração de Área com Chuva ($\text{RAF}$ %)** | **Densidade de Pulsos (Ritmo)** | Pouca área &rarr; pulsos esparsos e lentos.<br>Área ampla &rarr; pulsos rápidos e densos. | Representação da dispersão territorial como frequência temporal de repetição. |
 | **Evolução Cronológica ($t_0 \rightarrow t_k$)** | **Sequência de Segmentos (1.5s/passo)** | Cada observação dura um ciclo sonoro delimitado. | Permite que o cérebro estruture a evolução temporal como uma narrativa fluida. |
-| **Dado Ausente / Falha de Satélite** | **Tom Dissonante de Alerta** | Emissão de dois pulsos em onda triangular atenuada. | Distingue inequivocamente "ausência de chuva" (repouso) de "dado inexistente" (alerta). |
+| **Taxa abaixo do limiar operacional / dado ausente** | **Repouso / alerta** | Taxa abaixo de 0.1 mm/h usa o tom de repouso; dado ausente usa dois pulsos triangulares atenuados. | Distingue a representação sonora de repouso da indisponibilidade de uma observação. |
 
 ---
 
@@ -58,7 +58,9 @@ $$f(R) = f_{\text{base}} + (f_{\text{teto}} - f_{\text{base}}) \cdot \frac{\log_
 
 - $f_{\text{base}} = 220 \text{ Hz}$ (Nota Lá 3 / A3) para chuvas leves limiares ($0.1 \text{ mm/h}$).
 - $f_{\text{teto}} = 880 \text{ Hz}$ (Nota Lá 5 / A5) para tempestades severas ($R \ge R_{\text{max}} = 50 \text{ mm/h}$).
-- Para $R < 0.1 \text{ mm/h}$ (ausência de chuva mensurável): emissão de um tom de repouso muito sutil em $130 \text{ Hz}$ (Dó 3 / C3) ou silêncio controlado.
+- Para $0 \le R < 0.1 \text{ mm/h}$: o mapeamento atual aplica uma regra operacional de repouso com tom sutil em $130 \text{ Hz}$. Isso não redefine a taxa observada: uma taxa positiva abaixo do limiar continua positiva e distinta de zero; zero exato continua zero. Valor ausente é um estado separado e segue o tratamento de indisponibilidade.
+
+O limiar de $0.1$ mm/h descrito aqui é operacional para a representação sonora. A comunicação textual preserva a taxa numérica observada e explica quando o mapeamento aplica o repouso; ela não altera os valores científicos nem o algoritmo de áudio.
 
 ### 3.2. Densidade de Pulsos ($N_{\text{pulsos}}$)
 Para a proporção de área chuvosa $\text{RAF} \in [0.0, 1.0]$ dentro de um intervalo de observação de $1.5 \text{ segundos}$:

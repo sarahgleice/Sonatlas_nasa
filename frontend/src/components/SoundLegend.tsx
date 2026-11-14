@@ -1,10 +1,14 @@
 import React from 'react';
-import { globalAudioEngine } from '../audio/AudioEngine';
 import { Headphones, Info } from 'lucide-react';
+import { SonificationParams } from '../types/dataset';
 
-export const SoundLegend: React.FC = () => {
+interface SoundLegendProps {
+  onPreviewParams: (params: SonificationParams) => void;
+}
+
+export const SoundLegend: React.FC<SoundLegendProps> = ({ onPreviewParams }) => {
   const playSample = (freq: number, pulses: number, isMissing: boolean = false) => {
-    globalAudioEngine.playParams({
+    onPreviewParams({
       frequency: freq,
       pulseCount: pulses,
       durationMs: 1500,
@@ -63,11 +67,11 @@ export const SoundLegend: React.FC = () => {
           <button
             onClick={() => playSample(240, 2, true)}
             className="btn btn-outline btn-outline-warning"
-            aria-label="Ouvir calibração para Sinal de Dado Ausente: tom triangular de aviso não musical"
+            aria-label="Ouvir calibração para Sinal de Dado Ausente: dois pulsos triangulares de aviso"
           >
             Aviso de Dado Ausente
           </button>
-          <span className="legend-desc">Tom modulado de advertência (satélite sem medição válida)</span>
+          <span className="legend-desc">Dois pulsos triangulares atenuados (sem medição válida)</span>
         </div>
       </div>
 

@@ -28,7 +28,13 @@ export const Timeline: React.FC<TimelineProps> = ({
         {observations.map((obs, idx) => {
           const isActive = idx === currentIndex;
           const rate = obs.scientific_indicators.mean_precipitation_rate.value;
-          const label = `Passo ${idx + 1}: ${formatTimestamp(obs.timestamp_utc)} - Taxa: ${formatPrecipitationRate(rate)}`;
+          const displayRate = obs.availability.status === 'missing' ? null : rate;
+          const quality = obs.availability.status === 'missing'
+            ? 'Dados ausentes'
+            : obs.availability.status === 'partial'
+              ? `Observação parcial, ${Math.round(obs.availability.valid_cells_ratio * 100)}% de células válidas`
+              : 'Dados disponíveis';
+          const label = `Passo ${idx + 1}: ${formatTimestamp(obs.timestamp_utc)}. ${quality}. Taxa: ${formatPrecipitationRate(displayRate)}`;
 
           return (
             <li key={obs.observation_id} className="timeline-item">
@@ -43,7 +49,7 @@ export const Timeline: React.FC<TimelineProps> = ({
                   {obs.timestamp_utc.substring(11, 16)} UTC
                 </span>
                 <span className="step-rate">
-                  {rate !== null ? `${rate.toFixed(1)} mm/h` : 'Dado ausente'}
+                  {obs.availability.status === 'missing' ? 'Dado ausente' : formatPrecipitationRate(displayRate)}
                 </span>
               </button>
             </li>
