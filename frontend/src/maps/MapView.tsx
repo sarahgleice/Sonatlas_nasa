@@ -5,6 +5,7 @@ import { bboxToLeafletPolygon, getBboxCenter } from '../utils/geoUtils';
 import { MapPin } from 'lucide-react';
 import { findRegionAtPoint, limitsToBounds, STUDY_REGIONS } from './regions';
 import { amazonCentralGeoJson } from './amazonGeometry';
+import { congoBasinKisanganiGeoJson } from './congoGeometry';
 
 function geometryMatchesDataset(layer: L.GeoJSON, boundingBox: BoundingBox): boolean {
   const bounds = layer.getBounds();
@@ -83,21 +84,40 @@ export const MapView: React.FC<MapViewProps> = ({
     if (regionId === 'amazon_central') {
       for (const geoJson of geoJsonSources) {
         if (!geoJson) continue;
-      try {
-        const geoJsonLayer = L.geoJSON(geoJson, {
-          style: {
-            color: '#0284c7',
-            fillColor: '#38bdf8',
-            fillOpacity: 0.25,
-            weight: 3
+        try {
+          const geoJsonLayer = L.geoJSON(geoJson, {
+            style: {
+              color: '#0284c7',
+              fillColor: '#38bdf8',
+              fillOpacity: 0.25,
+              weight: 3
+            }
+          });
+          if (geometryMatchesDataset(geoJsonLayer, boundingBox)) {
+            geoJsonLayer.bindPopup(`<strong>${regionName}</strong><br/>Área de Amostragem do SONATLAS`);
+            regionLayer = geoJsonLayer.addTo(map);
+            break;
           }
-        });
-        if (geometryMatchesDataset(geoJsonLayer, boundingBox)) {
-          geoJsonLayer.bindPopup(`<strong>${regionName}</strong><br/>Área de Amostragem do SONATLAS`);
-          regionLayer = geoJsonLayer.addTo(map);
-          break;
+        } catch {
+          regionLayer = null;
         }
-      } catch {
+      }
+    } else if (regionId === 'congo_basin_kisangani' || regionId === 'international_candidate') {
+      if (congoBasinKisanganiGeoJson) {
+        try {
+          const geoJsonLayer = L.geoJSON(congoBasinKisanganiGeoJson, {
+            style: {
+              color: '#059669',
+              fillColor: '#34d399',
+              fillOpacity: 0.25,
+              weight: 3
+            }
+          });
+          if (geometryMatchesDataset(geoJsonLayer, boundingBox)) {
+            geoJsonLayer.bindPopup(`<strong>${regionName}</strong><br/>Janela de Amostragem de Kisangani (SONATLAS)`);
+            regionLayer = geoJsonLayer.addTo(map);
+          }
+        } catch {
           regionLayer = null;
         }
       }
@@ -127,10 +147,9 @@ export const MapView: React.FC<MapViewProps> = ({
 
     const selectRegion = (event: L.LeafletMouseEvent) => {
       const { lat, lng } = event.latlng;
-      if (regionId !== 'amazon_central') return;
-      const amazon = STUDY_REGIONS.find((region) => region.id === 'amazon_central');
-      if (!amazon) return;
-      const datasetRegion = { ...amazon, limits: boundingBox };
+      const target = STUDY_REGIONS.find((r) => r.id === regionId || (r.aliases && r.aliases.includes(regionId)));
+      if (!target) return;
+      const datasetRegion = { ...target, limits: boundingBox };
       const region = findRegionAtPoint(lat, lng, [datasetRegion]);
       if (region) {
         if (onMapPoint) onMapPoint(lat, lng);
@@ -150,9 +169,8 @@ export const MapView: React.FC<MapViewProps> = ({
 
     const locateRegion = (event: L.LeafletMouseEvent) => {
       L.DomEvent.stopPropagation(event.originalEvent);
-      if (regionId !== 'amazon_central') return;
-      const amazon = STUDY_REGIONS.find((region) => region.id === 'amazon_central');
-      if (amazon && findRegionAtPoint(event.latlng.lat, event.latlng.lng, [{ ...amazon, limits: boundingBox }])) {
+      const target = STUDY_REGIONS.find((r) => r.id === regionId || (r.aliases && r.aliases.includes(regionId)));
+      if (target && findRegionAtPoint(event.latlng.lat, event.latlng.lng, [{ ...target, limits: boundingBox }])) {
         onMapPoint(event.latlng.lat, event.latlng.lng);
       }
     };

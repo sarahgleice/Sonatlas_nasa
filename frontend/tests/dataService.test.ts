@@ -65,6 +65,19 @@ describe('DataService.loadRegionDataset', () => {
     });
   });
 
+  it.each([
+    ['amazon/observations_afternoon.json', 'amazon_central'],
+    ['congo/observations.json', 'congo_basin_kisangani']
+  ])('accepts the published dataset %s without changing its validation status', async (relPath, expectedRegionId) => {
+    const exported = JSON.parse(readFileSync(`public/data/${relPath}`, 'utf8'));
+    const result = await load(exported);
+    expect(result).toBe(exported);
+    expect(result.is_sample).toBe(false);
+    expect(result.region_id).toBe(expectedRegionId);
+    expect(result.observations).toHaveLength(6);
+    expect(result.validation_status).toBe('preliminary_verified');
+  });
+
   it.each(['amazon_central_series.json', 'international_candidate_series.json'])(
     'accepts the current pipeline export %s without changing its sample status', async (filename) => {
       const exported = JSON.parse(readFileSync(`public/data/${filename}`, 'utf8'));

@@ -65,13 +65,24 @@ processing/
 │
 ├── scripts/                  # Scripts executáveis de inspeção e pipeline
 │   ├── __init__.py
-│   ├── inspect_imerg.py      # Script de inspeção de arquivos IMERG (Etapa 1)
-│   └── run_pipeline.py       # Orquestrador de geração e exportação de datasets
+│   ├── inspect_imerg.py      # Inspeção detalhada de arquivos IMERG HDF5
+│   ├── run_pipeline.py       # Gerador de amostras demonstrativas sintéticas (--demo)
+│   ├── process_amazon_real.py# Pipeline científico oficial da madrugada na Amazônia Central
+│   ├── process_amazon_afternoon.py # Pipeline científico oficial da tarde na Amazônia Central
+│   ├── process_congo_real.py # Pipeline científico oficial para a janela de Kisangani (Congo)
+│   └── download_afternoon_granules.py # Download automatizado de grânulos no GES DISC
 │
 ├── tests/                    # Suíte de testes automatizados com Pytest
 │   ├── __init__.py
-│   ├── test_indicators.py
-│   └── test_validation.py
+│   ├── test_amazon_real_observations.py # Testes dos dados reais processados
+│   ├── test_api.py           # Testes dos endpoints da API geoespacial
+│   ├── test_extractor.py     # Testes do extrator e recorte espacial
+│   ├── test_indicators.py    # Testes dos algoritmos de cálculo de indicadores
+│   └── test_validation.py    # Testes do validador de conformidade e integridade
+│
+├── api/                      # API geoespacial FastAPI (regiões e localização)
+│   ├── main.py
+│   └── README.md
 │
 ├── validation/               # Validador de conformidade e integridade científica
 │   ├── __init__.py
@@ -140,7 +151,7 @@ Para acessar e baixar dados reais do GPM IMERG no GES DISC, a NASA exige autenti
 
 Para inspecionar um arquivo real baixado:
 ```bash
-python scripts/inspect_imerg.py data/raw/3B-HHR.MS.MRG.3IMERG.20240101-S000000-E002959.0000.V07B.HDF5
+python scripts/inspect_imerg.py data/raw/3B-HHR-E.MS.MRG.3IMERG.20240101-S000000-E002959.0000.V07B.HDF5
 ```
 
 Para validar a esteira imediatamente utilizando o gerador de grânulo sintético compatível com o schema da NASA:
@@ -154,3 +165,54 @@ O script exibirá:
 - As unidades físicas (`mm/hr`) e atributos (`_FillValue: -9999.9`).
 - As dimensões espaciais (3600 x 1800) e a necessidade de transposição `.T`.
 - A contagem de células válidas e ausentes.
+
+---
+
+## 7. Diferenciação Crucial: Dados Reais vs. Dados Sintéticos
+
+O módulo mantém uma distinção inequívoca e auditável entre ferramentas de simulação e a esteira de dados reais:
+
+| Componente | Tipo de Dado | Função Técnica | Arquivo de Saída / Destino |
+|---|---|---|---|
+| **`scripts/run_pipeline.py --demo`** | **Sintético** | Gerador de amostras fictícias para validação offline rápida sem necessidade de credenciais NASA. | `processing/data/samples/amazon_central_sample.json` (`is_sample: true`) |
+| **`scripts/process_amazon_real.py`** | **Real** | Pipeline oficial que lê os binários HDF5 baixados da NASA GES DISC, calcula indicadores ponderados e valida os contratos. | `frontend/public/data/amazon/observations.json` e `processing/data/processed/amazon_central_real_series.json` (`is_sample: false`) |
+| **`processing/data/samples/`** | **Sintético** | Amostras estruturais de bootstrap (ex: `amazon_central_sample.json` datado de 2026-10-12). | Usadas para testes de conformidade de schema. |
+| **`frontend/public/data/amazon/`** | **Real** | Observações geofísicas autênticas da Amazônia Central extraídas do satélite GPM. | Consumido pelo player e visualizadores do frontend. |
+
+> **Nota de Integridade:** Nenhum arquivo é considerado real apenas por conter `"is_sample": false`. A autenticidade é atestada pela proveniência dos 6 grânulos HDF5 originais em `data/raw/` e pela reprodução matemática dos cálculos.
+
+---
+
+## 8. Metodologia Científica e Fórmulas de Cálculo
+
+A extração realizada por [`scripts/process_amazon_real.py`](scripts/process_amazon_real.py) executa as seguintes etapas metodológicas:
+
+1. **Abertura e Transposição HDF5:**
+   - Leitura de `/Grid/precipitation` via `h5py`.
+   - Transposição matricial `.T`: a matriz bruta `(3600, 1800)` em `(lon, lat)` é convertida para `(1800, 3600)` em `(lat, lon)`.
+2. **Tratamento de Sentinelas e Nulos:**
+   - Identificação de `_FillValue = -9999.9`.
+   - Distinção estrita: valores iguais a `0.0 mm/hr` representam **tempo seco / ausência de chuva**. Valores sentinela ou negativos são marcados como **dados ausentes** e jamais somados ou interpretados como calmaria.
+3. **Recorte Espacial da Amazônia Central:**
+   - Coordenadas WGS84: Latitude $[-4.0^\circ, -1.5^\circ]$ e Longitude $[-61.5^\circ, -58.5^\circ]$.
+   - Grade de $25 \times 30 = 750$ células de $0.1^\circ \times 0.1^\circ$.
+4. **Média Espacial Ponderada pelo Cosseno da Latitude:**
+   Como a área das células decresce com o cosseno da latitude ($\phi$), o cálculo aplica:
+   $$\bar{R} = \frac{\sum_{i=1}^{N} R_i \cdot w_i \cdot \cos(\phi_i)}{\sum_{i=1}^{N} w_i \cdot \cos(\phi_i)}$$
+   onde $w_i = 1$ para células válidas e $0$ para dados ausentes.
+5. **Fração da Área com Chuva ($\text{RAF}$):**
+   Proporção ponderada de células válidas com precipitação mensurável igual ou superior a $0.1\text{ mm/hr}$ (limiar físico do sensor GMI):
+   $$\text{RAF} = \frac{\sum_{i \in \text{Válidos}} \mathbb{I}(R_i \ge 0.1 \text{ mm/hr}) \cdot \cos(\phi_i)}{\sum_{i \in \text{Válidos}} \cos(\phi_i)}$$
+   Expressa como fração adimensional contínua entre $0$ e $1$ (unidade `fraction`).
+6. **Diferença Temporal ($\Delta R$):**
+   Variação da taxa média entre observações adjacentes ($\Delta R_t = \bar{R}_t - \bar{R}_{t-1}$), expressa em `mm/h`.
+7. **Disponibilidade Instrumental:**
+   Razão entre células válidas e o total da grade ($750 / 750 = 1.0$). Classificada como `"available"` ($\ge 80\%$).
+
+---
+
+## 9. Limitações Científicas da Prova de Conceito
+
+- **Escopo Amostral Reduzido:** A demonstração processa uma sequência contínua de seis grânulos de 30 minutos (intervalo de 3 horas em 01/01/2024, de 00:00 a 02:59 UTC). Representa uma prova de conceito funcional da cadeia de processamento e sonificação, não devendo ser utilizada como estudo climatológico de sazonalidade da Amazônia.
+- **Geometria de Referência:** O recorte é uma *bounding box* retangular delimitada por coordenadas geográficas, e não o contorno ecológico ou hidrográfico complexo da Bacia Amazônica.
+- **Produto Satelital Early Run:** Utiliza o produto `GPM_3IMERGHHE` (Early Run, latência ~4 horas), calibrado prioritariamente por sensores orbitais rápidos, e não o produto `GPM_3IMERGHH` (Final Run), que inclui calibração posterior de pluviômetros de solo do GPCC com latência de meses.

@@ -7,7 +7,8 @@ import {
   Waves
 } from 'lucide-react';
 import { RegionDataset } from '../types/dataset';
-import { DataService, AVAILABLE_REGIONS } from '../services/dataService';
+import { DataService, AVAILABLE_REGIONS, findRegionOption } from '../services/dataService';
+import { globalAudioEngine } from '../audio/AudioEngine';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { formatAreaFraction, formatPrecipitationRate, formatTimestamp, getRatePresentationNote } from '../utils/formatters';
@@ -30,6 +31,7 @@ type GeoApiState = 'unconfigured' | 'loading' | 'connected' | 'fallback';
 
 export const HomePage: React.FC = () => {
   const [selectedRegionId, setSelectedRegionId] = useState('amazon_central');
+  const [selectedSeriesId, setSelectedSeriesId] = useState('morning');
   const [dataset, setDataset] = useState<RegionDataset | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -40,20 +42,30 @@ export const HomePage: React.FC = () => {
 
   useEffect(() => {
     let isMounted = true;
-    const regionOpt = AVAILABLE_REGIONS.find((region) => region.id === selectedRegionId);
-    if (!regionOpt) return;
+    const regionOpt = findRegionOption(selectedRegionId) ?? AVAILABLE_REGIONS[0];
+    const availableSeries = regionOpt.series;
+    
+    // Se a série atual não existe na região selecionada, ajusta para a primeira válida
+    let activeSeries = availableSeries.find((s) => s.id === selectedSeriesId);
+    if (!activeSeries) {
+      activeSeries = availableSeries[0];
+      setSelectedSeriesId(activeSeries.id);
+    }
+
+    // Interrompe imediatamente qualquer reprodução sonora prévia ao trocar região ou série
+    globalAudioEngine.stopPlayback();
 
     setLoading(true);
     setErrorMessage(null);
     setDataset(null);
 
-    DataService.loadRegionDataset(regionOpt.filePath)
+    DataService.loadRegionDataset(activeSeries.filePath)
       .then((data) => {
         if (!isMounted) return;
         setDataset(data);
         setLoading(false);
         setLiveAnnouncement(
-          `Região alterada para ${data.region_name}. ${data.observations.length} observações temporais carregadas.`
+          `Região: ${data.region_name}, série: ${activeSeries?.name}. ${data.observations.length} observações temporais carregadas.`
         );
       })
       .catch((error: unknown) => {
@@ -66,7 +78,7 @@ export const HomePage: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [selectedRegionId]);
+  }, [selectedRegionId, selectedSeriesId]);
 
   useEffect(() => {
     if (!dataset || dataset.region_id !== 'amazon_central') {
@@ -138,8 +150,8 @@ export const HomePage: React.FC = () => {
     );
   };
 
-  const selectAmazon = () => {
-    const region = AVAILABLE_REGIONS.find((item) => item.id === 'amazon_central' && item.status === 'active');
+  const selectRegion = (regionId: string) => {
+    const region = findRegionOption(regionId);
     if (!region) return;
     setSelectedRegionId(region.id);
     setLiveAnnouncement(`${region.name} selecionada pelo mapa.`);
@@ -149,14 +161,14 @@ export const HomePage: React.FC = () => {
     try {
       const result = await geoApiService.locate(lat, lon);
       if (result.available) {
-        if (result.data.regioes.includes('amazon_central')) selectAmazon();
+        if (result.data.regioes.includes('amazon_central')) selectRegion('amazon_central');
+        else if (result.data.regioes.includes('congo_basin_kisangani')) selectRegion('congo_basin_kisangani');
         return;
       }
     } catch {
       setApiGeometry(null);
       setGeoApiState('fallback');
     }
-    selectAmazon();
   };
 
   const {
@@ -208,7 +220,7 @@ export const HomePage: React.FC = () => {
                 geoApiStatus={geoApiState}
                 onMapPoint={handleMapPoint}
                 onRegionSelect={(regionId) => {
-                  const region = AVAILABLE_REGIONS.find((item) => item.id === regionId && item.status === 'active');
+                  const region = findRegionOption(regionId);
                   if (!region) return;
                   setSelectedRegionId(region.id);
                   setLiveAnnouncement(`${region.name} selecionada pelo mapa.`);
@@ -234,6 +246,8 @@ export const HomePage: React.FC = () => {
               <RegionSelector
                 selectedRegionId={selectedRegionId}
                 onSelectRegion={setSelectedRegionId}
+                selectedSeriesId={selectedSeriesId}
+                onSelectSeries={setSelectedSeriesId}
               />
               <VariableSelector />
               <section className="layer-section" aria-labelledby="layers-title">

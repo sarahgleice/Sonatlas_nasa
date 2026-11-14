@@ -51,10 +51,15 @@ graph LR
 
 ## 3. Modelo Matemático de Mapeamento
 
+A implementação canônica do modelo encontra-se em [`frontend/src/audio/sonificationMapping.ts`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/frontend/src/audio/sonificationMapping.ts), garantindo consistência estrita entre o embasamento físico e a síntese em tempo real.
+
 ### 3.1. Frequência Tonal Fundamental ($f_0$)
 Para uma taxa média $R$ em $\text{mm/h}$, aplicamos uma curva logarítmica refletindo a percepção de semitons da audição humana:
 
-$$f(R) = f_{\text{base}} + (f_{\text{teto}} - f_{\text{base}}) \cdot \frac{\log_{10}(1 + \min(R, R_{\text{max}}))}{\log_{10}(1 + R_{\text{max}})}$$
+$$f(R) = \begin{cases} 
+130 \text{ Hz (Tom de repouso C3)}, & \text{se } R < 0.1 \text{ mm/h} \\
+\text{round}\left(f_{\text{base}} + (f_{\text{teto}} - f_{\text{base}}) \cdot \frac{\log_{10}(1 + \min(R, R_{\text{max}}))}{\log_{10}(1 + R_{\text{max}})}\right), & \text{se } R \ge 0.1 \text{ mm/h}
+\end{cases}$$
 
 - $f_{\text{base}} = 220 \text{ Hz}$ (Nota Lá 3 / A3) para chuvas leves limiares ($0.1 \text{ mm/h}$).
 - $f_{\text{teto}} = 880 \text{ Hz}$ (Nota Lá 5 / A5) para tempestades severas ($R \ge R_{\text{max}} = 50 \text{ mm/h}$).
@@ -65,11 +70,29 @@ O limiar de $0.1$ mm/h descrito aqui é operacional para a representação sonor
 ### 3.2. Densidade de Pulsos ($N_{\text{pulsos}}$)
 Para a proporção de área chuvosa $\text{RAF} \in [0.0, 1.0]$ dentro de um intervalo de observação de $1.5 \text{ segundos}$:
 
-$$N_{\text{pulsos}} = \text{clamp}\Big(1 + \text{round}(6 \times \text{RAF}), \, 1, \, 7\Big)$$
+$$N_{\text{pulsos}} = \begin{cases}
+1, & \text{se } \text{RAF} < 0.05 \\
+\text{clamp}\Big(1 + \text{round}(6 \times \text{RAF}), \, 1, \, 7\Big), & \text{se } \text{RAF} \ge 0.05
+\end{cases}$$
 
+- Ausência ou traços de chuva ($\text{RAF} < 5\%$): **1 pulso isolado de repouso**.
 - Chuva pontual ($\text{RAF} \le 15\%$): **1 pulso isolado**.
-- Chuva disseminada ($\text{RAF} \approx 50\%$): **3 a 4 pulsos ritmados**.
+- Chuva disseminada ($\text{RAF} \approx 25\%\text{ a }35\%$): **3 pulsos ritmados**.
+- Chuva moderada em meia bacia ($\text{RAF} \approx 50\%$): **4 pulsos ritmados**.
 - Tempestade generalizada em toda a bacia ($\text{RAF} \ge 85\%$): **6 a 7 pulsos densos**.
+
+### 3.3. Tabela de Validação Acústica com os Dados Reais da Amazônia Central
+
+A aplicação direta das fórmulas oficiais aos dados reais processados do IMERG V07B resulta nos seguintes parâmetros acústicos reproduzidos pelo navegador:
+
+| Passo (UTC) | Taxa Real ($R$) | Fração Real ($\text{RAF}$) | Frequência Calculada | Frequência Reproduzida | Qtd. Pulsos | Estado Perceptivo |
+|---|---|---|---|---|---|---|
+| **00:00** | $0.3817 \text{ mm/h}$ | $0.3519$ ($35.2\%$) | $274.28 \text{ Hz}$ | **$274 \text{ Hz}$** | **3 pulsos** | Chuva leve generalizada |
+| **00:30** | $0.2669 \text{ mm/h}$ | $0.2653$ ($26.5\%$) | $259.71 \text{ Hz}$ | **$260 \text{ Hz}$** | **3 pulsos** | Chuva leve moderando |
+| **01:00** | $0.0013 \text{ mm/h}$ | $0.0027$ ($0.27\%$) | $< 0.1 \text{ mm/h}$ | **$130 \text{ Hz}$** | **1 pulso** | Repouso (C3) / Estiagem |
+| **01:30** | $0.0013 \text{ mm/h}$ | $0.0027$ ($0.27\%$) | $< 0.1 \text{ mm/h}$ | **$130 \text{ Hz}$** | **1 pulso** | Repouso (C3) / Estiagem |
+| **02:00** | $0.0007 \text{ mm/h}$ | $0.0013$ ($0.13\%$) | $< 0.1 \text{ mm/h}$ | **$130 \text{ Hz}$** | **1 pulso** | Repouso (C3) / Estiagem |
+| **02:30** | $0.0000 \text{ mm/h}$ | $0.0000$ ($0.0\%$) | $0.0 \text{ mm/h}$ | **$130 \text{ Hz}$** | **1 pulso** | Repouso pleno |
 
 ### 3.3. Envoltória Acústica ADSR
 Para evitar estalos acústicos (*clicks*) no início e no fim de cada pulso, cada nota gerada no oscilador passa por um nó de ganho com envoltória programada:

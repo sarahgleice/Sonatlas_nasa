@@ -36,20 +36,20 @@ export const STUDY_REGIONS: StudyRegion[] = [
   {
     id: 'congo_basin_kisangani',
     aliases: ['international_candidate'],
-    name: 'Bacia do Congo',
+    name: 'Janela de Kisangani (Bacia do Congo)',
     country: 'República Democrática do Congo',
     referenceCity: 'Kisangani',
     referencePoint: { lat: 0.5153, lon: 25.191 },
-    status: 'proposed_pending_validation',
+    status: 'preliminary_verified',
     description:
-      'Área de estudo proposta no entorno de Kisangani. Recorte específico, não representa toda a bacia. Aguarda validação científica.',
+      'Janela amostral de controle no entorno de Kisangani (750 células). Não representa toda a bacia. Homologada com dados reais NASA IMERG.',
     limits: {
       min_latitude: -0.8,
       max_latitude: 1.7,
       min_longitude: 23.7,
       max_longitude: 26.7,
     },
-    seriesFile: 'international_candidate_series.json',
+    seriesFile: 'congo/observations.json',
   },
 ];
 
