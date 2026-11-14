@@ -1,7 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { X } from 'lucide-react';
 import { RegionDataset } from '../types/dataset';
 import { formatTimestamp } from '../utils/formatters';
+import { SHORTCUTS } from '../types/player';
+import { useModalDialog } from '../accessibility/useModalDialog';
 
 interface EducationalPanelProps {
   isOpen: boolean;
@@ -12,25 +14,19 @@ interface EducationalPanelProps {
 }
 
 export const EducationalPanel: React.FC<EducationalPanelProps> = ({ isOpen, dataset, loading, error, onClose }) => {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const { dialogRef, handleClose, handleBackdropClick, requestClose } = useModalDialog(isOpen, onClose);
   const firstObservation = dataset?.observations[0];
   const lastObservation = dataset?.observations[dataset.observations.length - 1];
   const period = firstObservation && lastObservation
     ? `${formatTimestamp(firstObservation.timestamp_utc)} — ${formatTimestamp(lastObservation.timestamp_utc)}`
     : 'Não disponível no dataset';
 
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (isOpen && !dialog.open) dialog.showModal();
-    else if (!isOpen && dialog.open) dialog.close();
-  }, [isOpen]);
-
   return (
-    <dialog ref={dialogRef} className="educational-dialog" aria-labelledby="educational-title" onClose={onClose}>
+    <dialog ref={dialogRef} className="educational-dialog" aria-labelledby="educational-title" onClose={handleClose} onClick={handleBackdropClick}>
+      <div className="dialog-surface">
       <div className="educational-header">
         <div><span className="panel-index">GUIA DE EXPLORAÇÃO</span><h2 id="educational-title">Como interpretar esta exploração</h2></div>
-        <button type="button" className="btn-close" onClick={() => dialogRef.current?.close()} aria-label="Fechar guia">
+        <button type="button" className="btn-close" onClick={requestClose} aria-label="Fechar guia">
           <X size={20} aria-hidden="true" />
         </button>
       </div>
@@ -69,11 +65,12 @@ export const EducationalPanel: React.FC<EducationalPanelProps> = ({ isOpen, data
         <details>
           <summary>Atalhos de teclado</summary>
           <ul>
-            <li><kbd>Espaço</kbd> reproduzir ou pausar</li>
-            <li><kbd>←</kbd> / <kbd>→</kbd> período anterior ou seguinte</li>
-            <li><kbd>M</kbd> ativar ou silenciar o áudio</li>
+            {SHORTCUTS.map((shortcut) => (
+              <li key={shortcut.keys}><kbd>{shortcut.keys}</kbd> {shortcut.description}</li>
+            ))}
           </ul>
         </details>
+      </div>
       </div>
     </dialog>
   );

@@ -3,54 +3,82 @@ import { TemporalObservation } from '../types/dataset';
 import {
   formatPrecipitationRate,
   formatAreaFraction,
+  formatAvailabilityStatus,
   formatTimestamp,
-  getIntensityLabel
+  getIntensityLabel,
+  getObservationDataState
 } from '../utils/formatters';
-import { Activity, AlertTriangle, CheckCircle } from 'lucide-react';
+import { buildSonificationExplanation } from '../utils/scientificExplanation';
+import { Activity, AlertTriangle, CheckCircle, Headphones } from 'lucide-react';
 
 interface ScientificSummaryProps {
   observation: TemporalObservation | null;
   regionName: string;
+  previousObservation?: TemporalObservation | null;
+  index?: number;
+  total?: number;
 }
 
 export const ScientificSummary: React.FC<ScientificSummaryProps> = ({
   observation,
-  regionName
+  regionName,
+  previousObservation = null,
+  index = 0,
+  total = 1
 }) => {
   if (!observation) {
     return (
       <section className="card" aria-labelledby="summary-title">
-        <h2 id="summary-title" className="card-title">Sumário Científico</h2>
+        <h3 id="summary-title" className="card-title">Indicadores Científicos</h3>
         <p>Aguardando carregamento de observações científicas...</p>
       </section>
     );
   }
 
   const { availability, scientific_indicators, timestamp_utc, textual_summary } = observation;
-  const isMissing = availability.status === 'missing';
+  const dataState = getObservationDataState(observation);
+  const isMissing = dataState === 'missing';
+  const isPartial = availability.status === 'partial';
   const meanRate = scientific_indicators.mean_precipitation_rate.value;
   const areaFraction = scientific_indicators.rain_area_fraction.value;
+  const explanation = buildSonificationExplanation(observation, previousObservation, index, total);
+
+  const temporalDifference = scientific_indicators.temporal_difference
+    ?? scientific_indicators.temporal_change
+    ?? scientific_indicators.temporal_variance;
+  const differenceValue = temporalDifference?.value;
+  let differenceText: string;
+  if (differenceValue !== null && differenceValue !== undefined) {
+    differenceText = `${differenceValue > 0 ? '+' : ''}${differenceValue.toFixed(2)} mm/h`;
+  } else if (index > 0) {
+    differenceText = 'Indisponível (passo anterior ausente)';
+  } else {
+    differenceText = 'Linha base (primeiro passo)';
+  }
+
+  const availabilityLabel = formatAvailabilityStatus(availability.status);
+  const validPercent = Math.round(availability.valid_cells_ratio * 100);
 
   return (
     <section className="card scientific-summary-card" aria-labelledby="summary-title">
       <div className="card-header">
         <Activity size={20} className="card-icon" aria-hidden="true" />
-        <h2 id="summary-title" className="card-title">
+        <h3 id="summary-title" className="card-title">
           Indicadores Científicos — {regionName}
-        </h2>
+        </h3>
         <span
-          className={`badge ${isMissing ? 'badge-warning' : 'badge-success'}`}
-          aria-label={`Status de disponibilidade dos dados: ${availability.status}`}
+          className={`badge ${isMissing ? 'badge-warning' : isPartial ? 'badge-info' : 'badge-success'}`}
+          aria-label={`Status de disponibilidade dos dados: ${availabilityLabel}`}
         >
           {isMissing ? (
             <>
               <AlertTriangle size={14} aria-hidden="true" />
-              <span>Dados Ausentes</span>
+              <span>{availabilityLabel}</span>
             </>
           ) : (
             <>
               <CheckCircle size={14} aria-hidden="true" />
-              <span>Disponível ({Math.round(availability.valid_cells_ratio * 100)}% válido)</span>
+              <span>{availabilityLabel} ({validPercent}% válido)</span>
             </>
           )}
         </span>
@@ -59,6 +87,16 @@ export const ScientificSummary: React.FC<ScientificSummaryProps> = ({
       <div className="timestamp-badge">
         <strong>Instante da Coleta:</strong> {formatTimestamp(timestamp_utc)}
       </div>
+
+      <section className="listening-explanation" aria-labelledby="listening-title">
+        <h4 id="listening-title"><Headphones size={16} aria-hidden="true" /> Entenda o que você ouviu</h4>
+        <p className="listening-headline">{explanation.headline}</p>
+        <ul>
+          <li>{explanation.pitchComparison}</li>
+          {explanation.pulseComparison && <li>{explanation.pulseComparison}</li>}
+          {explanation.temporalChange && <li>{explanation.temporalChange}</li>}
+        </ul>
+      </section>
 
       <div className="metrics-grid">
         <div className="metric-box">
@@ -83,22 +121,15 @@ export const ScientificSummary: React.FC<ScientificSummaryProps> = ({
 
         <div className="metric-box">
           <span className="metric-label">Diferença Temporal (&Delta;R)</span>
-          <span className="metric-value">
-            {(() => {
-              const tempDiff = scientific_indicators.temporal_difference ?? scientific_indicators.temporal_change ?? scientific_indicators.temporal_variance;
-              return tempDiff?.value !== null && tempDiff?.value !== undefined
-                ? `${tempDiff.value > 0 ? '+' : ''}${tempDiff.value.toFixed(2)} mm/h`
-                : 'Linha base';
-            })()}
-          </span>
+          <span className="metric-value">{differenceText}</span>
           <span className="metric-caption">Em relação ao passo anterior (Rt - Rt-1)</span>
         </div>
       </div>
 
-      <div className="textual-summary-box" aria-label="Audiodescrição resumida da observação">
-        <h3>Descrição Textual Acessível</h3>
+      <section className="textual-summary-box" aria-labelledby="textual-summary-title">
+        <h4 id="textual-summary-title">Descrição Textual Acessível</h4>
         <p>{textual_summary}</p>
-      </div>
+      </section>
     </section>
   );
 };

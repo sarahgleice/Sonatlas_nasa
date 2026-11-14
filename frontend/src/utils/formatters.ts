@@ -1,20 +1,20 @@
 import { AvailabilityIndicator, TemporalObservation } from '../types/dataset';
 import { ObservationDataState } from '../types/player';
+import { RAIN_DETECTION_THRESHOLD_MM_H } from '../audio/sonificationMapping';
 
 /**
  * Utilitários de formatação textual e unidades para o SONATLAS.
  */
 
-export const RAIN_DETECTION_THRESHOLD_MM_H = 0.1;
-
 export function formatPrecipitationRate(rate: number | null | undefined): string {
   if (rate === null || rate === undefined) {
     return 'Não disponível';
   }
-  if (rate > 0 && rate < 0.001) {
+  // Traços abaixo do limiar de detecção (> 0) nunca devem aparecer como "0.0" ou "0.1".
+  if (rate > 0 && rate < 0.01) {
     return `${rate.toFixed(4)} mm/h`;
   }
-  if (rate > 0 && rate < 0.05) {
+  if (rate > 0 && rate < RAIN_DETECTION_THRESHOLD_MM_H) {
     return `${rate.toFixed(3)} mm/h`;
   }
   return `${rate.toFixed(1)} mm/h`;
