@@ -75,4 +75,47 @@ describe('Integração Real de Dados da Amazônia e Motor de Sonificação da Ha
     expect(params5.frequency).toBe(FREQ_REST); // 130 Hz
     expect(params5.pulseCount).toBe(1);
   });
+
+  it('valida sonificação da série vespertina da Amazônia Central', () => {
+    const afternoonPath = path.resolve(__dirname, '../public/data/amazon/observations_afternoon.json');
+    expect(fs.existsSync(afternoonPath)).toBe(true);
+    const dataset: RegionDataset = JSON.parse(fs.readFileSync(afternoonPath, 'utf-8'));
+
+    expect(dataset.observations).toHaveLength(6);
+    expect(dataset.observations[0].timestamp_utc).toBe('2024-01-01T17:00:00Z');
+    expect(dataset.observations[5].timestamp_utc).toBe('2024-01-01T19:30:00Z');
+
+    // Passo 0 (17:00 UTC): Taxa ~0.161 mm/h (chuva leve ativa)
+    const p0 = createObservationSonificationParams(dataset.observations[0]);
+    expect(p0.isMissing).toBe(false);
+    expect(p0.frequency).toBeGreaterThan(FREQ_REST);
+
+    // Passo 4 (19:00 UTC): Taxa ~0.178 mm/h
+    const p4 = createObservationSonificationParams(dataset.observations[4]);
+    expect(p4.isMissing).toBe(false);
+    expect(p4.frequency).toBeGreaterThan(FREQ_REST);
+  });
+
+  it('valida sonificação da série vespertina de Kisangani (Bacia do Congo)', () => {
+    const congoPath = path.resolve(__dirname, '../public/data/congo/observations.json');
+    expect(fs.existsSync(congoPath)).toBe(true);
+    const dataset: RegionDataset = JSON.parse(fs.readFileSync(congoPath, 'utf-8'));
+
+    expect(dataset.region_id).toBe('congo_basin_kisangani');
+    expect(dataset.observations).toHaveLength(6);
+    expect(dataset.observations[0].timestamp_utc).toBe('2024-01-01T17:00:00Z');
+    expect(dataset.observations[5].timestamp_utc).toBe('2024-01-01T19:30:00Z');
+
+    // Passo 4 (19:00 UTC): Pico médio da tempestade (~0.116 mm/h >= 0.1 mm/h) -> tom ativo
+    const p4 = createObservationSonificationParams(dataset.observations[4]);
+    expect(p4.isMissing).toBe(false);
+    expect(p4.frequency).toBeGreaterThan(FREQ_REST);
+
+    // Passo 5 (19:30 UTC): Média de 0.049 mm/h (< 0.1 mm/h) gera tom de repouso (130 Hz),
+    // confirmando que o pico pontual de 12.7 mm/h NÃO é misturado com a média usada pelo motor
+    const p5 = createObservationSonificationParams(dataset.observations[5]);
+    expect(p5.isMissing).toBe(false);
+    expect(p5.frequency).toBe(FREQ_REST);
+    expect(dataset.observations[5].scientific_indicators.max_precipitation_rate?.value).toBeGreaterThan(12.0);
+  });
 });

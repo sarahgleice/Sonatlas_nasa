@@ -29,6 +29,20 @@ async function load(payload: unknown) {
 afterEach(() => { vi.unstubAllGlobals(); });
 
 describe('DataService.loadRegionDataset', () => {
+  it.each([
+    ['amazon/observations.json', 'amazon_central'],
+    ['amazon/observations_afternoon.json', 'amazon_central'],
+    ['congo/observations.json', 'congo_basin_kisangani']
+  ])('accepts the official verified dataset %s with is_sample=false and 6 observations', async (relPath, expectedRegionId) => {
+    const exported = JSON.parse(readFileSync(`public/data/${relPath}`, 'utf8'));
+    const result = await load(exported);
+    expect(result).toBe(exported);
+    expect(result.is_sample).toBe(false);
+    expect(result.region_id).toBe(expectedRegionId);
+    expect(result.observations).toHaveLength(6);
+    expect(result.validation_status).toBe('preliminary_verified');
+  });
+
   it.each(['amazon_central_series.json', 'international_candidate_series.json'])(
     'accepts the current pipeline export %s without changing its sample status', async (filename) => {
       const exported = JSON.parse(readFileSync(`public/data/${filename}`, 'utf8'));

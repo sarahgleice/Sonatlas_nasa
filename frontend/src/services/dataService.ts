@@ -5,17 +5,58 @@ export const AVAILABLE_REGIONS: RegionOption[] = [
     id: 'amazon_central',
     name: 'Amazônia Central',
     country: 'Brasil',
+    status: 'active',
+    description: 'Recorte de 750 células na confluência dos rios Negro e Solimões (Manaus).',
     filePath: '/data/amazon/observations.json',
-    status: 'active'
+    series: [
+      {
+        id: 'morning',
+        name: 'Madrugada (00:00 – 02:30 UTC)',
+        periodLabel: '01/01/2024 · 00:00 a 02:30 UTC',
+        timeRangeUtc: '00:00 – 02:30 UTC',
+        localTimeRange: '20:00 – 22:30 (Horário de Manaus, UTC-4)',
+        filePath: '/data/amazon/observations.json',
+        description: 'Transição noturna: convecção residual dissipando até calmaria total (0,0 mm/h).',
+        granulesCount: 6
+      },
+      {
+        id: 'afternoon',
+        name: 'Tarde (17:00 – 19:30 UTC)',
+        periodLabel: '01/01/2024 · 17:00 a 19:30 UTC',
+        timeRangeUtc: '17:00 – 19:30 UTC',
+        localTimeRange: '13:00 – 15:30 (Horário de Manaus, UTC-4)',
+        filePath: '/data/amazon/observations_afternoon.json',
+        description: 'Convecção vespertina tropical ativa: desenvolvimento de chuva cobrindo até 15,1% da área.',
+        granulesCount: 6
+      }
+    ]
   },
   {
-    id: 'international_candidate',
-    name: 'Região Internacional (Bacia do Congo)',
-    country: 'África Central (Em validação)',
-    filePath: '/data/international_candidate_series.json',
-    status: 'candidate'
+    id: 'congo_basin_kisangani',
+    aliases: ['international_candidate'],
+    name: 'Janela de Kisangani (Bacia do Congo)',
+    country: 'República Democrática do Congo',
+    status: 'active',
+    description: 'Janela amostral de controle (750 células). Não representa a totalidade da Bacia do Congo.',
+    filePath: '/data/congo/observations.json',
+    series: [
+      {
+        id: 'afternoon',
+        name: 'Tarde / Noite (17:00 – 19:30 UTC)',
+        periodLabel: '01/01/2024 · 17:00 a 19:30 UTC',
+        timeRangeUtc: '17:00 – 19:30 UTC',
+        localTimeRange: '19:00 – 21:30 (Horário da África Central, CAT / UTC+2)',
+        filePath: '/data/congo/observations.json',
+        description: 'Noite equatorial: tempestade convectiva com salto às 19:00 UTC e célula isolada de 12,7 mm/h.',
+        granulesCount: 6
+      }
+    ]
   }
 ];
+
+export function findRegionOption(regionId: string): RegionOption | undefined {
+  return AVAILABLE_REGIONS.find((r) => r.id === regionId || (r.aliases && r.aliases.includes(regionId)));
+}
 
 const isRecord = (value: unknown): value is Record<string, any> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
