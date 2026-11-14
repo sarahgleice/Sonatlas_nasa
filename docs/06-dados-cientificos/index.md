@@ -86,10 +86,17 @@ O motor de sonificação traduz primordialmente a **taxa de precipitação insta
 - **`processing/scripts/run_pipeline.py --demo`:** Script de demonstração offline para gerar o arquivo sintético de bootstrap [`processing/data/samples/amazon_central_sample.json`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/processing/data/samples/amazon_central_sample.json) (`is_sample: true`).
 - A autenticidade científica dos dados é garantida pela rastreabilidade e proveniência dos grânulos brutos HDF5 arquivados, e não exclusivamente por flags booleanas.
 
-### 4.2. Região Internacional: Área de Estudo Candidata
-- **Status:** <span class="badge-review">Candidata Preliminar Sob Validação</span>
-- **Região Candidata em Estudo:** Bacia do Congo (África Central).
-- **Diretriz de Integridade Científica:** A escolha definitiva da segunda região ainda aguarda validação formal da equipe. Em estrito respeito às boas práticas científicas, **nenhuma coordenada arbitrária ou dado fictício foi associado à região**; o repositório mantém apenas arquivos de orientação estrutural (*placeholders*) até a homologação dos dados reais.
+### 4.2. Região Internacional: Bacia do Congo (Janela de Kisangani, RDC)
+- **Status:** <span class="badge-verified">Verificada com Dados Reais NASA IMERG</span>
+- **Coordenadas de Referência (WGS84):**
+  - Latitude: $-0.8^\circ$ a $+1.7^\circ$ Norte (25 células de $0.1^\circ$)
+  - Longitude: $23.7^\circ$ a $26.7^\circ$ Leste (30 células de $0.1^\circ$)
+  - **Total de Células:** 750 células espaciais (simetria dimensional exata 1:1 com a Amazônia Central).
+- **Série Temporal Real Processada:** Sequência de seis grânulos vespertinos em 01/01/2024 (17:00:00 UTC a 19:59:59 UTC) extraídos do produto `GPM_3IMERGHHE.07` (Early Run V07B).
+- **Dataset Real Oficial:** Publicado em [`frontend/public/data/congo/observations.json`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/frontend/public/data/congo/observations.json) (e [`processing/data/processed/congo_kisangani_real_series.json`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/processing/data/processed/congo_kisangani_real_series.json)), com `is_sample: false`.
+- **Pipeline Científico de Processamento:** [`processing/scripts/process_congo_real.py`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/processing/scripts/process_congo_real.py).
+- **Contexto Bioclimático:** Janela em torno de Kisangani (República Democrática do Congo), na transição equatorial da Bacia do Congo. Na janela UTC adotada (17:00 a 19:30 UTC = 19:00 a 21:30 horário local CAT), registra a evolução da convecção noturna equatorial, atingindo pico máximo pontual de $12.70 \text{ mm/h}$ às 19:30 UTC.
+- **Ressalva Metodológica:** Identificada estritamente como *Janela de Amostragem de Kisangani* para comparação bioclimática controlada, e não como representação integral de toda a extensão hidrográfica da Bacia do Congo.
 
 ---
 
