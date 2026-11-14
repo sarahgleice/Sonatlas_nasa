@@ -232,7 +232,7 @@ export const HomePage: React.FC = () => {
         onOpenShortcuts={openShortcuts}
       />
 
-      <main id="main-content" className="main-content">
+      <main id="main-content" className="main-content" tabIndex={-1}>
         <h1 className="sr-only">Sonatlas Earth Explorer</h1>
         <div className="explorer-layout">
           <section id="map" className="map-panel" aria-label="Área do mapa">

@@ -327,3 +327,4 @@ kbd { min-width: 64px; padding: .25rem .4rem; border: 1px solid var(--color-bord
 .step-tag { padding: 0 .3rem; border: 1px solid var(--color-success); border-radius: 3px; color: var(--color-success); font-size: .55rem; font-weight: 600; }
 .timeline-step-missing { border: 2px dashed var(--color-warning); background: repeating-linear-gradient(135deg, var(--color-raised) 0 5px, rgb(251 191 36 / 18%) 5px 10px); color: var(--color-warning); }
 .timeline-step-missing.active { border-color: var(--color-warning); color: var(--color-text); }
+.main-content:focus { outline: none; }
