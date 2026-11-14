@@ -100,9 +100,9 @@ export const HomePage: React.FC = () => {
       <main id="main-content" className="main-content" tabIndex={-1}>
         <div className="container">
           <section className="explorer-intro" aria-labelledby="explorer-title">
-            <p className="eyebrow">EARTH INFORMATION, EXPERIENCED DIFFERENTLY</p>
-            <h2 id="explorer-title">A Terra tem um ritmo. Escute.</h2>
-            <p>Explore padrões de precipitação por região e ao longo do tempo, com contexto científico acessível.</p>
+            <p className="eyebrow">Observação da Terra · Exploração sonora</p>
+            <h2 id="explorer-title">Ouça o ritmo da chuva na Terra.</h2>
+            <p>Explore as mudanças da precipitação ao longo do tempo, com contexto científico apresentado de forma acessível.</p>
           </section>
 
           <div id="region" className="workspace-region">

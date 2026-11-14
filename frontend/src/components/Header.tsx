@@ -15,7 +15,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenShortcuts }) => {
           </div>
           <div>
             <h1 className="logo-title">SONATLAS</h1>
-            <p className="logo-subtitle">Explore Earth Through Sound — NASA Space Apps Challenge 2026</p>
+            <p className="logo-subtitle">Exploração sonora da Terra · NASA Space Apps 2026</p>
           </div>
         </div>
 
