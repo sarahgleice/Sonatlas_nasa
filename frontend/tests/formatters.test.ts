@@ -48,6 +48,9 @@ describe('formatters', () => {
     expect(formatPrecipitationRate(0)).toBe('0.0 mm/h');
     expect(formatPrecipitationRate(0.00134)).toBe('0,00134 mm/h');
     expect(formatPrecipitationRate(0.00067)).toBe('0,00067 mm/h');
+    expect(formatPrecipitationRate(0.00129)).not.toBe(formatPrecipitationRate(0.00145));
+    expect(formatPrecipitationRate(0.06)).toBe('0,06 mm/h');
+    expect(formatPrecipitationRate(0.1)).toBe('0.1 mm/h');
     expect(formatPrecipitationRate(null)).toBe('Não disponível');
   });
 

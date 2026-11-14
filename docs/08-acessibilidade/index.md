@@ -73,3 +73,30 @@ flowchart TD
    - Aciona a barra de espaço para tocar a série temporal.
    - Pausa no passo 3 e declara verbalmente: o horário da observação, a taxa de precipitação aproximada e a extensão da chuva.
 3. **Critério de Sucesso:** O avaliador extrai com exatidão as informações científicas sem olhar para a tela uma única vez.
+
+---
+
+## 4. Player, Linha do Tempo e Atalhos (implementação)
+
+### 4.1. Política de anúncios (`aria-live`)
+Canal único (`AriaLiveAnnouncer`) com dois nós sempre montados: `role="status"` (educado) e `role="alert"` (assertivo, só para dado ausente e erros). A regra anti-spam fica em `frontend/src/utils/announcements.ts`:
+
+| Origem da mudança de passo | Anúncio |
+|---|---|
+| Foco no slider da linha do tempo | Nenhum (o leitor já lê `aria-valuetext`) |
+| Botões, setas, gráfico (manual) | Completo: passo, data/hora UTC, taxa, intensidade, cobertura, disponibilidade |
+| Início da reprodução | Curto, com aviso se o passo inicial é ausente ou o áudio está silenciado |
+| Avanço automático | Silencioso; alerta assertivo só ao **entrar** em passo sem dados |
+| Pausa / fim da série | Resumo do ponto de parada / "Sequência concluída" |
+
+Dado ausente nunca é dito como "0 mm/h"; zero exato é "0.0 mm/h, sem chuva" (dado válido).
+
+### 4.2. Linha do tempo (WAI-ARIA APG, slider)
+Uma única parada de `Tab` (`role="slider"`, `aria-valuemin/max/now`, `aria-valuetext` com data/hora UTC e taxa). Teclas: `←/→/↑/↓` (1 passo), `Home/End`, `PgUp/PgDn` (5 passos). Os marcadores visuais são decorativos (`aria-hidden`) e distinguem ausente (ícone, borda tracejada, hachura e texto "Ausente") de zero (rótulo "Sem chuva"), sem depender de cor.
+
+### 4.3. Atalhos globais
+`Espaço` reproduz/pausa (nunca sobre botões, links, `summary` ou campos, para não impedir a ativação nativa), `←/→` passo, `Home/End` primeiro/último, `M` mudo, `L` repetir, `?` abre a janela de atalhos (`<dialog>` nativo, `Esc` fecha e o foco volta ao acionador). Combinações com Ctrl/Alt/Meta são ignoradas, exceto `?` via AltGr (teclado ABNT2). Usuários de NVDA/JAWS devem ativar o modo de foco (NVDA + Espaço) para os atalhos de reprodução.
+
+### 4.4. Velocidade, repetição e volume
+A velocidade (0,5x a 2x) altera só o intervalo entre passos; frequência e pulsos permanecem os mesmos. Sem repetição, a série para no último passo. **Pendência:** o controle de volume (spec §4.4) depende de `setVolume` no `AudioEngine` (ganho mestre fixo em 0,3); não foi exposto um controle sem efeito.
+

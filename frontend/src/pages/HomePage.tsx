@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   CalendarClock,
@@ -6,14 +6,17 @@ import {
   Map,
   Waves
 } from 'lucide-react';
-import { RegionDataset } from '../types/dataset';
+import { RegionDataset, TemporalObservation } from '../types/dataset';
+import { LiveAnnouncement } from '../types/player';
 import { DataService, AVAILABLE_REGIONS, findRegionOption } from '../services/dataService';
 import { globalAudioEngine } from '../audio/AudioEngine';
-import { useAudioPlayer } from '../hooks/useAudioPlayer';
+import { useAudioPlayer, PlayerBoundary, StepTransition } from '../hooks/useAudioPlayer';
+import { buildAnnouncement } from '../utils/announcements';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
-import { formatAreaFraction, formatPrecipitationRate, formatTimestamp, getRatePresentationNote } from '../utils/formatters';
+import { formatPrecipitationRate, formatTimestamp } from '../utils/formatters';
 import { Header } from '../components/Header';
 import { EducationalPanel } from '../components/EducationalPanel';
+import { KeyboardShortcutsModal } from '../accessibility/KeyboardShortcutsModal';
 import { Footer } from '../components/Footer';
 import { RegionSelector } from '../components/RegionSelector';
 import { VariableSelector } from '../components/VariableSelector';
@@ -29,14 +32,22 @@ import { parseAmazonCentralApiFeature } from '../maps/amazonGeometry';
 
 type GeoApiState = 'unconfigured' | 'loading' | 'connected' | 'fallback';
 
+const EMPTY_OBSERVATIONS: TemporalObservation[] = [];
+
 export const HomePage: React.FC = () => {
   const [selectedRegionId, setSelectedRegionId] = useState('amazon_central');
   const [selectedSeriesId, setSelectedSeriesId] = useState('morning');
   const [dataset, setDataset] = useState<RegionDataset | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [liveAnnouncement, setLiveAnnouncement] = useState('');
+  const [liveAnnouncement, setLiveAnnouncement] = useState<LiveAnnouncement | null>(null);
+  const announcementIdRef = useRef(0);
+  const announce = useCallback((text: string, politeness: LiveAnnouncement['politeness'] = 'polite') => {
+    announcementIdRef.current += 1;
+    setLiveAnnouncement({ id: announcementIdRef.current, text, politeness });
+  }, []);
   const [isEducationalOpen, setIsEducationalOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [geoApiState, setGeoApiState] = useState<GeoApiState>('unconfigured');
   const [apiGeometry, setApiGeometry] = useState<GeoJSON.GeoJsonObject | null>(null);
 
@@ -64,15 +75,13 @@ export const HomePage: React.FC = () => {
         if (!isMounted) return;
         setDataset(data);
         setLoading(false);
-        setLiveAnnouncement(
-          `Região: ${data.region_name}, série: ${activeSeries?.name}. ${data.observations.length} observações temporais carregadas.`
-        );
+        announce(`Região: ${data.region_name}, série: ${activeSeries?.name}. ${data.observations.length} observações temporais carregadas.`);
       })
       .catch((error: unknown) => {
         if (!isMounted) return;
         setErrorMessage(error instanceof Error ? error.message : 'Erro ao carregar dados científicos.');
         setLoading(false);
-        setLiveAnnouncement('Erro ao carregar dados científicos.');
+        announce('Erro ao carregar dados científicos.', 'assertive');
       });
 
     return () => {
@@ -130,31 +139,32 @@ export const HomePage: React.FC = () => {
     };
   }, [dataset]);
 
-  const observations = dataset?.observations ?? [];
-  const handleStepChange = (index: number) => {
-    const observation = observations[index];
-    if (!observation) return;
-    const rate = observation.scientific_indicators.mean_precipitation_rate.value;
-    const availability = observation.availability;
-    const quality = availability.status === 'missing'
-      ? 'Observação ausente; ausência não significa precipitação zero.'
-      : availability.status === 'partial'
-        ? `Observação parcial, ${Math.round(availability.valid_cells_ratio * 100)}% de células válidas.`
-        : `Observação disponível, ${Math.round(availability.valid_cells_ratio * 100)}% de células válidas.`;
-    const sample = dataset?.is_sample ? ' Dataset demonstrativo (is_sample: true), não é observação NASA verificada.' : '';
-    setLiveAnnouncement(
-      `Passo ${index + 1} de ${observations.length}. ${formatTimestamp(observation.timestamp_utc)}. ` +
-      `Precipitação média: ${formatPrecipitationRate(rate)}. ` +
-      `${getRatePresentationNote(rate) ?? ''} ` +
-      `Área com chuva: ${formatAreaFraction(observation.scientific_indicators.rain_area_fraction.value)}. ${quality}${sample}`
-    );
-  };
+  const observations = useMemo(() => dataset?.observations ?? EMPTY_OBSERVATIONS, [dataset]);
+
+  const handleTransition = useCallback((transition: StepTransition) => {
+    const announcement = buildAnnouncement({
+      source: transition.source,
+      observation: transition.observation,
+      index: transition.index,
+      total: observations.length,
+      previousObservation: transition.previousIndex !== null && transition.previousIndex !== transition.index
+        ? observations[transition.previousIndex] ?? null
+        : null
+    });
+    if (announcement) {
+      announce(announcement.text, announcement.politeness);
+    }
+  }, [observations, announce]);
+
+  const handleBoundary = useCallback((boundary: PlayerBoundary) => {
+    announce(boundary === 'end' ? 'Você está no último passo da série.' : 'Você está no primeiro passo da série.');
+  }, [announce]);
 
   const selectRegion = (regionId: string) => {
     const region = findRegionOption(regionId);
     if (!region) return;
     setSelectedRegionId(region.id);
-    setLiveAnnouncement(`${region.name} selecionada pelo mapa.`);
+    announce(`${region.name} selecionada pelo mapa.`);
   };
 
   const handleMapPoint = async (lat: number, lon: number) => {
@@ -173,39 +183,57 @@ export const HomePage: React.FC = () => {
 
   const {
     isPlaying,
-    isPreviewing,
     currentIndex,
     isMuted,
     audioError,
     analyser,
     currentObservation,
+    previousObservation,
+    speed,
+    isLooping,
+    canGoPrevious,
+    canGoNext,
+    restart,
+    setSpeed,
     togglePlay,
     previewStep,
-    previewParams,
     nextStep,
     prevStep,
     setStep,
+    firstStep,
+    lastStep,
+    toggleLoop,
     toggleMute
-  } = useAudioPlayer({ observations, stepDurationMs: 1500, onStepChange: handleStepChange });
+  } = useAudioPlayer({
+    observations,
+    stepDurationMs: 1500,
+    onTransition: handleTransition,
+    onBoundary: handleBoundary
+  });
+
+  const openShortcuts = useCallback(() => setIsShortcutsOpen(true), []);
 
   useKeyboardShortcuts({
     onTogglePlay: togglePlay,
     onNextStep: nextStep,
     onPrevStep: prevStep,
     onToggleMute: toggleMute,
-    enabled: !isEducationalOpen
+    onFirstStep: firstStep,
+    onLastStep: lastStep,
+    onToggleLoop: toggleLoop,
+    onOpenShortcuts: openShortcuts,
+    enabled: !isEducationalOpen && !isShortcutsOpen
   });
-
-  const currentRateNote = currentObservation
-    ? getRatePresentationNote(currentObservation.scientific_indicators.mean_precipitation_rate.value)
-    : null;
 
   return (
     <div className="app-layout">
-      <AriaLiveAnnouncer message={liveAnnouncement} />
-      <Header onOpenEducational={() => setIsEducationalOpen(true)} />
+      <AriaLiveAnnouncer announcement={liveAnnouncement} />
+      <Header
+        onOpenEducational={() => setIsEducationalOpen(true)}
+        onOpenShortcuts={openShortcuts}
+      />
 
-      <main id="main-content" className="main-content">
+      <main id="main-content" className="main-content" tabIndex={-1}>
         <h1 className="sr-only">Sonatlas Earth Explorer</h1>
         <div className="explorer-layout">
           <section id="map" className="map-panel" aria-label="Área do mapa">
@@ -223,7 +251,7 @@ export const HomePage: React.FC = () => {
                   const region = findRegionOption(regionId);
                   if (!region) return;
                   setSelectedRegionId(region.id);
-                  setLiveAnnouncement(`${region.name} selecionada pelo mapa.`);
+                  announce(`${region.name} selecionada pelo mapa.`);
                 }}
               />
             ) : (
@@ -291,14 +319,19 @@ export const HomePage: React.FC = () => {
                         ? 'Dados ausentes neste período'
                         : `${currentObservation.availability.status === 'partial' ? 'Disponibilidade parcial' : 'Dados disponíveis'} · ${Math.round(currentObservation.availability.valid_cells_ratio * 100)}% de células válidas`}
                     </p>
-                    {currentRateNote && <p className="availability-status">{currentRateNote}</p>}
+                    <ScientificSummary
+                      observation={currentObservation}
+                      regionName={dataset.region_name}
+                      previousObservation={previousObservation}
+                      index={currentIndex}
+                      total={observations.length}
+                    />
                     <details className="details-disclosure">
-                      <summary>Detalhes da observação e fonte</summary>
-                      <ScientificSummary observation={currentObservation} regionName={dataset.region_name} />
+                      <summary>Fonte e metadados técnicos</summary>
                       <dl className="source-metadata">
                         <div><dt>Fonte</dt><dd>{dataset.data_source}</dd></div>
                         <div><dt>Produto</dt><dd>{dataset.product_name} · {dataset.product_version}</dd></div>
-                        <div><dt>Resolução temporal</dt><dd>{dataset.temporal_resolution.replace('_', ' ')}</dd></div>
+                        <div><dt>Resolução temporal</dt><dd>{dataset.temporal_resolution.replace(/_/g, ' ')}</dd></div>
                       </dl>
                     </details>
                   </>
@@ -310,10 +343,17 @@ export const HomePage: React.FC = () => {
               <section id="playback" className="sonification-section" aria-label="Controles de sonificação">
                 <AudioPlayer
                   isPlaying={isPlaying}
-                  isPreviewing={isPreviewing}
                   isMuted={isMuted}
+                  isLooping={isLooping}
+                  speed={speed}
                   currentIndex={currentIndex}
                   totalSteps={observations.length}
+                  currentObservation={currentObservation}
+                  canGoPrevious={canGoPrevious}
+                  canGoNext={canGoNext}
+                  onToggleLoop={toggleLoop}
+                  onRestart={restart}
+                  onSpeedChange={setSpeed}
                   onTogglePlay={togglePlay}
                   onPreview={() => previewStep(currentIndex)}
                   onNextStep={nextStep}
@@ -327,10 +367,7 @@ export const HomePage: React.FC = () => {
 
               <details className="details-disclosure sound-disclosure">
                 <summary><Waves size={15} aria-hidden="true" /> Calibração sonora</summary>
-                <SoundLegend onPreviewParams={(params) => {
-                  previewParams(params);
-                  setLiveAnnouncement('Prévia de calibração sonora. Não representa uma observação científica selecionada.');
-                }} />
+                <SoundLegend />
               </details>
             </div>
           </section>
@@ -340,7 +377,7 @@ export const HomePage: React.FC = () => {
               <div>
                 <h2 id="timeline-panel-title">Linha temporal</h2>
               </div>
-              <div className="selected-period" aria-live="polite">
+              <div className="selected-period">
                 <CalendarClock size={16} aria-hidden="true" />
                 <span>{currentObservation ? formatTimestamp(currentObservation.timestamp_utc) : 'Nenhum período selecionado'}</span>
               </div>
@@ -355,6 +392,7 @@ export const HomePage: React.FC = () => {
       </main>
 
       <Footer />
+      <KeyboardShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
       <EducationalPanel isOpen={isEducationalOpen} dataset={dataset} loading={loading} error={errorMessage} onClose={() => setIsEducationalOpen(false)} />
     </div>
   );

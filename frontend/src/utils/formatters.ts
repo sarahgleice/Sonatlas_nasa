@@ -1,11 +1,10 @@
 import { AvailabilityIndicator, TemporalObservation } from '../types/dataset';
 import { ObservationDataState } from '../types/player';
+import { RAIN_DETECTION_THRESHOLD_MM_H } from '../audio/sonificationMapping';
 
 /**
  * Utilitários de formatação textual e unidades para o SONATLAS.
  */
-
-export const RAIN_DETECTION_THRESHOLD_MM_H = 0.1;
 
 export function formatPrecipitationRate(rate: number | null | undefined): string {
   if (rate === null || rate === undefined) {

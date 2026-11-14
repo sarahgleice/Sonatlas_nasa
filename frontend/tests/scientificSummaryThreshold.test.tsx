@@ -27,7 +27,7 @@ describe('ScientificSummary rate threshold communication', () => {
     expect(html).toContain('O valor é positivo e está abaixo do limiar operacional sonoro de 0,1 mm/h');
     expect(html).toContain('o áudio usa o tom de repouso');
     expect(html).not.toContain('representa taxa zero');
-    expect(html).not.toContain('Resumo');
+    expect(html).toContain('Resumo');
   });
 
   it('identifies an observed exact zero and the operational sound threshold', () => {
@@ -36,6 +36,6 @@ describe('ScientificSummary rate threshold communication', () => {
 
   it('identifies a missing metric as unavailable, not zero', () => {
     expect(markup(null)).toContain('Taxa média indisponível; dado ausente não equivale a taxa zero.');
-    expect(markup(null)).toContain('Dados Ausentes');
+    expect(markup(null)).toContain('Dados ausentes');
   });
 });
