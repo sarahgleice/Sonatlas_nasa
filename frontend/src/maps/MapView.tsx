@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
-import { BoundingBox } from '../types/dataset';
+import { AvailabilityIndicator, BoundingBox } from '../types/dataset';
 import { bboxToLeafletPolygon, getBboxCenter } from '../utils/geoUtils';
 import { MapPin } from 'lucide-react';
 import { findRegionAtPoint, limitsToBounds, STUDY_REGIONS } from './regions';
 import { amazonCentralGeoJson } from './amazonGeometry';
 import { congoBasinKisanganiGeoJson } from './congoGeometry';
+import { PrecipitationOverlay } from './PrecipitationOverlay';
 
 function geometryMatchesDataset(layer: L.GeoJSON, boundingBox: BoundingBox): boolean {
   const bounds = layer.getBounds();
@@ -26,6 +27,9 @@ interface MapViewProps {
   regionId?: string;
   apiGeometry?: GeoJSON.GeoJsonObject | null;
   geoApiStatus?: 'unconfigured' | 'loading' | 'connected' | 'fallback';
+  spatialDatasetPath?: string;
+  selectedTimestamp?: string | null;
+  selectedAvailability?: AvailabilityIndicator | null;
   onRegionSelect?: (regionId: string) => void;
   onMapPoint?: (lat: number, lon: number) => void;
 }
@@ -37,6 +41,9 @@ export const MapView: React.FC<MapViewProps> = ({
   regionId = 'amazon_central',
   apiGeometry = null,
   geoApiStatus = 'unconfigured',
+  spatialDatasetPath = '',
+  selectedTimestamp = null,
+  selectedAvailability = null,
   onRegionSelect,
   onMapPoint
 }) => {
@@ -44,6 +51,7 @@ export const MapView: React.FC<MapViewProps> = ({
   const mapInstanceRef = useRef<L.Map | null>(null);
   const polygonLayerRef = useRef<L.Layer | null>(null);
   const [geometryFallback, setGeometryFallback] = useState(false);
+  const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
 
   useEffect(() => {
     if (!mapContainerRef.current || isPlaceholder || !boundingBox) {
@@ -68,6 +76,7 @@ export const MapView: React.FC<MapViewProps> = ({
       }).addTo(map);
 
       mapInstanceRef.current = map;
+      setMapInstance(map);
     } else {
       mapInstanceRef.current.setView(center, 6);
     }
@@ -243,6 +252,16 @@ export const MapView: React.FC<MapViewProps> = ({
               <p className="map-caption">Região ativa: {regionName}. O seletor de região oferece a alternativa por teclado.</p>
             )}
           </div>
+          {spatialDatasetPath && (
+            <PrecipitationOverlay
+              map={mapInstance}
+              datasetPath={spatialDatasetPath}
+              regionId={regionId}
+              boundingBox={boundingBox}
+              timestampUtc={selectedTimestamp}
+              availability={selectedAvailability}
+            />
+          )}
         </>
       )}
     </section>

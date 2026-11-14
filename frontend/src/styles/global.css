@@ -66,6 +66,23 @@ a { color: inherit; }
 .map-placeholder-box p { max-width: 32ch; }
 .map-accessible-fallback { flex: 0 0 auto; }
 .map-caption { margin: .5rem 0 0; color: var(--color-muted); font-family: var(--font-science); font-size: .75rem; line-height: 1.5; }
+.precipitation-layer-info { min-width: 0; margin-top: .55rem; padding-top: .5rem; border-top: 1px solid var(--color-border); }
+.precipitation-layer-status { margin: 0 0 .45rem; color: var(--color-muted); font-size: .72rem; }
+.precipitation-layer-source { margin: -.2rem 0 .45rem; color: var(--color-muted); font-size: .65rem; }
+.precipitation-legend > strong { font-size: .74rem; }
+.precipitation-legend ul { display: flex; flex-wrap: wrap; gap: .35rem .75rem; margin: .35rem 0; padding: 0; list-style: none; color: var(--color-muted); font-size: .68rem; }
+.precipitation-legend li { display: inline-flex; align-items: center; gap: .3rem; white-space: nowrap; }
+.precipitation-legend > p { margin: .25rem 0 0; color: var(--color-muted); font-size: .65rem; line-height: 1.4; }
+.precipitation-swatch { width: .8rem; height: .8rem; flex: 0 0 auto; border: 1px solid rgb(255 255 255 / 55%); border-radius: 2px; }
+.swatch-zero { background: #cbd5e1; }
+.swatch-missing { border-style: dashed; background: repeating-linear-gradient(135deg, #64748b 0 3px, #cbd5e1 3px 5px); }
+.precipitation-grid-details { margin-top: .4rem; color: var(--color-muted); font-size: .7rem; }
+.precipitation-grid-details > summary { width: fit-content; padding: .25rem 0; color: var(--color-map); cursor: pointer; }
+.precipitation-grid-table-wrap { max-width: 100%; overflow-x: auto; }
+.precipitation-grid-table-wrap table { border-collapse: collapse; font-size: .66rem; white-space: nowrap; }
+.precipitation-grid-table-wrap caption { padding: .35rem 0; text-align: left; white-space: normal; }
+.precipitation-grid-table-wrap th, .precipitation-grid-table-wrap td { padding: .3rem .45rem; border: 1px solid var(--color-border); text-align: right; }
+.precipitation-grid-table-wrap th { color: var(--color-text); font-weight: 600; }
 .map-loading-state { flex: 1; min-height: 240px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .6rem; padding: 2rem; color: var(--color-muted); text-align: center; }
 .map-loading-state svg { color: var(--color-map); }
 .map-loading-state strong { color: var(--color-text); font-family: var(--font-display); font-size: 1.1rem; }

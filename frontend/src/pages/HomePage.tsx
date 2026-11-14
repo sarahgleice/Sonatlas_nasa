@@ -246,6 +246,9 @@ export const HomePage: React.FC = () => {
                 regionId={selectedRegionId}
                 apiGeometry={apiGeometry}
                 geoApiStatus={geoApiState}
+                spatialDatasetPath={findRegionOption(selectedRegionId)?.series.find((series) => series.id === selectedSeriesId)?.filePath ?? ''}
+                selectedTimestamp={currentObservation?.timestamp_utc ?? null}
+                selectedAvailability={currentObservation?.availability ?? null}
                 onMapPoint={handleMapPoint}
                 onRegionSelect={(regionId) => {
                   const region = findRegionOption(regionId);
