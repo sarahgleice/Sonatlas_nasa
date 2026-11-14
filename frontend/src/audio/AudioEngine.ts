@@ -116,7 +116,30 @@ export class AudioEngine {
     this.scheduler();
   }
 
-  // --- CONTROLES DE NAVEGAÇÃO ---
+  /**
+   * Toca um único parâmetro sonoro imediatamente. 
+   * Usado pela interface do Jukebox quando o utilizador navega passo a passo.
+   */
+  public playParams(params: SonificationParams): void {
+    if (this.isMuted) return;
+    const ctx = this.initContext();
+    
+    // Interrompe o som anterior para não encavalar
+    this.stopActiveSounds();
+    
+    if (ctx.state === 'suspended') {
+      void ctx.resume();
+    }
+    
+    // Agenda o som para tocar exatamente agora
+    this.scheduleParams(params, ctx.currentTime);
+  }
+
+  // --- CONTROLES DE NAVEGAÇÃO E PARADA ---
+
+  public stopPlayback(): void {
+    this.stopActiveSounds();
+  }
 
   public next(): void {
     if (this.currentIndex < this.currentSequence.length - 1) {
