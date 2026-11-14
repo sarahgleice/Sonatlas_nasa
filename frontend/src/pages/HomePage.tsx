@@ -189,6 +189,12 @@ export const HomePage: React.FC = () => {
     analyser,
     currentObservation,
     previousObservation,
+    speed,
+    isLooping,
+    canGoPrevious,
+    canGoNext,
+    restart,
+    setSpeed,
     togglePlay,
     nextStep,
     prevStep,
@@ -337,8 +343,16 @@ export const HomePage: React.FC = () => {
                 <AudioPlayer
                   isPlaying={isPlaying}
                   isMuted={isMuted}
+                  isLooping={isLooping}
+                  speed={speed}
                   currentIndex={currentIndex}
                   totalSteps={observations.length}
+                  currentObservation={currentObservation}
+                  canGoPrevious={canGoPrevious}
+                  canGoNext={canGoNext}
+                  onToggleLoop={toggleLoop}
+                  onRestart={restart}
+                  onSpeedChange={setSpeed}
                   onTogglePlay={togglePlay}
                   onNextStep={nextStep}
                   onPrevStep={prevStep}
