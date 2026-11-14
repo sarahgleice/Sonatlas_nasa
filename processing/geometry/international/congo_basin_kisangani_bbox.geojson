@@ -1,0 +1,34 @@
+{
+  "type": "FeatureCollection",
+  "name": "congo_basin_kisangani_proposed_bbox",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "region_id": "congo_basin_kisangani",
+        "region_name": "Bacia do Congo",
+        "country": "República Democrática do Congo",
+        "status": "proposed_pending_validation",
+        "description": "Bounding box proposto no entorno de Kisangani, com o mesmo tamanho da Amazônia Central (3.0 x 2.5 graus). Recorte específico, não representa toda a bacia. Aguarda validação científica."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [23.7, -0.8],
+            [26.7, -0.8],
+            [26.7, 1.7],
+            [23.7, 1.7],
+            [23.7, -0.8]
+          ]
+        ]
+      }
+    }
+  ]
+}
