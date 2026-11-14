@@ -18,7 +18,7 @@ Este guia estabelece os procedimentos para instalação do ambiente local, conve
 
 ### 2.1. Clonar o Repositório
 ```bash
-git clone https://github.com/challenge-2-residencia-ia-grupo-3/sonatlas.git
+git clone https://github.com/sarahgleice/sonatlas.git
 cd sonatlas
 ```
 
