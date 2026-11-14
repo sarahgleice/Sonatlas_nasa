@@ -23,6 +23,10 @@ import { PrecipitationChart } from '../components/PrecipitationChart';
 import { SoundLegend } from '../components/SoundLegend';
 import { MapView } from '../maps/MapView';
 import { AriaLiveAnnouncer } from '../accessibility/AriaLiveAnnouncer';
+import { geoApiService } from '../services/geoApiService';
+import { parseAmazonCentralApiFeature } from '../maps/amazonGeometry';
+
+type GeoApiState = 'unconfigured' | 'loading' | 'connected' | 'fallback';
 
 export const HomePage: React.FC = () => {
   const [selectedRegionId, setSelectedRegionId] = useState('amazon_central');
@@ -31,6 +35,8 @@ export const HomePage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [liveAnnouncement, setLiveAnnouncement] = useState('');
   const [isEducationalOpen, setIsEducationalOpen] = useState(false);
+  const [geoApiState, setGeoApiState] = useState<GeoApiState>('unconfigured');
+  const [apiGeometry, setApiGeometry] = useState<GeoJSON.GeoJsonObject | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -62,6 +68,56 @@ export const HomePage: React.FC = () => {
     };
   }, [selectedRegionId]);
 
+  useEffect(() => {
+    if (!dataset || dataset.region_id !== 'amazon_central') {
+      setApiGeometry(null);
+      return;
+    }
+
+    let isMounted = true;
+    setApiGeometry(null);
+    setGeoApiState('loading');
+
+    Promise.all([
+      geoApiService.getHealth(),
+      geoApiService.getRegions(),
+      geoApiService.getRegion('amazon_central')
+    ]).then(([health, regions, feature]) => {
+      if (!isMounted) return;
+      if (!health.available || !regions.available || !feature.available) {
+        setGeoApiState('unconfigured');
+        return;
+      }
+
+      const summary = regions.data.find((region) => region.region_id === 'amazon_central');
+      const apiBox = summary?.bbox;
+      const box = dataset.bounding_box;
+      const epsilon = 1e-6;
+      const matches = health.data.status === 'ok' && summary?.has_geometry && !summary.is_placeholder &&
+        summary.status === 'preliminary_verified' && apiBox !== null && apiBox !== undefined &&
+        Math.abs(apiBox.south - box.min_latitude) < epsilon &&
+        Math.abs(apiBox.north - box.max_latitude) < epsilon &&
+        Math.abs(apiBox.west - box.min_longitude) < epsilon &&
+        Math.abs(apiBox.east - box.max_longitude) < epsilon;
+      const geometry = matches ? parseAmazonCentralApiFeature(feature.data, dataset.bounding_box) : null;
+
+      if (geometry) {
+        setApiGeometry(geometry);
+        setGeoApiState('connected');
+      } else {
+        setGeoApiState('fallback');
+      }
+    }).catch(() => {
+      if (!isMounted) return;
+      setApiGeometry(null);
+      setGeoApiState('fallback');
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [dataset]);
+
   const observations = dataset?.observations ?? [];
   const handleStepChange = (index: number) => {
     const observation = observations[index];
@@ -72,10 +128,33 @@ export const HomePage: React.FC = () => {
     );
   };
 
+  const selectAmazon = () => {
+    const region = AVAILABLE_REGIONS.find((item) => item.id === 'amazon_central' && item.status === 'active');
+    if (!region) return;
+    setSelectedRegionId(region.id);
+    setLiveAnnouncement(`${region.name} selecionada pelo mapa.`);
+  };
+
+  const handleMapPoint = async (lat: number, lon: number) => {
+    try {
+      const result = await geoApiService.locate(lat, lon);
+      if (result.available) {
+        if (result.data.regioes.includes('amazon_central')) selectAmazon();
+        return;
+      }
+    } catch {
+      setApiGeometry(null);
+      setGeoApiState('fallback');
+    }
+    selectAmazon();
+  };
+
   const {
     isPlaying,
     currentIndex,
     isMuted,
+    audioError,
+    analyser,
     currentObservation,
     togglePlay,
     nextStep,
@@ -107,6 +186,16 @@ export const HomePage: React.FC = () => {
                 boundingBox={dataset.bounding_box}
                 regionName={dataset.region_name}
                 isPlaceholder={dataset.is_placeholder}
+                regionId={selectedRegionId}
+                apiGeometry={apiGeometry}
+                geoApiStatus={geoApiState}
+                onMapPoint={handleMapPoint}
+                onRegionSelect={(regionId) => {
+                  const region = AVAILABLE_REGIONS.find((item) => item.id === regionId && item.status === 'active');
+                  if (!region) return;
+                  setSelectedRegionId(region.id);
+                  setLiveAnnouncement(`${region.name} selecionada pelo mapa.`);
+                }}
               />
             ) : (
               <div className="map-loading-state" role={errorMessage ? 'alert' : 'status'}>
@@ -196,6 +285,8 @@ export const HomePage: React.FC = () => {
                   onNextStep={nextStep}
                   onPrevStep={prevStep}
                   onToggleMute={toggleMute}
+                  analyser={analyser}
+                  audioError={audioError}
                   disabled={observations.length === 0}
                 />
               </section>
