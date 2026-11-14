@@ -32,12 +32,17 @@ O SONATLAS resolve isso através de **sonificação orientada por dados com rigo
 
 ## 🔬 Rigor Científico e Fontes de Dados
 
-- **Fonte Candidata Principal:** Missão **NASA GPM (Global Precipitation Measurement)** / produto **IMERG (Integrated Multi-satellitE Retrievals for GPM)**.
+- **Fonte Oficial Primária:** Missão **NASA GPM (Global Precipitation Measurement)** / produto **IMERG Early Run V07B (`GPM_3IMERGHHE`)**, obtido do repositório oficial NASA GES DISC.
+- **Série Temporal da Amazônia Central:** Sequência de 6 observações reais de 30 minutos em 01/01/2024 (00:00 a 02:59 UTC), recortadas para a bounding box $[-4.0^\circ, -1.5^\circ] \times [-61.5^\circ, -58.5^\circ]$ (750 células espaciais de $0.1^\circ \times 0.1^\circ$).
 - **Grandezas Físicas Tratadas:**
-  - **Taxa de precipitação instantânea/média (`mm/h`)**: diferenciada explicitamente de precipitação acumulada (`mm`).
-  - **Fração de área com chuva (`%`)**: proporção de células com precipitação mensurável acima do limiar de detecção.
-  - **Variabilidade temporal**: dispersão espacial e temporal entre passos de observação.
-- **Tratamento Ético de Dados:** Células ausentes ou sob controle de qualidade deficiente **não são tratadas como precipitação zero**. Todo dado de demonstração na base é explicitamente sinalizado como amostra técnica (`sample`).
+  - **Taxa média de precipitação (`mm/h`)**: calculada com ponderação pelo cosseno da latitude sobre células válidas, diferenciada de precipitação acumulada (`mm`).
+  - **Fração de área com chuva (`fraction` entre 0 e 1)**: proporção da área com taxa $\ge 0.1\text{ mm/h}$ (limiar instrumental do sensor GMI).
+  - **Diferença temporal (`mm/h`)**: variação contínua entre passos adjacentes ($\Delta R_t = \bar{R}_t - \bar{R}_{t-1}$).
+- **Tratamento Rigoroso de Dados:** Células ausentes ou sob controle de qualidade deficiente (`_FillValue: -9999.9`) **não são tratadas como precipitação zero**. Valores zero indicam calmaria real (`0.0 mm/hr`).
+- **Diferenciação Real vs. Sintético:**
+  - `frontend/public/data/amazon/observations.json`: dados autênticos extraídos dos grânulos HDF5 reais (`is_sample: false`).
+  - `processing/scripts/run_pipeline.py --demo`: gera dados demonstrativos sintéticos para testes rápidos offline (`processing/data/samples/amazon_central_sample.json`).
+- **Limitações Científicas:** A sequência de 6 grânulos (3 horas) constitui uma prova de conceito funcional da pipeline e sonificação, e não uma caracterização climatológica de longo prazo da Amazônia. Utiliza o produto Early Run V07B (latência rápida), sem calibração tardia de pluviômetros de solo do Final Run.
 
 ---
 
@@ -178,10 +183,13 @@ source venv/bin/activate
 # Instalar dependências científicas
 pip install -r requirements.txt
 
-# Executar a esteira de teste / geração de amostras
+# Processar grânulos HDF5 reais da NASA para a Amazônia Central
+python scripts/process_amazon_real.py
+
+# Alternativa: gerar amostra demonstrativa sintética offline
 python scripts/run_pipeline.py --demo
 
-# Executar testes unitários do processamento
+# Executar testes automatizados do processamento
 pytest tests/
 ```
 
@@ -194,9 +202,10 @@ pytest tests/
 - [x] Base React + Vite + TypeScript configurada com acessibilidade nativa e Web Audio API.
 - [x] Documentação completa de produto, arquitetura, ciência, acessibilidade e setup redigida.
 - [x] Dicionário de dados JSON especificado e validado com schema formal.
-- [x] Amostras demonstrativas de dados e delimitadores geográficos estruturados.
-- [ ] Conexão e download de dados brutos IMERG V07 em ambiente NASA Earthdata GES DISC.
-- [ ] Validação oficial e escolha da segunda região geográfica internacional.
+- [x] Conexão e download de grânulos brutos IMERG V07B via NASA Earthdata GES DISC.
+- [x] Ingestão científica, recorte espacial e cálculo de indicadores ponderados da Amazônia Central (`process_amazon_real.py`).
+- [x] Integração completa dos dados reais com o motor de sonificação Web Audio API da Hazel (`AudioEngine`).
+- [ ] Validação oficial e escolha da segunda região geográfica internacional (Bacia do Congo).
 - [ ] Calibração psicoacústica das frequências e timbres com usuários de leitores de tela.
 
 ---
