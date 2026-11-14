@@ -1,17 +1,33 @@
-import { SonificationParams } from '../types/dataset';
+import { TemporalObservation, SonificationParams } from '../types/dataset';
+import { createObservationSonificationParams } from './sonificationMapping';
 
 /**
  * Motor nativo de áudio para síntese em tempo real via Web Audio API.
- * Não requer bibliotecas externas pesadas e funciona em qualquer navegador moderno.
+ * Implementa agendamento preciso (Lookahead) para sequências temporais
+ * e integração com nós de análise (waveform) e gestão de erros.
  */
 export class AudioEngine {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private analyser: AnalyserNode | null = null;
+  private isMuted: boolean = false;
+
+  // Estado de controle da sequência (Hazel)
+  private isPlaying: boolean = false;
+  private currentSequence: TemporalObservation[] = [];
+  private currentIndex: number = 0;
+  private nextSegmentTime: number = 0;
+  private scheduleTimer: number | null = null;
+  private speedMultiplier: number = 1.0;
+
+  // Rastreio de osciladores ativos
   private activeOscillators = new Set<OscillatorNode>();
   private errorListeners = new Set<(message: string | null) => void>();
   private lastError: string | null = null;
-  private isMuted: boolean = false;
+
+  // Parâmetros de agendamento (A Tale of Two Clocks)
+  private readonly LOOKAHEAD_MS = 25;
+  private readonly SCHEDULE_AHEAD_SEC = 0.1;
 
   private initContext(): AudioContext {
     if (!this.ctx) {
@@ -61,44 +77,143 @@ export class AudioEngine {
     this.errorListeners.forEach((listener) => listener(message));
   }
 
-  public stopPlayback(): void {
-    if (!this.ctx) return;
-    for (const oscillator of this.activeOscillators) {
-      try {
-        oscillator.stop(this.ctx.currentTime);
-      } catch {
-        // Oscillatoros que já terminaram não precisam ser interrompidos.
+  public setSpeed(multiplier: number): void {
+    this.speedMultiplier = Math.max(0.1, multiplier);
+  }
+
+  // --- CONTROLES DE REPRODUÇÃO ---
+
+  public pause(): void {
+    this.isPlaying = false;
+    if (this.ctx && this.ctx.state === 'running') {
+      this.ctx.suspend();
+    }
+    if (this.scheduleTimer) {
+      window.clearTimeout(this.scheduleTimer);
+      this.scheduleTimer = null;
+    }
+  }
+
+  public async resume(): Promise<void> {
+    if (!this.ctx || this.currentSequence.length === 0) return;
+    this.isPlaying = true;
+    await this.ctx.resume();
+    this.nextSegmentTime = this.ctx.currentTime + 0.1;
+    this.scheduler();
+  }
+
+  public async playSequence(sequence: TemporalObservation[]): Promise<void> {
+    this.currentSequence = sequence;
+    this.currentIndex = 0;
+
+    if (this.isMuted) return;
+    const ctx = this.initContext();
+    this.isPlaying = true;
+
+    this.stopPlayback();
+    await ctx.resume();
+    this.nextSegmentTime = ctx.currentTime + 0.1;
+    this.scheduler();
+  }
+
+  // --- CONTROLES DE NAVEGAÇÃO ---
+
+  public next(): void {
+    if (this.currentIndex < this.currentSequence.length - 1) {
+      this.goToIndex(this.currentIndex + 1);
+    }
+  }
+
+  public previous(): void {
+    if (this.currentIndex > 0) {
+      this.goToIndex(this.currentIndex - 1);
+    }
+  }
+
+  public goToIndex(index: number): void {
+    if (index >= 0 && index < this.currentSequence.length) {
+      this.currentIndex = index;
+
+      this.stopPlayback();
+
+      if (this.ctx) {
+        this.nextSegmentTime = this.ctx.currentTime;
+      }
+
+      if (this.isPlaying) {
+        if (this.scheduleTimer) window.clearTimeout(this.scheduleTimer);
+        this.scheduler();
       }
     }
   }
 
-  /**
-   * Executa a sonificação de um conjunto de parâmetros (frequência + pulsos).
-   */
-  public playParams(params: SonificationParams): void {
-    if (this.isMuted) return;
-    const ctx = this.initContext();
-    const now = ctx.currentTime;
-    const totalDurationSec = params.durationMs / 1000;
+  public stopPlayback(): void {
+    if (!this.ctx) return;
+    for (const oscillator of this.activeOscillators) {
+      try {
+        oscillator.stop();
+        oscillator.disconnect();
+      } catch {
+        // Oscillatoros que já terminaram
+      }
+    }
+    this.activeOscillators.clear();
+  }
 
-    if (params.isMissing) {
-      // Sinal de dado ausente: dois pulsos suaves em onda quadrada atenuada
-      this.playAlertTone(ctx, now);
-      return;
+  // --- LOOP DE AGENDAMENTO ---
+
+  private scheduler = (): void => {
+    if (!this.isPlaying || !this.ctx) return;
+
+    while (this.nextSegmentTime < this.ctx.currentTime + this.SCHEDULE_AHEAD_SEC && this.currentIndex < this.currentSequence.length) {
+      const obs = this.currentSequence[this.currentIndex];
+
+      const baseDurationMs = 1500;
+      const adjustedDurationMs = baseDurationMs / this.speedMultiplier;
+
+      const params = createObservationSonificationParams(obs, adjustedDurationMs);
+      this.scheduleParams(params, this.nextSegmentTime);
+
+      this.nextSegmentTime += (adjustedDurationMs / 1000);
+      this.currentIndex++;
     }
 
-    const pulseInterval = totalDurationSec / params.pulseCount;
-    const pulseActiveDuration = Math.min(pulseInterval * 0.65, 0.25);
-
-    for (let i = 0; i < params.pulseCount; i++) {
-      const pulseStart = now + i * pulseInterval;
-      this.synthesizePulse(ctx, params.frequency, pulseStart, pulseActiveDuration);
+    if (this.currentIndex < this.currentSequence.length) {
+      this.scheduleTimer = window.setTimeout(this.scheduler, this.LOOKAHEAD_MS);
+    } else {
+      this.isPlaying = false;
+      this.scheduleTimer = null;
     }
   }
 
   /**
-   * Sintetiza um pulso tonal individual com envoltória suave de ganho para evitar cliques.
+   * Executa a sonificação de um conjunto de parâmetros imediatamente.
    */
+  public playParams(params: SonificationParams): void {
+    if (this.isMuted) return;
+    const ctx = this.initContext();
+    this.scheduleParams(params, ctx.currentTime);
+  }
+
+  // --- SÍNTESE DE ÁUDIO ---
+
+  private scheduleParams(params: SonificationParams, startTime: number): void {
+    if (!this.ctx) return;
+
+    if (params.isMissing) {
+      this.playAlertTone(this.ctx, startTime);
+      return;
+    }
+
+    const pulseInterval = (params.durationMs / 1000) / params.pulseCount;
+    const pulseActiveDuration = Math.min(pulseInterval * 0.65, 0.25);
+
+    for (let i = 0; i < params.pulseCount; i++) {
+      const pulseStart = startTime + i * pulseInterval;
+      this.synthesizePulse(this.ctx, params.frequency, pulseStart, pulseActiveDuration);
+    }
+  }
+
   private synthesizePulse(
     ctx: AudioContext,
     frequency: number,
@@ -111,21 +226,17 @@ export class AudioEngine {
     osc.type = 'sine';
     osc.frequency.setValueAtTime(frequency, startTime);
 
-    // Envoltória ADSR suave (Attack e Release)
     const attackTime = 0.02;
     const releaseTime = duration * 0.4;
     const peakTime = startTime + attackTime;
-    const decayStart = startTime + duration - releaseTime;
 
     gain.gain.setValueAtTime(0.0001, startTime);
-    gain.gain.exponentialRampToValueAtTime(0.4, peakTime);
-    gain.gain.setValueAtTime(0.4, Math.max(peakTime, decayStart));
+    gain.gain.exponentialRampToValueAtTime(0.3, peakTime);
+    gain.gain.setValueAtTime(0.3, startTime + duration - releaseTime);
     gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
 
     osc.connect(gain);
-    if (this.masterGain) {
-      gain.connect(this.masterGain);
-    }
+    if (this.masterGain) gain.connect(this.masterGain);
 
     osc.start(startTime);
     this.activeOscillators.add(osc);
@@ -137,25 +248,19 @@ export class AudioEngine {
     osc.stop(startTime + duration + 0.05);
   }
 
-  /**
-   * Sinal acústico de advertência para dados faltantes.
-   */
   private playAlertTone(ctx: AudioContext, startTime: number): void {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
 
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(240, startTime);
-    osc.frequency.linearRampToValueAtTime(180, startTime + 0.3);
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(150, startTime);
 
     gain.gain.setValueAtTime(0.001, startTime);
-    gain.gain.exponentialRampToValueAtTime(0.2, startTime + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.08, startTime + 0.05);
     gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
 
     osc.connect(gain);
-    if (this.masterGain) {
-      gain.connect(this.masterGain);
-    }
+    if (this.masterGain) gain.connect(this.masterGain);
 
     osc.start(startTime);
     this.activeOscillators.add(osc);
@@ -168,9 +273,10 @@ export class AudioEngine {
   }
 
   public dispose(): void {
+    this.pause();
+    this.stopPlayback();
     if (this.ctx) {
       if (this.ctx.state !== 'closed') {
-        this.stopPlayback();
         this.masterGain?.disconnect();
         this.analyser?.disconnect();
         void this.ctx.close();
@@ -184,5 +290,4 @@ export class AudioEngine {
   }
 }
 
-// Instância singleton para uso em toda a aplicação
 export const globalAudioEngine = new AudioEngine();
