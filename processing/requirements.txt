@@ -1,8 +1,26 @@
 # SONATLAS Scientific Processing Dependencies
+# NASA GPM IMERG V07 Data Pipeline
+
+# Manipulação de Matrizes e Dados Numéricos
 numpy>=1.24.0
 pandas>=2.0.0
+
+# Leitura e Acesso a Arquivos Científicos NASA (HDF5 / NetCDF4 / OPeNDAP)
+h5py>=3.8.0
+netCDF4>=1.6.0
 xarray>=2023.5.0
+
+# Processamento Geoespacial e Geometrias GeoJSON
+shapely>=2.0.0
+
+# Validação de Dados, Contratos e Requisições
 pydantic>=2.0.0
 requests>=2.31.0
-pytest>=7.4.0
 python-dotenv>=1.0.0
+
+# API geoespacial
+fastapi>=0.110.0
+uvicorn>=0.29.0
+
+# Testes e Garantia de Qualidade
+pytest>=7.4.0

@@ -17,32 +17,50 @@ export function useAudioPlayer({
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const totalSteps = observations.length;
 
-  const playStep = useCallback((index: number) => {
+  const playStep = useCallback((index: number): boolean => {
     if (index >= 0 && index < observations.length) {
       const obs = observations[index];
       const params = createObservationSonificationParams(obs, stepDurationMs);
-      globalAudioEngine.playParams(params);
+      try {
+        globalAudioEngine.playParams(params);
+        setAudioError(null);
+      } catch (error) {
+        globalAudioEngine.reportError(error);
+        return false;
+      }
       if (onStepChange) {
         onStepChange(index);
       }
+      return true;
     }
+    return false;
   }, [observations, stepDurationMs, onStepChange]);
 
   const togglePlay = useCallback(() => {
-    setIsPlaying((prev) => {
-      const nextState = !prev;
-      if (nextState) {
-        // Tocar imediatamente o passo atual
-        playStep(currentIndex);
-      }
-      return nextState;
-    });
-  }, [currentIndex, playStep]);
+    if (isPlaying) {
+      globalAudioEngine.stopPlayback();
+      setIsPlaying(false);
+    } else if (playStep(currentIndex)) {
+      setIsPlaying(true);
+    }
+  }, [currentIndex, isPlaying, playStep]);
+
+  useEffect(() => globalAudioEngine.subscribeError((error) => {
+    setAudioError(error);
+    if (error) {
+      setIsPlaying(false);
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = null;
+      globalAudioEngine.stopPlayback();
+    }
+  }), []);
+  useEffect(() => () => globalAudioEngine.dispose(), []);
 
   const nextStep = useCallback(() => {
     setCurrentIndex((prev) => {
@@ -103,14 +121,19 @@ export function useAudioPlayer({
 
   // Resetar quando a lista de observações mudar (ex: troca de região)
   useEffect(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null;
     setIsPlaying(false);
     setCurrentIndex(0);
+    globalAudioEngine.stopPlayback();
   }, [observations]);
 
   return {
     isPlaying,
     currentIndex,
     isMuted,
+    audioError,
+    analyser: globalAudioEngine.getAnalyser(),
     currentObservation: observations[currentIndex] || null,
     togglePlay,
     nextStep,

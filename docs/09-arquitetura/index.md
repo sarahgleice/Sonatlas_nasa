@@ -108,7 +108,26 @@ sonatlas/
 
 ---
 
-## 4. Registro de Decisões Arquiteturais (ADRs)
+## 4. Contratos de integração do frontend
+
+`frontend/src/types/dataset.ts` é o contrato compartilhado para a integração:
+
+- **Ciência / dados:** publica `RegionDataset` em JSON em `frontend/public/data/`. `region_id`, `observations`, `timestamp_utc`, `availability` e `scientific_indicators` mantêm o formato definido pelas interfaces existentes. Marque `is_sample: true` para amostras; a interface as identifica como demonstrativas.
+- **Mapa:** recebe `boundingBox`, `regionName` e `isPlaceholder` em `MapView`; a página apenas encaminha a região e seus limites.
+- **Sonificação e player:** `TemporalObservation` é a unidade temporal compartilhada. O player recebe os passos e o índice selecionado; o motor de áudio permanece no módulo `audio/`.
+- **Composição:** `HomePage` seleciona uma região, carrega seu dataset e encaminha a mesma observação ativa ao resumo e aos controles temporais.
+
+Estados da interface: carregamento e falha do fetch são estados da página; série vazia é indisponibilidade de observações; `availability` descreve células ausentes dentro de uma observação; `is_sample` identifica dados demonstrativos. Não interprete nenhum desses estados como precipitação zero.
+
+Os módulos de mapa, processamento científico e áudio/player mantêm seus arquivos e implementação próprios; esta integração consome seus contratos existentes.
+
+### Estado da integração IMERG
+
+O contrato de integração do frontend é o `RegionDataset` em `frontend/src/types/dataset.ts`, publicado como JSON estático em `frontend/public/data/`. O arquivo `amazon_central_series.json` atualmente disponível está marcado com `is_sample: true`. O `processing/scripts/run_pipeline.py` gera essa amostra demonstrativa; `GPMExtractor` recebe matrizes e faz o recorte espacial, mas não baixa nem extrai grânulos IMERG. Portanto, os valores atuais não são observações NASA reais.
+
+Para integrar observações oficiais, o pipeline existente deve exportar o mesmo contrato após extração e validação: produto/versão e origem, limites geográficos, resolução temporal, timestamps UTC, unidade de cada indicador, estado e razão de disponibilidade por observação, nulos preservados e `is_sample: false` somente após validação da proveniência. O frontend não deve alterar ou inferir medições para preencher campos ausentes.
+
+## 5. Registro de Decisões Arquiteturais (ADRs)
 
 ### ADR-01: Desacoplamento Total via Arquivos JSON Estáticos
 - **Contexto:** Necessidade de permitir que o frontend funcione com latência mínima, zero custo de hospedagem de backend e total portabilidade para o hackathon.

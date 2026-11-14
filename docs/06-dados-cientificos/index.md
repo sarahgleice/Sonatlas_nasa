@@ -4,9 +4,9 @@ Este documento estabelece o embasamento físico, geofísico e matemático dos da
 
 ---
 
-## 1. Fonte de Dados Candidata: NASA GPM / IMERG V07
+## 1. Fontes de Dados Oficiais da NASA
 
-O projeto adota como base científica os produtos da missão **Global Precipitation Measurement (GPM)**, especificamente o algoritmo **IMERG (Integrated Multi-satellitE Retrievals for GPM)**, versão 07.
+O projeto adota como base científica primária os produtos da missão **Global Precipitation Measurement (GPM)**, especificamente o algoritmo **IMERG (Integrated Multi-satellitE Retrievals for GPM)**, versão **07B**.
 
 ```mermaid
 flowchart TD
@@ -19,16 +19,41 @@ flowchart TD
     MERGE --> FINAL
 ```
 
-### Especificações do Produto
-- **Código Oficial do Produto:** `GPM_3IMERGHHE` (Early Run para latência rápida) e `GPM_3IMERGHH` (Final Run para pesquisa com calibração em pluviômetros).
-- **Centro Distribuidor:** NASA Goddard Earth Sciences Data and Information Services Center (GES DISC).
+### 1.1. Referências e Diretórios Oficiais
+- **NASA SVS 4285:** [https://svs.gsfc.nasa.gov/4285/](https://svs.gsfc.nasa.gov/4285/)  
+  *Nota metodológica:* A animação do Scientific Visualization Studio (SVS 4285) é uma referência visual e de divulgação científica. Os indicadores e a sonificação do SONATLAS **são calculados estritamente a partir dos dados numéricos matriciais do IMERG**, e não estimados pelas cores da animação.
+- **NASA GPM IMERG:** [https://gpm.nasa.gov/data/imerg](https://gpm.nasa.gov/data/imerg)
+- **NASA GPM Data Directory:** [https://gpm.nasa.gov/data/directory](https://gpm.nasa.gov/data/directory)
+- **Repositório GES DISC:** [https://gpm1.gesdisc.eosdis.nasa.gov/data/GPM_L3/GPM_3IMERGHH.07/](https://gpm1.gesdisc.eosdis.nasa.gov/data/GPM_L3/GPM_3IMERGHH.07/)
+
+### 1.2. Especificações do Produto IMERG V07B
+- **Produtos Utilizados:** `GPM_3IMERGHHE` (Early Run, latência ~4h) e `GPM_3IMERGHH` (Final Run com calibração de pluviômetros, para pesquisa).
+- **Formato Nativo:** HDF5 estruturado sob o grupo `/Grid` (ou NetCDF-4 `.nc4`).
 - **Resolução Espacial:** Grade regular global de $0.1^\circ \times 0.1^\circ$ (aproximadamente $11 \text{ km} \times 11 \text{ km}$ no equador).
 - **Resolução Temporal:** Passo de 30 minutos (*half-hourly*).
-- **Variável Física Extraída:** `precipitationCal` (taxa de precipitação calibrada por múltiplos sensores).
 
 ---
 
-## 2. Diferenciação Física Crucial: Taxa ($\text{mm/h}$) vs. Acumulação ($\text{mm}$)
+## 2. Investigação Técnica da Variável de Precipitação
+
+### 2.1. `/Grid/precipitationCal` vs `/Grid/precipitation`
+Na documentação oficial da versão **IMERG V07B**:
+- **Variável Principal:** `/Grid/precipitationCal`  
+  - **Definição Oficial:** Estimativa de taxa de precipitação multissatélite calibrada com dados de pluviômetros e sensores de micro-ondas.
+  - **Unidade de Medida:** **`mm/hr`** (milímetros por hora &mdash; taxa instantânea).
+  - **Valor Sentinela (`_FillValue`):** `-9999.9` (representa dados ausentes ou sem cobertura instrumental).
+- **Variável Secundária (`Grid/precipitation`):** Utilizada em alguns produtos derivados diários (em mm/day) ou subsetters GeoTIFF/GIS.
+- **Estratégia de Implementação no Pipeline:** O leitor verifica prioritariamente `/Grid/precipitationCal`, com fallback para `/Grid/precipitation`, validando explicitamente se o atributo `units` contém `mm/hr`.
+
+### 2.2. Sistema de Coordenadas e Transposição Espacial
+- **Latitude (`lat`):** 1800 pontos, de $-89.95^\circ$ a $+89.95^\circ$ (resolução $0.1^\circ$).
+- **Longitude (`lon`):** 3600 pontos, de $-179.95^\circ$ a $+179.95^\circ$ (resolução $0.1^\circ$).
+- :warning: **Peculiaridade de Indexação do HDF5:**  
+  No arquivo HDF5 nativo da NASA, a matriz de precipitação está armazenada como `(lon, lat)` com dimensões `(3600, 1800)`. Para manipulação em bibliotecas geoespaciais e exibição cartográfica, o extrator aplica a **transposição (`.T`)** para obter `(lat, lon)` com dimensões `(1800, 3600)`.
+
+---
+
+## 3. Diferenciação Física Crucial: Taxa ($\text{mm/h}$) vs. Acumulação ($\text{mm}$)
 
 > :octicons-alert-16: **REGRA CIENTÍFICA ABSOLUTA:**  
 > A taxa de precipitação instantânea ($\text{mm/h}$) e a precipitação acumulada ($\text{mm}$) são grandezas físicas distintas e jamais devem ser confundidas ou somadas diretamente.
@@ -43,25 +68,25 @@ O motor de sonificação traduz primordialmente a **taxa de precipitação insta
 
 ---
 
-## 3. Delimitação das Regiões de Estudo
+## 4. Delimitação das Regiões de Estudo
 
-### 3.1. Região Nacional: Amazônia Central (Brasil)
+### 4.1. Região Nacional: Amazônia Central (Brasil)
 - **Status:** <span class="badge-verified">Verificada Preliminarmente</span>
 - **Coordenadas de Referência (WGS84):**
   - Latitude: $-4.0^\circ$ a $-1.5^\circ$ Sul
   - Longitude: $-61.5^\circ$ a $-58.5^\circ$ Oeste
-- **Justificativa Bioclimática:** Região de encontro dos Rios Negro e Solimões/Amazonas, próxima à Reserva Florestal Cuieiras (ZF2) e à Torre ATTO (*Amazon Tall Tower Observatory*). Apresenta um dos ciclos hidrológicos mais vigorosos e dinâmicos do planeta.
+- **Justificativa Bioclimática:** Região de confluência dos Rios Negro e Solimões/Amazonas, próxima à Reserva ZF2 e à Torre ATTO (*Amazon Tall Tower Observatory*). Apresenta um dos regimes convectivos tropicais mais dinâmicos do planeta.
 
-### 3.2. Região Internacional: Área de Estudo Candidata
+### 4.2. Região Internacional: Área de Estudo Candidata
 - **Status:** <span class="badge-review">Candidata Preliminar Sob Validação</span>
 - **Região Candidata em Estudo:** Bacia do Congo (África Central).
-- **Diretriz de Integridade Científica:** A escolha definitiva da segunda região ainda aguarda validação formal da equipe de mentores. Em estrito respeito às boas práticas científicas, **nenhuma coordenada arbitrária ou dado fictício foi associado à região**; o repositório mantém apenas arquivos de orientação estrutural (*placeholders*) até a homologação dos dados reais.
+- **Diretriz de Integridade Científica:** A escolha definitiva da segunda região ainda aguarda validação formal da equipe. Em estrito respeito às boas práticas científicas, **nenhuma coordenada arbitrária ou dado fictício foi associado à região**; o repositório mantém apenas arquivos de orientação estrutural (*placeholders*) até a homologação dos dados reais.
 
 ---
 
-## 4. Indicadores Científicos Calculados no Pipeline
+## 5. Indicadores Científicos Calculados no Pipeline
 
-### 4.1. Taxa Média com Ponderação Cosseno da Latitude
+### 5.1. Taxa Média com Ponderação Cosseno da Latitude
 Como a área real das células de uma grade regular $(\Delta \phi \times \Delta \lambda)$ decresce com o cosseno da latitude ($\phi$), o cálculo da média espacial sobre as células válidas na *bounding box* aplica a seguinte fórmula:
 
 $$\bar{R} = \frac{\sum_{i=1}^{N} R_i \cdot w_i \cdot \cos(\phi_i)}{\sum_{i=1}^{N} w_i \cdot \cos(\phi_i)}$$
@@ -71,21 +96,21 @@ onde:
 - $\phi_i$ é a latitude do ponto central da célula em radianos.
 - $w_i \in \{0, 1\}$ é a máscara de validade ($w_i = 1$ se o dado for válido e estiver contido na geometria; $w_i = 0$ se for ausente ou externo).
 
-### 4.2. Fração de Área com Chuva Positiva ($\text{Rain Area Fraction}$)
+### 5.2. Fração de Área com Chuva Positiva ($\text{Rain Area Fraction}$)
 Permite discernir eventos de convecção isolada de tempestades amplas e generalizadas:
 
 $$\text{RAF} = \frac{\sum_{i \in \text{Válidos}} \mathbb{I}(R_i \ge 0.1 \text{ mm/h}) \cdot \cos(\phi_i)}{\sum_{i \in \text{Válidos}} \cos(\phi_i)}$$
 
 O limiar de $0.1 \text{ mm/h}$ corresponde ao limite inferior confiável de detecção dos radiômetros de micro-ondas da constelação GPM.
 
-### 4.3. Variabilidade Temporal ($\Delta R$)
+### 5.3. Variabilidade Temporal ($\Delta R$)
 Expressa o aumento ou dissipação da chuva em relação ao passo imediatamente anterior:
 
 $$\Delta R_k = \bar{R}(t_k) - \bar{R}(t_{k-1})$$
 
 ---
 
-## 5. Tratamento Ético de Dados Ausentes (*Missing Data*)
+## 6. Tratamento Ético de Dados Ausentes (*Missing Data*)
 
 > :octicons-x-circle-16: **REGRA CIENTÍFICA ABSOLUTA:**  
 > Células com falha instrumental ou sem retorno de satélite NUNCA devem ser tratadas como precipitação zero.
@@ -98,7 +123,18 @@ No IMERG, dados não mensuráveis recebem valores sentinela (ex: $-9999.9$). O p
 
 ---
 
-## 6. Relação com as Visualizações do Earth Information Center (EIC)
+## 7. Como Acessar Dados Reais da NASA (Autenticação)
 
-> :octicons-info-16: **AVISO DE VALIDAÇÃO PENDENTE:**  
-> As animações e mapas colorimétricos divulgados pelo Earth Information Center (EIC) da NASA aplicam paletas estilizadas, interpolações contínuas e filtros de suavização que nem sempre correspondem 1:1 aos valores de grade crua. No SONATLAS, todas as referências a imagens do EIC possuem o status `"pending_official_validation"` até que a correlação exata de grânulos seja verificada. É expressamente proibido inferir valores numéricos a partir da leitura de cores visuais.
+O acesso aos dados do GPM IMERG no NASA GES DISC é gratuito, mas requer autenticação:
+1. Cadastre-se em [https://urs.earthdata.nasa.gov/](https://urs.earthdata.nasa.gov/).
+2. Em *Applications* &gt; *Authorized Apps*, autorize o aplicativo **NASA GESDISC DATA ARCHIVE**.
+3. Configure o arquivo `.netrc` na máquina local (`~/.netrc` no Linux/macOS ou `%USERPROFILE%\_netrc` no Windows):
+   ```text
+   machine urs.earthdata.nasa.gov
+   login SEU_USUARIO_EARTHDATA
+   password SUA_SENHA_EARTHDATA
+   ```
+4. Baixe os grânulos HDF5 em `processing/data/raw/` e execute o teste de inspeção:
+   ```bash
+   python processing/scripts/inspect_imerg.py processing/data/raw/seu_arquivo.HDF5
+   ```

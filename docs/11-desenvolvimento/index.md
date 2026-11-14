@@ -30,6 +30,16 @@ npm run dev
 ```
 A aplicação web estará disponível em `http://localhost:5173`.
 
+### 2.2.1. API geoespacial opcional
+
+Instale as dependências de `processing/requirements.txt` no ambiente Python e, na raiz do repositório, inicie a API:
+
+```bash
+python -m uvicorn api.main:app --app-dir processing --reload
+```
+
+Copie `frontend/.env.example` para `frontend/.env.local` e configure `VITE_GEO_API_URL=http://127.0.0.1:8000`. Reinicie o Vite após alterar a variável. Sem essa configuração ou quando a API falhar, o mapa usa o GeoJSON local; os dados científicos continuam sendo carregados pelo DataService.
+
 Para verificar a compilação do TypeScript e gerar o pacote de produção:
 ```bash
 npm run build

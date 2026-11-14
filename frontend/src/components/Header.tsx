@@ -1,32 +1,29 @@
 import React from 'react';
-import { Volume2, HelpCircle } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 
 interface HeaderProps {
-  onOpenShortcuts: () => void;
+  onOpenEducational: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenShortcuts }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenEducational }) => {
   return (
     <header className="app-header" role="banner">
       <div className="header-container">
-        <div className="logo-group">
-          <div className="logo-icon" aria-hidden="true">
-            <Volume2 size={28} />
-          </div>
-          <div>
-            <h1 className="logo-title">SONATLAS</h1>
-            <p className="logo-subtitle">Explore Earth Through Sound — NASA Space Apps Challenge 2026</p>
-          </div>
+        <div className="brand-lockup">
+          <a className="logo-title" href="#main-content" aria-label="Sonatlas, início do explorador">sonatlas<span>.</span></a>
+          <span className="product-label">EARTH EXPLORER</span>
         </div>
 
-        <nav aria-label="Navegação de apoio">
+        <nav className="header-nav" aria-label="Informações do projeto e ajuda">
+          <a href="#about">Sobre o projeto</a>
           <button
-            onClick={onOpenShortcuts}
+            onClick={onOpenEducational}
             className="btn btn-secondary btn-sm"
-            aria-label="Abrir guia de atalhos de teclado"
+            aria-haspopup="dialog"
+            aria-label="Abrir ajuda e informações científicas"
           >
             <HelpCircle size={18} aria-hidden="true" />
-            <span>Atalhos de Teclado</span>
+            <span>Ajuda</span>
           </button>
         </nav>
       </div>

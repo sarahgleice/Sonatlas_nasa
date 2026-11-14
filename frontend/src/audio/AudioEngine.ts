@@ -5,10 +5,14 @@ import { createObservationSonificationParams } from './sonificationMapping';
  * Motor nativo de áudio para síntese em tempo real via Web Audio API.
  * Implementa agendamento preciso (Lookahead) para sequências temporais.
  */
-
 export class AudioEngine {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
+  private analyser: AnalyserNode | null = null;
+  
+  private activeOscillators = new Set<OscillatorNode>();
+  private errorListeners = new Set<(message: string | null) => void>();
+  private lastError: string | null = null;
   private isMuted: boolean = false;
 
   // Estado de controle da sequência
@@ -18,9 +22,6 @@ export class AudioEngine {
   private nextSegmentTime: number = 0;
   private scheduleTimer: number | null = null;
   private speedMultiplier: number = 1.0;
-  
-  // Rastreio de nós ativos para podermos interrompê-los ao pular passos
-  private activeOscillators: OscillatorNode[] = [];
   
   // Parâmetros de agendamento (A Tale of Two Clocks)
   private readonly LOOKAHEAD_MS = 25; 
@@ -32,10 +33,14 @@ export class AudioEngine {
       this.ctx = new AudioCtx();
       this.masterGain = this.ctx.createGain();
       this.masterGain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-      this.masterGain.connect(this.ctx.destination);
+      this.analyser = this.ctx.createAnalyser();
+      this.masterGain.connect(this.analyser);
+      this.analyser.connect(this.ctx.destination);
     }
     if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      void this.ctx.resume().then(() => this.notifyError(null)).catch((error: unknown) => {
+        this.notifyError(error instanceof Error ? error.message : 'Não foi possível iniciar o áudio.');
+      });
     }
     return this.ctx;
   }
@@ -51,11 +56,32 @@ export class AudioEngine {
     return this.isMuted;
   }
 
+  // --- MÉTODOS DO ANALISADOR E ERROS (MAIN) ---
+  
+  public getAnalyser(): AnalyserNode | null {
+    return this.analyser;
+  }
+
+  public subscribeError(listener: (message: string | null) => void): () => void {
+    this.errorListeners.add(listener);
+    listener(this.lastError);
+    return () => this.errorListeners.delete(listener);
+  }
+
+  public reportError(error: unknown): void {
+    this.notifyError(error instanceof Error ? error.message : 'Não foi possível iniciar o áudio.');
+  }
+
+  private notifyError(message: string | null): void {
+    this.lastError = message;
+    this.errorListeners.forEach((listener) => listener(message));
+  }
+
+  // --- CONTROLES DE REPRODUÇÃO (HAZEL) ---
+
   public setSpeed(multiplier: number): void {
     this.speedMultiplier = Math.max(0.1, multiplier);
   }
-
-  // --- CONTROLES DE REPRODUÇÃO ---
 
   public pause(): void {
     this.isPlaying = false;
@@ -90,7 +116,7 @@ export class AudioEngine {
     this.scheduler();
   }
 
-  // --- CONTROLES DE NAVEGAÇÃO (PULAR E VOLTAR) ---
+  // --- CONTROLES DE NAVEGAÇÃO ---
 
   public next(): void {
     if (this.currentIndex < this.currentSequence.length - 1) {
@@ -108,17 +134,12 @@ export class AudioEngine {
     if (index >= 0 && index < this.currentSequence.length) {
       this.currentIndex = index;
       
-      // Interrompe o som atual imediatamente para não sobrepor
       this.stopActiveSounds();
       
       if (this.ctx) {
-        // Força o scheduler a tocar o novo índice imediatamente
         this.nextSegmentTime = this.ctx.currentTime; 
       }
       
-      // Se estava pausado e o usuário clicou para avançar, podemos manter pausado 
-      // ou forçar o play. Aqui mantemos o comportamento de apenas atualizar o cursor,
-      // mas se estiver tocando, chamamos o scheduler para continuar.
       if (this.isPlaying) {
         if (this.scheduleTimer) window.clearTimeout(this.scheduleTimer);
         this.scheduler();
@@ -126,19 +147,16 @@ export class AudioEngine {
     }
   }
 
-  /**
-   * Interrompe todos os osciladores em andamento para evitar sobreposição de áudio
-   */
   private stopActiveSounds(): void {
-    this.activeOscillators.forEach(osc => {
+    for (const osc of this.activeOscillators) {
       try {
         osc.stop();
         osc.disconnect();
       } catch (e) {
         // Ignora erros caso o nó já tenha sido finalizado pelo tempo
       }
-    });
-    this.activeOscillators = [];
+    }
+    this.activeOscillators.clear();
   }
 
   // --- LOOP DE AGENDAMENTO ---
@@ -172,9 +190,6 @@ export class AudioEngine {
   private scheduleParams(params: SonificationParams, startTime: number): void {
     if (!this.ctx) return;
     const totalDurationSec = params.durationMs / 1000;
-
-    // Limpa array de nós inativos para não vazar memória
-    this.activeOscillators = this.activeOscillators.filter(osc => osc.context.currentTime < startTime + totalDurationSec + 1);
 
     if (params.isMissing) {
       this.playAlertTone(this.ctx, startTime);
@@ -216,9 +231,13 @@ export class AudioEngine {
     if (this.masterGain) gain.connect(this.masterGain);
 
     osc.start(startTime);
+    this.activeOscillators.add(osc);
+    osc.addEventListener('ended', () => {
+      this.activeOscillators.delete(osc);
+      osc.disconnect();
+      gain.disconnect();
+    }, { once: true });
     osc.stop(startTime + duration + 0.05);
-    
-    this.activeOscillators.push(osc);
   }
 
   private playAlertTone(ctx: AudioContext, startTime: number): void {
@@ -237,18 +256,30 @@ export class AudioEngine {
     if (this.masterGain) gain.connect(this.masterGain);
 
     osc.start(startTime);
+    this.activeOscillators.add(osc);
+    osc.addEventListener('ended', () => {
+      this.activeOscillators.delete(osc);
+      osc.disconnect();
+      gain.disconnect();
+    }, { once: true });
     osc.stop(startTime + 0.4);
-    
-    this.activeOscillators.push(osc);
   }
 
   public dispose(): void {
     this.pause();
     this.stopActiveSounds();
-    if (this.ctx && this.ctx.state !== 'closed') {
-      this.ctx.close();
+    if (this.ctx) {
+      if (this.ctx.state !== 'closed') {
+        this.masterGain?.disconnect();
+        this.analyser?.disconnect();
+        void this.ctx.close();
+      }
       this.ctx = null;
+      this.masterGain = null;
+      this.analyser = null;
+      this.activeOscillators.clear();
     }
+    this.lastError = null;
   }
 }
 

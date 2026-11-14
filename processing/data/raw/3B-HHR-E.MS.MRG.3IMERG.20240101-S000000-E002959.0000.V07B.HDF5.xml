@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="/data/S4paGran2HTML.xsl"?>
+<S4PAGranuleMetaDataFile>
+  <CollectionMetaData>
+    <ShortName>GPM_3IMERGHHE</ShortName>
+    <VersionID>07</VersionID>
+    <URL xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="/data/GPM_L3/GPM_3IMERGHHE.07/GPM_3IMERGHHE_07_dif.xml" xlink:show="new" xlink:actuate="onRequest" xlink:title="Click to view GPM_3IMERGHHE collection">/data/GPM_L3/GPM_3IMERGHHE.07/GPM_3IMERGHHE_07_dif.xml</URL>
+  </CollectionMetaData>
+  <DataGranule>
+    <GranuleID>3B-HHR-E.MS.MRG.3IMERG.20240101-S000000-E002959.0000.V07B.HDF5</GranuleID>
+    <LocalGranuleID>3B-HHR-E.MS.MRG.3IMERG.20240101-S000000-E002959.0000.V07B.HDF5</LocalGranuleID>
+    <Format>HDF-5</Format>
+    <CheckSum>
+      <CheckSumType>CRC32</CheckSumType>
+      <CheckSumValue>2702818079</CheckSumValue>
+    </CheckSum>
+    <SizeBytesDataGranule>7173315</SizeBytesDataGranule>
+    <InsertDateTime>2024-07-16 16:07:24</InsertDateTime>
+    <ProductionDateTime>2024-07-03T22:38:13.000Z</ProductionDateTime>
+  </DataGranule>
+  <RangeDateTime>
+    <RangeEndingDate>2024-01-01</RangeEndingDate>
+    <RangeEndingTime>00:29:59.999</RangeEndingTime>
+    <RangeBeginningDate>2024-01-01</RangeBeginningDate>
+    <RangeBeginningTime>00:00:00.000</RangeBeginningTime>
+  </RangeDateTime>
+  <SpatialDomainContainer>
+    <HorizontalSpatialDomainContainer>
+      <BoundingRectangle>
+        <WestBoundingCoordinate>-180.0</WestBoundingCoordinate>
+        <NorthBoundingCoordinate>90.0</NorthBoundingCoordinate>
+        <EastBoundingCoordinate>180.0</EastBoundingCoordinate>
+        <SouthBoundingCoordinate>-90.0</SouthBoundingCoordinate>
+      </BoundingRectangle>
+    </HorizontalSpatialDomainContainer>
+  </SpatialDomainContainer>
+  <Platform>
+    <PlatformShortName>MULTI</PlatformShortName>
+    <Instrument>
+      <InstrumentShortName>MERGED</InstrumentShortName>
+    </Instrument>
+  </Platform>
+  <PSAs>
+    <PSA>
+      <PSAName>DOI</PSAName>
+      <PSAValue>10.5067/GPM/IMERG/3B-HH-E/07</PSAValue>
+    </PSA>
+    <PSA>
+      <PSAName>Algorithm ID</PSAName>
+      <PSAValue>3IMERGHH</PSAValue>
+    </PSA>
+    <PSA>
+      <PSAName>Algorithm Version</PSAName>
+      <PSAValue>3IMERGH_7.0</PSAValue>
+    </PSA>
+    <PSA>
+      <PSAName>Granule Number</PSAName>
+      <PSAValue/>
+    </PSA>
+    <PSA>
+      <PSAName>Number Of Grids</PSAName>
+      <PSAValue>1</PSAValue>
+    </PSA>
+    <PSA>
+      <PSAName>Granule Start</PSAName>
+      <PSAValue/>
+    </PSA>
+    <PSA>
+      <PSAName>Time Interval</PSAName>
+      <PSAValue>HALF_HOUR</PSAValue>
+    </PSA>
+    <PSA>
+      <PSAName>Processing System</PSAName>
+      <PSAValue>PPS</PSAValue>
+    </PSA>
+    <PSA>
+      <PSAName>Missing Data</PSAName>
+      <PSAValue/>
+    </PSA>
+    <PSA>
+      <PSAName>Empty Granule</PSAName>
+      <PSAValue>NOT_EMPTY</PSAValue>
+    </PSA>
+  </PSAs>
+</S4PAGranuleMetaDataFile>

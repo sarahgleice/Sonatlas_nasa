@@ -87,6 +87,9 @@ class DataValidator:
         # Proporção de área
         area_obj = indicators.get("rain_area_fraction", {})
         area_val = area_obj.get("value")
+        area_unit = area_obj.get("unit")
+        if area_unit and area_unit not in ["fraction", "dimensionless", "percentage"]:
+            errors.append(f"{prefix} unidade de fração de área deve ser 'fraction', obtido: '{area_unit}'")
         if area_val is not None:
             if not (0.0 <= area_val <= 1.0):
                 errors.append(f"{prefix} fração de área chuvosa deve estar entre 0.0 e 1.0: {area_val}")
