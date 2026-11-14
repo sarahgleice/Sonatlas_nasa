@@ -2,6 +2,8 @@
 
 Este documento estabelece o embasamento físico, geofísico e matemático dos dados utilizados pelo SONATLAS, assegurando que todas as transformações de dados em som respeitem princípios científicos invioláveis.
 
+O formato esperado para grades de precipitação por célula e sua matriz está descrito no [contrato de grade espacial](contrato-grade-espacial.md).
+
 ---
 
 ## 1. Fontes de Dados Oficiais da NASA
