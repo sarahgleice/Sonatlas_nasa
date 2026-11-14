@@ -5,7 +5,7 @@ export const AVAILABLE_REGIONS: RegionOption[] = [
     id: 'amazon_central',
     name: 'Amazônia Central',
     country: 'Brasil',
-    filePath: '/data/amazon_central_series.json',
+    filePath: '/data/amazon/observations.json',
     status: 'active'
   },
   {
