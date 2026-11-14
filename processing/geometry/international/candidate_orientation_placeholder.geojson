@@ -1,0 +1,23 @@
+{
+  "type": "FeatureCollection",
+  "name": "international_candidate_placeholder",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "region_id": "international_candidate",
+        "region_name": "Região Internacional Candidata (Bacia do Congo sob validação)",
+        "status": "candidate_under_review",
+        "is_placeholder": true,
+        "note": "Placeholder estrutural. Coordenadas e limites oficiais aguardam validação final da equipe científica."
+      },
+      "geometry": null
+    }
+  ]
+}

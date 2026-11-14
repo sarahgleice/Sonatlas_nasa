@@ -1,0 +1,65 @@
+{
+  "dataset_version": "1.0.0",
+  "region_id": "amazon_central",
+  "region_name": "Amazônia Central",
+  "country": "Brasil",
+  "bounding_box": {
+    "min_latitude": -4.0,
+    "max_latitude": -1.5,
+    "min_longitude": -61.5,
+    "max_longitude": -58.5
+  },
+  "data_source": "NASA Earthdata GES DISC",
+  "product_name": "GPM_3IMERGHHE",
+  "product_version": "07B",
+  "phenomenon": "precipitation",
+  "temporal_resolution": "30_minutes",
+  "is_sample": true,
+  "validation_status": "preliminary_verified",
+  "metadata_url": "https://gpm.nasa.gov/data/imerg",
+  "observations": [
+    {
+      "observation_id": "obs_amazon_000",
+      "step_index": 0,
+      "timestamp_utc": "2026-10-12T12:00:00Z",
+      "availability": {
+        "status": "available",
+        "valid_cells_ratio": 1.0,
+        "missing_cells_count": 0,
+        "total_cells_count": 100
+      },
+      "scientific_indicators": {
+        "mean_precipitation_rate": {
+          "value": 1.15,
+          "unit": "mm/h",
+          "metric_type": "rate",
+          "description": "Taxa média espacial de precipitação ponderada pela área da célula"
+        },
+        "rain_area_fraction": {
+          "value": 0.15,
+          "unit": "percentage",
+          "threshold_rate_mm_h": 0.1,
+          "description": "Proporção da área com taxa de precipitação >= 0.1 mm/h"
+        },
+        "max_precipitation_rate": {
+          "value": 3.8,
+          "unit": "mm/h",
+          "description": "Pico máximo pontual de precipitação registrado"
+        },
+        "temporal_variance": {
+          "value": null,
+          "unit": "mm/h",
+          "description": "Variação da taxa média em relação à observação anterior"
+        }
+      },
+      "visual_frame_reference": {
+        "frame_id": "frame_000",
+        "image_path": "/visualizations/frame_000.png",
+        "source_system": "NASA Earth Information Center (EIC)",
+        "synchronization_status": "pending_official_validation",
+        "alt_text": "Precipitação leve com taxa média de 1.15 mm/h cobrindo aproximadamente 15.0% da área da Amazônia Central."
+      },
+      "textual_summary": "Precipitação leve com taxa média de 1.15 mm/h cobrindo aproximadamente 15.0% da área da Amazônia Central."
+    }
+  ]
+}

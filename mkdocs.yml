@@ -1,0 +1,103 @@
+site_name: SONATLAS
+site_description: "Explore Earth Through Sound — Portal de Documentação Oficial"
+site_author: "Equipe SONATLAS — NASA Space Apps Challenge 2026"
+site_url: "https://challenge-2-residencia-ia-grupo-3.github.io/sonatlas/"
+repo_name: "challenge-2-residencia-ia-grupo-3/sonatlas"
+repo_url: "https://github.com/challenge-2-residencia-ia-grupo-3/sonatlas"
+copyright: "Copyright &copy; 2026 SONATLAS — Licença MIT — Desenvolvido para o NASA Space Apps Challenge 2026"
+
+theme:
+  name: material
+  language: pt-BR
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.tracking
+    - navigation.indexes
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+  palette:
+    # Modo Escuro (Default - Estética Espacial e Alta Acessibilidade)
+    - scheme: slate
+      primary: blue
+      accent: light blue
+      toggle:
+        icon: material/brightness-4
+        name: Alternar para Modo Claro
+    # Modo Claro
+    - scheme: default
+      primary: blue
+      accent: light blue
+      toggle:
+        icon: material/brightness-7
+        name: Alternar para Modo Escuro
+  font:
+    text: Inter
+    code: Roboto Mono
+  icon:
+    logo: material/ear-hearing
+    repo: fontawesome/brands/github
+
+extra_css:
+  - assets/stylesheets/extra.css
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+extra_javascript:
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+nav:
+  - "Início": index.md
+  - "01. Visão do Produto": 01-visao-produto/index.md
+  - "02. Personas e Usuários": 02-personas/index.md
+  - "03. Requisitos do Sistema": 03-requisitos/index.md
+  - "04. Histórias de Usuário": 04-historias-usuario/index.md
+  - "05. Metodologia e Planejamento": 05-metodologia/index.md
+  - "06. Dados Científicos": 06-dados-cientificos/index.md
+  - "07. Sonificação": 07-sonificacao/index.md
+  - "08. Acessibilidade": 08-acessibilidade/index.md
+  - "09. Arquitetura e Tecnologias": 09-arquitetura/index.md
+  - "10. Testes e Validação": 10-testes/index.md
+  - "11. Desenvolvimento": 11-desenvolvimento/index.md
+  - "12. Equipe": 12-equipe/index.md

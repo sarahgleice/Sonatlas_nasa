@@ -1,0 +1,232 @@
+/* ==========================================================================
+   SONATLAS — Custom Stylesheet para MkDocs Material
+   Identidade: Espaço, Terra, Atmosfera, Ondas Sonoras e Ciência
+   ========================================================================== */
+
+:root {
+  --sonatlas-deep-space: #070b14;
+  --sonatlas-surface: #0f172a;
+  --sonatlas-surface-card: #131d36;
+  --sonatlas-blue-glow: #0284c7;
+  --sonatlas-cyan-bright: #38bdf8;
+  --sonatlas-text-light: #f8fafc;
+  --sonatlas-border: #1e293b;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #0c1527;
+  --md-primary-bg-color: #f8fafc;
+  --md-default-bg-color: #070b14;
+  --md-default-fg-color: #cbd5e1;
+  --md-default-fg-color--light: #94a3b8;
+  --md-accent-fg-color: #38bdf8;
+  --md-code-bg-color: #0b1120;
+}
+
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #0369a1;
+  --md-accent-fg-color: #0284c7;
+}
+
+/* ==========================================================================
+   Hero Section na Página Inicial (index.md)
+   ========================================================================== */
+
+.sonatlas-hero {
+  text-align: center;
+  padding: 3rem 1.5rem 2rem 1.5rem;
+  background: radial-gradient(circle at 50% 20%, rgba(2, 132, 199, 0.25) 0%, rgba(7, 11, 20, 0.8) 75%);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 16px;
+  margin-bottom: 2.5rem;
+  box-shadow: 0 10px 30px -10px rgba(2, 132, 199, 0.3);
+}
+
+.sonatlas-hero-badge {
+  display: inline-block;
+  padding: 0.35rem 1rem;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  border-radius: 9999px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 1rem;
+}
+
+.sonatlas-hero-title {
+  font-size: 3rem !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.5rem !important;
+  background: linear-gradient(135deg, #ffffff 30%, #38bdf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.sonatlas-hero-slogan {
+  font-size: 1.35rem;
+  font-weight: 500;
+  color: #94a3b8;
+  margin-bottom: 1.25rem;
+}
+
+.sonatlas-hero-desc {
+  max-width: 760px;
+  margin: 0 auto 1.75rem auto;
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: #cbd5e1;
+}
+
+.sonatlas-cta-group {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.sonatlas-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #0284c7;
+  color: #ffffff !important;
+  padding: 0.65rem 1.4rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none !important;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+}
+
+.sonatlas-btn-primary:hover {
+  background: #0369a1;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.6);
+}
+
+.sonatlas-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #f8fafc !important;
+  padding: 0.65rem 1.4rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none !important;
+  transition: all 0.2s ease;
+}
+
+.sonatlas-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   Cards de Acesso Rápido (Quick Nav Grid)
+   ========================================================================== */
+
+.sonatlas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin: 2rem 0;
+}
+
+.sonatlas-card {
+  display: block;
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-decoration: none !important;
+  color: inherit !important;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.sonatlas-card:hover {
+  border-color: #0284c7;
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px -5px rgba(2, 132, 199, 0.25);
+  background: #131d36;
+}
+
+.sonatlas-card-number {
+  font-family: var(--md-code-font-family);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #38bdf8;
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
+}
+
+.sonatlas-card-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-bottom: 0.5rem;
+}
+
+.sonatlas-card-text {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #94a3b8;
+}
+
+/* ==========================================================================
+   Badges de Status de Validação
+   ========================================================================== */
+
+.badge-verified {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: #4ade80;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-review {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-planned {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  background: rgba(148, 163, 184, 0.15);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  color: #94a3b8;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Tabelas Aprimoradas */
+.md-typeset table:not([class]) {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--md-default-fg-color--lightest);
+}
+
+.md-typeset table:not([class]) th {
+  background-color: rgba(2, 132, 199, 0.1);
+  color: var(--md-default-fg-color);
+  font-weight: 700;
+}

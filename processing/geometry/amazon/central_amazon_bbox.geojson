@@ -1,0 +1,34 @@
+{
+  "type": "FeatureCollection",
+  "name": "central_amazon_preliminary_bbox",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "region_id": "amazon_central",
+        "region_name": "Amazônia Central",
+        "country": "Brasil",
+        "status": "preliminary_verified",
+        "description": "Bounding box preliminar da Amazônia Central para corte espacial de grade IMERG 0.1 deg"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-61.5, -4.0],
+            [-58.5, -4.0],
+            [-58.5, -1.5],
+            [-61.5, -1.5],
+            [-61.5, -4.0]
+          ]
+        ]
+      }
+    }
+  ]
+}

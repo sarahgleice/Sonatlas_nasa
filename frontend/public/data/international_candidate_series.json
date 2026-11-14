@@ -1,0 +1,22 @@
+{
+  "dataset_version": "1.0.0",
+  "region_id": "international_candidate",
+  "region_name": "Região Internacional Candidata (Bacia do Congo)",
+  "country": "África Central",
+  "bounding_box": {
+    "min_latitude": -2.0,
+    "max_latitude": 2.0,
+    "min_longitude": 18.0,
+    "max_longitude": 24.0
+  },
+  "data_source": "NASA Earthdata GES DISC",
+  "product_name": "GPM_3IMERGHHE",
+  "product_version": "07B",
+  "phenomenon": "precipitation",
+  "temporal_resolution": "30_minutes",
+  "is_sample": true,
+  "is_placeholder": true,
+  "validation_status": "candidate_under_review",
+  "note": "Área de estudo internacional sob validação da equipe científica. Dados reais em processo de homologação.",
+  "observations": []
+}
