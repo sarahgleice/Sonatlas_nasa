@@ -38,6 +38,7 @@ export const SHORTCUTS: readonly ShortcutItem[] = [
   { keys: 'M', description: 'Silenciar ou ativar o áudio' },
   { keys: 'L', description: 'Ativar ou desativar a repetição contínua (loop)' },
   { keys: '?', description: 'Abrir a ajuda com atalhos de teclado' },
+  { keys: 'Linha do tempo: ← → ↑ ↓ Home End PgUp PgDn', description: 'Com a linha do tempo em foco: mover um passo (setas), ir ao início ou fim (Home/End) ou saltar cinco passos (PgUp/PgDn)' },
   { keys: 'Esc', description: 'Fechar a janela ou guia aberto' },
   { keys: 'Tab / Shift + Tab', description: 'Navegar entre os controles interativos da página' }
 ];
