@@ -299,3 +299,10 @@ kbd { min-width: 64px; padding: .25rem .4rem; border: 1px solid var(--color-bord
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: .01ms !important; }
 }
+
+/* Entenda o que você ouviu */
+.listening-explanation { margin: .75rem 0; padding: .85rem 1rem; border: 1px solid var(--color-sound); border-left-width: 4px; border-radius: var(--radius-md); background: var(--color-raised); }
+.listening-explanation h4 { display: flex; align-items: center; gap: .4rem; margin: 0 0 .4rem; color: var(--color-text); font-family: var(--font-display); font-size: .92rem; }
+.listening-headline { margin: 0 0 .4rem; color: var(--color-text); font-size: .85rem; font-weight: 600; }
+.listening-explanation ul { margin: 0; padding-left: 1.1rem; color: var(--color-text); font-size: .8rem; line-height: 1.55; }
+.listening-explanation li + li { margin-top: .3rem; }

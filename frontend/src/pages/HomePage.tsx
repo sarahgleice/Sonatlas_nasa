@@ -188,6 +188,7 @@ export const HomePage: React.FC = () => {
     audioError,
     analyser,
     currentObservation,
+    previousObservation,
     togglePlay,
     nextStep,
     prevStep,
@@ -311,13 +312,19 @@ export const HomePage: React.FC = () => {
                         ? 'Dados ausentes neste período'
                         : `${currentObservation.availability.status === 'partial' ? 'Disponibilidade parcial' : 'Dados disponíveis'} · ${Math.round(currentObservation.availability.valid_cells_ratio * 100)}% de células válidas`}
                     </p>
+                    <ScientificSummary
+                      observation={currentObservation}
+                      regionName={dataset.region_name}
+                      previousObservation={previousObservation}
+                      index={currentIndex}
+                      total={observations.length}
+                    />
                     <details className="details-disclosure">
-                      <summary>Detalhes da observação e fonte</summary>
-                      <ScientificSummary observation={currentObservation} regionName={dataset.region_name} />
+                      <summary>Fonte e metadados técnicos</summary>
                       <dl className="source-metadata">
                         <div><dt>Fonte</dt><dd>{dataset.data_source}</dd></div>
                         <div><dt>Produto</dt><dd>{dataset.product_name} · {dataset.product_version}</dd></div>
-                        <div><dt>Resolução temporal</dt><dd>{dataset.temporal_resolution.replace('_', ' ')}</dd></div>
+                        <div><dt>Resolução temporal</dt><dd>{dataset.temporal_resolution.replace(/_/g, ' ')}</dd></div>
                       </dl>
                     </details>
                   </>
