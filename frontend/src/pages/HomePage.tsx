@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   CalendarClock,
@@ -7,6 +7,7 @@ import {
   Waves
 } from 'lucide-react';
 import { RegionDataset, TemporalObservation } from '../types/dataset';
+import { LiveAnnouncement } from '../types/player';
 import { DataService, AVAILABLE_REGIONS, findRegionOption } from '../services/dataService';
 import { globalAudioEngine } from '../audio/AudioEngine';
 import { useAudioPlayer, PlayerBoundary, StepTransition } from '../hooks/useAudioPlayer';
@@ -38,7 +39,12 @@ export const HomePage: React.FC = () => {
   const [dataset, setDataset] = useState<RegionDataset | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [liveAnnouncement, setLiveAnnouncement] = useState('');
+  const [liveAnnouncement, setLiveAnnouncement] = useState<LiveAnnouncement | null>(null);
+  const announcementIdRef = useRef(0);
+  const announce = useCallback((text: string, politeness: LiveAnnouncement['politeness'] = 'polite') => {
+    announcementIdRef.current += 1;
+    setLiveAnnouncement({ id: announcementIdRef.current, text, politeness });
+  }, []);
   const [isEducationalOpen, setIsEducationalOpen] = useState(false);
   const [geoApiState, setGeoApiState] = useState<GeoApiState>('unconfigured');
   const [apiGeometry, setApiGeometry] = useState<GeoJSON.GeoJsonObject | null>(null);
@@ -67,15 +73,13 @@ export const HomePage: React.FC = () => {
         if (!isMounted) return;
         setDataset(data);
         setLoading(false);
-        setLiveAnnouncement(
-          `Região: ${data.region_name}, série: ${activeSeries?.name}. ${data.observations.length} observações temporais carregadas.`
-        );
+        announce(`Região: ${data.region_name}, série: ${activeSeries?.name}. ${data.observations.length} observações temporais carregadas.`);
       })
       .catch((error: unknown) => {
         if (!isMounted) return;
         setErrorMessage(error instanceof Error ? error.message : 'Erro ao carregar dados científicos.');
         setLoading(false);
-        setLiveAnnouncement('Erro ao carregar dados científicos.');
+        announce('Erro ao carregar dados científicos.', 'assertive');
       });
 
     return () => {
@@ -146,19 +150,19 @@ export const HomePage: React.FC = () => {
         : null
     });
     if (announcement) {
-      setLiveAnnouncement(announcement.text);
+      announce(announcement.text, announcement.politeness);
     }
-  }, [observations]);
+  }, [observations, announce]);
 
   const handleBoundary = useCallback((boundary: PlayerBoundary) => {
-    setLiveAnnouncement(boundary === 'end' ? 'Você está no último passo da série.' : 'Você está no primeiro passo da série.');
-  }, []);
+    announce(boundary === 'end' ? 'Você está no último passo da série.' : 'Você está no primeiro passo da série.');
+  }, [announce]);
 
   const selectRegion = (regionId: string) => {
     const region = findRegionOption(regionId);
     if (!region) return;
     setSelectedRegionId(region.id);
-    setLiveAnnouncement(`${region.name} selecionada pelo mapa.`);
+    announce(`${region.name} selecionada pelo mapa.`);
   };
 
   const handleMapPoint = async (lat: number, lon: number) => {
@@ -204,7 +208,7 @@ export const HomePage: React.FC = () => {
 
   return (
     <div className="app-layout">
-      <AriaLiveAnnouncer message={liveAnnouncement} />
+      <AriaLiveAnnouncer announcement={liveAnnouncement} />
       <Header onOpenEducational={() => setIsEducationalOpen(true)} />
 
       <main id="main-content" className="main-content">
@@ -225,7 +229,7 @@ export const HomePage: React.FC = () => {
                   const region = findRegionOption(regionId);
                   if (!region) return;
                   setSelectedRegionId(region.id);
-                  setLiveAnnouncement(`${region.name} selecionada pelo mapa.`);
+                  announce(`${region.name} selecionada pelo mapa.`);
                 }}
               />
             ) : (
