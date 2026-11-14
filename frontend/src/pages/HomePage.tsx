@@ -1,12 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { AlertTriangle, CloudRain, Map, Waves } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import {
+  AlertTriangle,
+  CalendarClock,
+  Layers,
+  Map,
+  Waves
+} from 'lucide-react';
 import { RegionDataset } from '../types/dataset';
 import { DataService, AVAILABLE_REGIONS } from '../services/dataService';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import { formatPrecipitationRate, formatTimestamp } from '../utils/formatters';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { RegionSelector } from '../components/RegionSelector';
+import { VariableSelector } from '../components/VariableSelector';
 import { AudioPlayer } from '../components/AudioPlayer';
 import { Timeline } from '../components/Timeline';
 import { ScientificSummary } from '../components/ScientificSummary';
@@ -16,17 +24,16 @@ import { AriaLiveAnnouncer } from '../accessibility/AriaLiveAnnouncer';
 import { KeyboardShortcutsModal } from '../accessibility/KeyboardShortcutsModal';
 
 export const HomePage: React.FC = () => {
-  const [selectedRegionId, setSelectedRegionId] = useState<string>('amazon_central');
+  const [selectedRegionId, setSelectedRegionId] = useState('amazon_central');
   const [dataset, setDataset] = useState<RegionDataset | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [liveAnnouncement, setLiveAnnouncement] = useState<string>('');
-  const [isShortcutsOpen, setIsShortcutsOpen] = useState<boolean>(false);
+  const [liveAnnouncement, setLiveAnnouncement] = useState('');
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
 
-  // Carregar dataset quando a região for alterada
   useEffect(() => {
     let isMounted = true;
-    const regionOpt = AVAILABLE_REGIONS.find((r) => r.id === selectedRegionId);
+    const regionOpt = AVAILABLE_REGIONS.find((region) => region.id === selectedRegionId);
     if (!regionOpt) return;
 
     setLoading(true);
@@ -38,14 +45,13 @@ export const HomePage: React.FC = () => {
         if (!isMounted) return;
         setDataset(data);
         setLoading(false);
-        const obsCount = data.observations.length;
         setLiveAnnouncement(
-          `Região alterada para ${data.region_name}. ${obsCount > 0 ? `${obsCount} observações temporais carregadas.` : 'Esta é uma área candidata sob validação científica.'}`
+          `Região alterada para ${data.region_name}. ${data.observations.length} observações temporais carregadas.`
         );
       })
-      .catch((err) => {
+      .catch((error: unknown) => {
         if (!isMounted) return;
-        setErrorMessage(err.message || 'Erro ao carregar dados científicos.');
+        setErrorMessage(error instanceof Error ? error.message : 'Erro ao carregar dados científicos.');
         setLoading(false);
         setLiveAnnouncement('Erro ao carregar dados científicos.');
       });
@@ -55,17 +61,14 @@ export const HomePage: React.FC = () => {
     };
   }, [selectedRegionId]);
 
-  const observations = dataset?.observations || [];
-
+  const observations = dataset?.observations ?? [];
   const handleStepChange = (index: number) => {
-    if (observations[index]) {
-      const obs = observations[index];
-      const rate = obs.scientific_indicators.mean_precipitation_rate.value;
-      const rateStr = rate !== null ? `${rate} milímetros por hora` : 'dados não disponíveis';
-      setLiveAnnouncement(
-        `Passo ${index + 1} de ${observations.length}. ${rateStr}.`
-      );
-    }
+    const observation = observations[index];
+    if (!observation) return;
+    const rate = observation.scientific_indicators.mean_precipitation_rate.value;
+    setLiveAnnouncement(
+      `Passo ${index + 1} de ${observations.length}. ${rate === null ? 'Dados não disponíveis.' : `${rate} milímetros por hora.`}`
+    );
   };
 
   const {
@@ -78,13 +81,8 @@ export const HomePage: React.FC = () => {
     prevStep,
     setStep,
     toggleMute
-  } = useAudioPlayer({
-    observations,
-    stepDurationMs: 1500,
-    onStepChange: handleStepChange
-  });
+  } = useAudioPlayer({ observations, stepDurationMs: 1500, onStepChange: handleStepChange });
 
-  // Atalhos de teclado globais
   useKeyboardShortcuts({
     onTogglePlay: togglePlay,
     onNextStep: nextStep,
@@ -97,118 +95,129 @@ export const HomePage: React.FC = () => {
       <AriaLiveAnnouncer message={liveAnnouncement} />
       <Header onOpenShortcuts={() => setIsShortcutsOpen(true)} />
 
-      <main id="main-content" className="main-content" tabIndex={-1}>
-        <div className="container">
-          <section className="explorer-intro" aria-labelledby="explorer-title">
-            <p className="eyebrow">Observação da Terra · Exploração sonora</p>
-            <h2 id="explorer-title">Ouça o ritmo da chuva na Terra.</h2>
-            <p>Explore as mudanças da precipitação ao longo do tempo, com contexto científico apresentado de forma acessível.</p>
-          </section>
-
-          <div id="region" className="workspace-region">
-            <RegionSelector
-              selectedRegionId={selectedRegionId}
-              onSelectRegion={setSelectedRegionId}
-            />
-            {dataset && (
-              <div className="region-context" aria-live="polite">
-                <span className="region-context-icon" aria-hidden="true"><Map size={18} /></span>
-                <div>
-                  <span className="eyebrow">REGIÃO EM EXPLORAÇÃO</span>
-                  <h3>{dataset.region_name}</h3>
-                  <p>{dataset.country} <span aria-hidden="true">·</span> Precipitação <span aria-hidden="true">·</span> Resolução {dataset.temporal_resolution.replace('_', ' ')}</p>
-                </div>
+      <main id="main-content" className="main-content">
+        <h1 className="sr-only">Sonatlas Earth Explorer</h1>
+        <div className="explorer-layout">
+          <section id="map" className="map-panel" aria-label="Área do mapa">
+            <h2 className="map-heading"><Map size={17} aria-hidden="true" /> Mapa da região</h2>
+            {dataset ? (
+              <MapView
+                boundingBox={dataset.bounding_box}
+                regionName={dataset.region_name}
+                isPlaceholder={dataset.is_placeholder}
+              />
+            ) : (
+              <div className="map-loading-state" role={errorMessage ? 'alert' : 'status'}>
+                {errorMessage ? <AlertTriangle aria-hidden="true" /> : <Map aria-hidden="true" />}
+                <strong>{errorMessage ? 'Mapa indisponível' : 'Preparando a área de exploração'}</strong>
+                <span>{errorMessage ?? 'Aguardando os dados da região selecionada.'}</span>
               </div>
             )}
-          </div>
+            {dataset?.is_sample && (
+              <p className="sample-strip"><AlertTriangle size={14} aria-hidden="true" /> Amostra técnica — valores demonstrativos, não são observações NASA verificadas.</p>
+            )}
+          </section>
 
-          {loading && (
-            <div className="card loading-card" role="status">
-              <p>Carregando dados científicos de satélite...</p>
-            </div>
-          )}
-
-          {errorMessage && (
-            <div className="card error-card" role="alert">
-              <p><strong>Aviso:</strong> {errorMessage}</p>
-            </div>
-          )}
-
-          {!loading && !errorMessage && dataset?.is_sample && (
-            <aside className="sample-notice" aria-label="Aviso sobre dados demonstrativos">
-              <AlertTriangle size={19} aria-hidden="true" />
-              <p><strong>Amostra técnica demonstrativa.</strong> Estes valores servem para validar a interface e não representam observações reais verificadas da NASA.</p>
-            </aside>
-          )}
-
-          {!loading && !errorMessage && dataset && (
-            <>
-              {observations.length === 0 && (
-                <aside className="empty-notice" role="status">
-                  <CloudRain size={20} aria-hidden="true" />
-                  <p><strong>Observações indisponíveis.</strong> Ainda não há uma série temporal publicada para esta região.</p>
-                </aside>
-              )}
-
-              <div className="exploration-grid">
-                <div id="map">
-                  <MapView
-                    boundingBox={dataset.bounding_box}
-                    regionName={dataset.region_name}
-                    isPlaceholder={dataset.is_placeholder}
-                  />
-                </div>
-                <div id="indicators">
-                  {currentObservation ? (
-                    <ScientificSummary
-                      observation={currentObservation}
-                      regionName={dataset.region_name}
-                    />
-                  ) : (
-                    <section className="card" aria-labelledby="summary-title">
-                      <h2 id="summary-title" className="card-title">Indicadores Científicos</h2>
-                      <p>Indicadores indisponíveis até que uma observação temporal seja publicada para esta região.</p>
-                    </section>
-                  )}
-                </div>
-                <section id="playback" className="playback-panel" aria-labelledby="playback-heading">
-                  <div className="section-heading">
-                    <Waves size={19} aria-hidden="true" />
-                    <h2 id="playback-heading">Exploração temporal e sonora</h2>
-                  </div>
-                  <AudioPlayer
-                    isPlaying={isPlaying}
-                    isMuted={isMuted}
-                    currentIndex={currentIndex}
-                    totalSteps={observations.length}
-                    onTogglePlay={togglePlay}
-                    onNextStep={nextStep}
-                    onPrevStep={prevStep}
-                    onToggleMute={toggleMute}
-                    disabled={observations.length === 0}
-                  />
-
-                  <Timeline
-                    observations={observations}
-                    currentIndex={currentIndex}
-                    onSelectStep={setStep}
-                  />
-                </section>
-                <div className="exploration-legend">
-                  <SoundLegend />
-                </div>
+          <section className="side-panel left-panel" aria-labelledby="exploration-title">
+            <div className="panel-content">
+              <div className="panel-heading">
+                <h2 id="exploration-title">Exploração</h2>
               </div>
-            </>
-          )}
+              <RegionSelector
+                selectedRegionId={selectedRegionId}
+                onSelectRegion={setSelectedRegionId}
+              />
+              <VariableSelector />
+              <section className="layer-section" aria-labelledby="layers-title">
+                <div className="control-section-heading">
+                  <Layers size={16} aria-hidden="true" />
+                  <h3 id="layers-title">Camadas geográficas</h3>
+                </div>
+                <p className="layer-name">Contorno da área selecionada</p>
+              </section>
+              {loading && <p className="inline-status" role="status">Carregando dataset da região…</p>}
+              {errorMessage && <p className="inline-error" role="alert">{errorMessage}</p>}
+            </div>
+          </section>
+
+          <section className="side-panel right-panel" aria-labelledby="signal-title">
+            <div className="panel-content">
+              <div className="panel-heading">
+                <h2 id="signal-title">Dados e som</h2>
+              </div>
+              <section id="indicators" className="data-section" aria-label="Indicadores científicos">
+                {dataset?.is_sample && (
+                  <p className="sample-status">Amostra técnica — não é observação NASA verificada.</p>
+                )}
+                {currentObservation && dataset ? (
+                  <>
+                    <div className="current-value">
+                      <span>Precipitação média</span>
+                      <strong>{formatPrecipitationRate(currentObservation.scientific_indicators.mean_precipitation_rate.value)}</strong>
+                      <time dateTime={currentObservation.timestamp_utc}>{formatTimestamp(currentObservation.timestamp_utc)}</time>
+                    </div>
+                    <p className={`availability-status availability-${currentObservation.availability.status}`}>
+                      {currentObservation.availability.status === 'missing'
+                        ? 'Dados ausentes neste período'
+                        : `${currentObservation.availability.status === 'partial' ? 'Disponibilidade parcial' : 'Dados disponíveis'} · ${Math.round(currentObservation.availability.valid_cells_ratio * 100)}% de células válidas`}
+                    </p>
+                    <details className="details-disclosure">
+                      <summary>Detalhes da observação e fonte</summary>
+                      <ScientificSummary observation={currentObservation} regionName={dataset.region_name} />
+                      <dl className="source-metadata">
+                        <div><dt>Fonte</dt><dd>{dataset.data_source}</dd></div>
+                        <div><dt>Produto</dt><dd>{dataset.product_name} · {dataset.product_version}</dd></div>
+                        <div><dt>Resolução temporal</dt><dd>{dataset.temporal_resolution.replace('_', ' ')}</dd></div>
+                      </dl>
+                    </details>
+                  </>
+                ) : (
+                  <p className="data-empty" role="status">{loading ? 'Carregando observações…' : 'Sem observações disponíveis para este período.'}</p>
+                )}
+              </section>
+
+              <section id="playback" className="sonification-section" aria-label="Controles de sonificação">
+                <AudioPlayer
+                  isPlaying={isPlaying}
+                  isMuted={isMuted}
+                  currentIndex={currentIndex}
+                  totalSteps={observations.length}
+                  onTogglePlay={togglePlay}
+                  onNextStep={nextStep}
+                  onPrevStep={prevStep}
+                  onToggleMute={toggleMute}
+                  disabled={observations.length === 0}
+                />
+              </section>
+
+              <details className="details-disclosure sound-disclosure">
+                <summary><Waves size={15} aria-hidden="true" /> Calibração sonora</summary>
+                <SoundLegend />
+              </details>
+            </div>
+          </section>
+
+          <section className="timeline-panel" aria-labelledby="timeline-panel-title">
+            <div className="timeline-panel-heading">
+              <div>
+                <h2 id="timeline-panel-title">Linha temporal</h2>
+              </div>
+              <div className="selected-period" aria-live="polite">
+                <CalendarClock size={16} aria-hidden="true" />
+                <span>{currentObservation ? formatTimestamp(currentObservation.timestamp_utc) : 'Nenhum período selecionado'}</span>
+              </div>
+            </div>
+            <Timeline
+              observations={observations}
+              currentIndex={currentIndex}
+              onSelectStep={setStep}
+            />
+          </section>
         </div>
       </main>
 
       <Footer />
-
-      <KeyboardShortcutsModal
-        isOpen={isShortcutsOpen}
-        onClose={() => setIsShortcutsOpen(false)}
-      />
+      <KeyboardShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
     </div>
   );
 };
