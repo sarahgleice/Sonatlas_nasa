@@ -43,7 +43,7 @@ export const Timeline: React.FC<TimelineProps> = ({
                   {obs.timestamp_utc.substring(11, 16)} UTC
                 </span>
                 <span className="step-rate">
-                  {rate !== null ? `${rate.toFixed(1)} mm/h` : 'N/D'}
+                  {rate !== null ? `${rate.toFixed(1)} mm/h` : 'Dado ausente'}
                 </span>
               </button>
             </li>

@@ -35,9 +35,9 @@ export const MapView: React.FC<MapViewProps> = ({
         scrollWheelZoom: false // Evitar sequestro de scroll do teclado
       });
 
-      // Camada base CartoDB Dark Matter / OpenStreetMap acessível
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+      // Base tiles are requested only for the map area currently in view.
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 18
       }).addTo(map);
 
