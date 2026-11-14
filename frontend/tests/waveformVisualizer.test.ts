@@ -66,7 +66,6 @@ describe('integração do AudioEngine com o visualizador', () => {
     expect(gain.connect).toHaveBeenCalledWith(analyser);
     expect(analyser.connect).toHaveBeenCalledWith(context.destination);
     
-    // Verifica se stopPlayback interrompe as fontes ativas corretamente
     engine.stopPlayback();
     expect(oscillator.stop).toHaveBeenCalledWith(context.currentTime);
 
@@ -125,8 +124,9 @@ describe('integração do AudioEngine com o visualizador', () => {
     const onError = vi.fn();
     engine.subscribeError(onError);
 
-    // Adiciona sequência fictícia para passar na checagem inicial do resume()
+    // Injeta sequência E o contexto falso para passar no bloqueio inicial da função
     engine['currentSequence'] = [{}] as any; 
+    engine['ctx'] = context as unknown as AudioContext;
     
     // Testa falha no resume()
     await engine.resume();
