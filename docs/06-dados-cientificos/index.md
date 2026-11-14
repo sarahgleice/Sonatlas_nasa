@@ -71,11 +71,20 @@ O motor de sonificação traduz primordialmente a **taxa de precipitação insta
 ## 4. Delimitação das Regiões de Estudo
 
 ### 4.1. Região Nacional: Amazônia Central (Brasil)
-- **Status:** <span class="badge-verified">Verificada Preliminarmente</span>
+- **Status:** <span class="badge-verified">Verificada Oficialmente com Dados Reais NASA</span>
 - **Coordenadas de Referência (WGS84):**
-  - Latitude: $-4.0^\circ$ a $-1.5^\circ$ Sul
-  - Longitude: $-61.5^\circ$ a $-58.5^\circ$ Oeste
+  - Latitude: $-4.0^\circ$ a $-1.5^\circ$ Sul (25 células de $0.1^\circ$)
+  - Longitude: $-61.5^\circ$ a $-58.5^\circ$ Oeste (30 células de $0.1^\circ$)
+  - **Total de Células:** 750 células espaciais.
+- **Série Temporal Real Processada:** Sequência de seis grânulos consecutivos de 30 minutos em 01/01/2024 (00:00:00 UTC a 02:59:59 UTC) extraídos do produto `GPM_3IMERGHHE.07` (Early Run V07B), lidos a partir de `processing/data/raw/*.HDF5`.
+- **Dataset Real Oficial:** Publicado em [`frontend/public/data/amazon/observations.json`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/frontend/public/data/amazon/observations.json) (espelhado em [`frontend/public/data/amazon_central_series.json`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/frontend/public/data/amazon_central_series.json)), com `is_sample: false`.
+- **Pipeline Científico de Processamento:** [`processing/scripts/process_amazon_real.py`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/processing/scripts/process_amazon_real.py).
 - **Justificativa Bioclimática:** Região de confluência dos Rios Negro e Solimões/Amazonas, próxima à Reserva ZF2 e à Torre ATTO (*Amazon Tall Tower Observatory*). Apresenta um dos regimes convectivos tropicais mais dinâmicos do planeta.
+
+#### Diferenciação entre Dados Reais e Sintéticos
+- **`processing/scripts/process_amazon_real.py`:** Pipeline oficial que realiza a abertura dos HDF5 reais via `h5py`, tratamento de sentinelas, transposição matricial, recorte e cálculo de indicadores ponderados por cosseno da latitude (`is_sample: false`).
+- **`processing/scripts/run_pipeline.py --demo`:** Script de demonstração offline para gerar o arquivo sintético de bootstrap [`processing/data/samples/amazon_central_sample.json`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/processing/data/samples/amazon_central_sample.json) (`is_sample: true`).
+- A autenticidade científica dos dados é garantida pela rastreabilidade e proveniência dos grânulos brutos HDF5 arquivados, e não exclusivamente por flags booleanas.
 
 ### 4.2. Região Internacional: Área de Estudo Candidata
 - **Status:** <span class="badge-review">Candidata Preliminar Sob Validação</span>
@@ -138,3 +147,13 @@ O acesso aos dados do GPM IMERG no NASA GES DISC é gratuito, mas requer autenti
    ```bash
    python processing/scripts/inspect_imerg.py processing/data/raw/seu_arquivo.HDF5
    ```
+
+---
+
+## 8. Limitações Científicas da Prova de Conceito Atual
+
+Com o intuito de manter a mais rigorosa transparência e honestidade metodológica:
+
+1. **Extensão Temporal:** A série temporal atualmente integrada cobre uma sequência de seis observações de 30 minutos (janela de 3 horas em 01/01/2024, das 00:00 às 02:59 UTC). Trata-se de uma prova de conceito funcional da pipeline e da sonificação, não devendo ser interpretada como caracterização estatística do regime pluviométrico sazonal da Amazônia.
+2. **Geometria de Delimitação:** O recorte espacial é uma *bounding box* retangular delimitada por coordenadas lat/lon WGS84, não correspondendo aos limites biológicos, hidrográficos ou políticos exatos da bacia amazônica.
+3. **Produto Satelital:** Utiliza-se o algoritmo IMERG versão **Early Run V07B** (`GPM_3IMERGHHE`), que privilegia baixa latência (~4h após observação) com base em sensores de micro-ondas e infravermelho. Não se trata do produto **Final Run** (`GPM_3IMERGHH`), cuja calibração retrospectiva com dados de pluviômetros de solo (GPCC) requer meses de processamento.

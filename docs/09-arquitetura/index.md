@@ -123,9 +123,30 @@ Os módulos de mapa, processamento científico e áudio/player mantêm seus arqu
 
 ### Estado da integração IMERG
 
-O contrato de integração do frontend é o `RegionDataset` em `frontend/src/types/dataset.ts`, publicado como JSON estático em `frontend/public/data/`. O arquivo `amazon_central_series.json` atualmente disponível está marcado com `is_sample: true`. O `processing/scripts/run_pipeline.py` gera essa amostra demonstrativa; `GPMExtractor` recebe matrizes e faz o recorte espacial, mas não baixa nem extrai grânulos IMERG. Portanto, os valores atuais não são observações NASA reais.
+O contrato de integração do frontend é o `RegionDataset` em `frontend/src/types/dataset.ts`, publicado como JSON estático em `frontend/public/data/`.
 
-Para integrar observações oficiais, o pipeline existente deve exportar o mesmo contrato após extração e validação: produto/versão e origem, limites geográficos, resolução temporal, timestamps UTC, unidade de cada indicador, estado e razão de disponibilidade por observação, nulos preservados e `is_sample: false` somente após validação da proveniência. O frontend não deve alterar ou inferir medições para preencher campos ausentes.
+A integração com **dados reais da NASA** para a Amazônia Central foi implementada e auditada tecnicamente:
+
+- **Fonte Oficial:** NASA Earthdata GES DISC — Missão Global Precipitation Measurement (GPM).
+- **Produto e Versão:** `GPM_3IMERGHHE` (IMERG Early Run), versão **V07B**.
+- **Data e Janela Temporal:** 01/01/2024, cobrindo seis passos consecutivos de 30 minutos das 00:00:00 às 02:59:59 UTC (horários de início em 00:00, 00:30, 01:00, 01:30, 02:00 e 02:30 UTC).
+- **Variável e Unidade:** `/Grid/precipitation` em taxa instantânea de **`mm/hr`**.
+- **Recorte Espacial da Amazônia Central:** Bounding box delimitada pelas latitudes $-4.0^\circ$ a $-1.5^\circ$ Sul e longitudes $-61.5^\circ$ a $-58.5^\circ$ Oeste, totalizando **750 células espaciais** ($25 \times 30$ células de $0.1^\circ \times 0.1^\circ$).
+- **Dataset Real Publicado:** [`frontend/public/data/amazon/observations.json`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/frontend/public/data/amazon/observations.json) (espelhado em [`frontend/public/data/amazon_central_series.json`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/frontend/public/data/amazon_central_series.json)), com `is_sample: false` comprovado por proveniência direta dos grânulos HDF5.
+- **Pipeline Científico Oficial:** [`processing/scripts/process_amazon_real.py`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/processing/scripts/process_amazon_real.py), responsável pela leitura dos grânulos HDF5, tratamento de `_FillValue`, transposição matricial `(lat, lon)` e cálculo de média ponderada por cosseno da latitude.
+
+#### Diferenciação entre Dados Reais e Sintéticos
+
+Para preservar a rastreabilidade e integridade científica do projeto:
+- **`processing/scripts/run_pipeline.py --demo`:** Script de bootstrap que gera a amostra sintética [`processing/data/samples/amazon_central_sample.json`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/processing/data/samples/amazon_central_sample.json) (`is_sample: true`), voltado a testes rápidos offline de desenvolvimento sem necessidade de credenciais NASA.
+- **`processing/scripts/process_amazon_real.py`:** Orquestrador científico oficial que processa grânulos brutos HDF5 reais baixados do GES DISC (`processing/data/raw/*.HDF5`) e gera observações oficiais auditadas (`is_sample: false`).
+- Nenhum arquivo é considerado real unicamente pela flag `is_sample: false`; a autenticidade é garantida pela proveniência dos grânulos brutos baixados e verificados numericamente.
+
+#### Limitações Científicas da Prova de Conceito
+
+1. **Janela Temporal:** A demonstração atual processa uma sequência de seis observações de 30 minutos (janela de 3 horas), servindo como prova de conceito da esteira ponta a ponta e da sonificação, não constituindo uma caracterização climatológica de longo prazo da Amazônia.
+2. **Delimitação Espacial:** O recorte adotado é uma *bounding box* retangular de referência geofísica, e não o contorno hidrográfico ou biomático exato da floresta amazônica.
+3. **Produto Early Run:** Utiliza o produto `GPM_3IMERGHHE` (Early Run, latência de ~4h), voltado a monitoramento rápido, e não o `GPM_3IMERGHH` (Final Run), cuja calibração com a rede global de pluviômetros de superfície (GPCC) requer meses de consolidação.
 
 ## 5. Registro de Decisões Arquiteturais (ADRs)
 
