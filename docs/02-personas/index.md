@@ -1,155 +1,128 @@
 # 02. Personas e Usuários
 
 > **Nota Metodológica Obrigatória:**  
-> As personas descritas neste documento são **representações arquetípicas hipotéticas** desenvolvidas para guiar decisões de arquitetura de software, design de interação e requisitos de acessibilidade do SONATLAS. Elas não representam resultados empíricos de entrevistas ou pesquisas com usuários reais já concluídas pela equipe.
+> As personas descritas neste documento são **representações arquetípicas hipotéticas** desenvolvidas para orientar as decisões de engenharia de software, priorização de requisitos, design de interação e acessibilidade do SONATLAS. Elas não representam resultados empíricos de pesquisas de campo já concluídas, devendo ser validadas ao longo do ciclo de vida do produto.
 
 ---
 
 ## 1. Visão Geral dos Perfis de Usuário
 
-Para assegurar que o desenvolvimento atenda tanto ao rigor científico quanto à acessibilidade universal, definimos quatro personas hipotéticas divididas em **público prioritário** e **públicos secundários**:
+Para assegurar que o desenvolvimento do SONATLAS atenda com excelência tanto à acessibilidade universal quanto à fidelidade científica, estruturamos quatro personas hipotéticas complementares:
 
 ```mermaid
 graph LR
     subgraph Prioritário
-        P1["Persona 1: André Mendes<br/>Pessoa Cega / Analista de Acessibilidade"]
+        P1["PERSONA 01: Helena<br/>Pessoa cega ou com baixa visão"]
     end
     subgraph Secundários
-        P2["Persona 2: Camila Rocha<br/>Estudante do Ensino Médio"]
-        P3["Persona 3: Profa. Mariana Esteves<br/>Educadora de Ciências"]
-        P4["Persona 4: Dr. Lucas Ndong<br/>Pesquisador Climatológico"]
+        P2["PERSONA 02: Lucas<br/>Estudante de Ciências e Tecnologia"]
+        P3["PERSONA 03: Mariana<br/>Professora e Divulgadora Científica"]
+        P4["PERSONA 04: Rafael<br/>Pesquisador em Geociências e Dados"]
     end
 ```
 
 ---
 
-## 2. Persona 1 (Prioritária): Pessoa Cega / Usuário de Tecnologia Assistiva
+## 2. PERSONA 01 — Helena (Público Prioritário)
 
 <div class="sonatlas-card">
-  <div class="sonatlas-card-number">Persona 01 &bull; Público Prioritário</div>
-  <div class="sonatlas-card-title">André Mendes, 29 anos</div>
+  <div class="sonatlas-card-number">Persona 01 &bull; Público Prioritário de Acessibilidade</div>
+  <div class="sonatlas-card-title">Helena &bull; Pessoa cega ou com baixa visão</div>
   <div class="sonatlas-card-text">
-    <strong>Ocupação:</strong> Analista de Acessibilidade Digital e entusiasta de astronomia e climatologia.<br/>
-    <strong>Localização:</strong> São Paulo, Brasil.<br/>
-    <strong>Tecnologias Assistivas:</strong> Leitor de tela NVDA (Windows) e VoiceOver (iOS); navegação estritamente via teclado.
+    <strong>Perfil:</strong> Usuária ativa de tecnologia assistiva digital e leitora assídua de conteúdos científicos e culturais acessíveis.<br/>
+    <strong>Tecnologias Utilizadas:</strong> Leitores de tela (NVDA no desktop e VoiceOver no smartphone); navegação 100% via teclado.<br/>
+    <strong>Motivação:</strong> Acessar informações meteorológicas e climáticas globais com autonomia e sem intermediação visual.
   </div>
 </div>
 
-### Contexto de Uso
-André tem grande paixão por ciência e acompanha os lançamentos da NASA. No entanto, frustra-se com frequência porque as plataformas científicas disponibilizam dados através de mapas de calor visuais inacessíveis (`colormaps`), imagens PNG sem descrições alternativas semânticas e gráficos sem árvores de acessibilidade.
-
-### Objetivos de Utilização
-- Compreender a variação temporal de eventos de tempestade e estiagem na Amazônia de forma autônoma.
-- Explorar dados científicos através de áudio que traduza dados reais, e não simples efeitos sonoros ilustrativos ou decorativos.
-
 ### Necessidades Principais
-- Navegação fluida e sem atalhos conflitantes usando a tecla `Tab` e setas.
-- Anúncios concisos e discretos via `aria-live`, sem repetições irritantes a cada segundo.
-- Legenda sonora para treinar seu modelo mental antes de iniciar a reprodução da série completa.
+- **Independência do Mapa Visual:** Explorar e selecionar regiões territoriais por meio de alternativas textuais semânticas estruturadas.
+- **Interação Fluida com Leitores de Tela:** Navegar por todos os botões, controles de linha do tempo e seletores com anúncios precisos via `aria-live`.
+- **Compreensão Intuitiva dos Sons:** Dispor de uma **Legenda Sonora** interativa para calibrar seu modelo mental acústico antes de ouvir séries complexas.
+- **Controle Total da Reprodução:** Pausar, retroceder, avançar passo a passo e repetir trechos sonoros sem restrições.
 
-### Dificuldades e Dores Enfrentadas
-- Elementos `<canvas>` ou gráficos SVG inacessíveis sem texto estruturado equivalente.
-- Interfaces que travam o leitor de tela ou exigem clique de mouse para interagir.
-- Sons agudos estridentes ou frequências desconfortáveis que causam fadiga auditiva precoce.
+### Dificuldades e Barreiras Enfrentadas
+- Plataformas tradicionais que apresentam mapas em `<canvas>` ou imagens PNG sem audiodescrição ou texto equivalente.
+- Falta de controle temporal nos áudios, forçando o usuário a ouvir arquivos longos sem poder pausar no ponto desejado.
+- Confusão auditiva entre "ausência de dados de satélite" e "ausência de chuva" quando a plataforma não sinaliza erros instrumentais.
 
-### Cenário de Uso Hipotético
-André acessa o SONATLAS usando o leitor de tela NVDA. Ele escuta o anúncio de boas-vindas, pula diretamente para a Legenda Sonora através do atalho de salto (*skip-link*), testa o som de uma "chuva fraca" e de uma "tempestade severa". Em seguida, seleciona a Amazônia Central, aciona a barra de espaço para iniciar a reprodução e consegue discernir com nitidez o momento exato em que a tempestade atinge o pico convectivo.
+### Cenário de Uso Típico
+Helena acessa a aplicação via navegador utilizando o leitor de tela NVDA. Por meio da tecla `Tab`, ela salta o cabeçalho e acessa a **Legenda Sonora**, onde clica nos botões de teste para ouvir a diferença entre chuva fraca, chuva moderada e tempestade severa. Em seguida, seleciona a Amazônia Central pelo seletor textual acessível, pressiona a barra de espaço para iniciar o reprodutor e acompanha a dinâmica da precipitação pelo áudio, ouvindo simultaneamente as audiodescrições em linguagem natural.
 
 ---
 
-## 3. Persona 2 (Secundária): Estudante
+## 3. PERSONA 02 — Lucas (Estudante)
 
 <div class="sonatlas-card">
-  <div class="sonatlas-card-number">Persona 02 &bull; Educação Básica / Superior</div>
-  <div class="sonatlas-card-title">Camila Rocha, 17 anos</div>
+  <div class="sonatlas-card-number">Persona 02 &bull; Educação e Engajamento Científico</div>
+  <div class="sonatlas-card-title">Lucas &bull; Estudante interessado em ciências e tecnologia</div>
   <div class="sonatlas-card-text">
-    <strong>Ocupação:</strong> Estudante do 3º ano do Ensino Médio.<br/>
-    <strong>Localização:</strong> Manaus, Amazonas, Brasil.<br/>
-    <strong>Perfil Tecnológico:</strong> Nativa digital em smartphones e notebooks; prefere experiências multissensoriais dinâmicas.
+    <strong>Perfil:</strong> Aluno do Ensino Médio / Iniciação Científica Júnior, apaixonado por física, astronomia e programação.<br/>
+    <strong>Tecnologias Utilizadas:</strong> Laptop pessoal e smartphone; familiarizado com interfaces web modernas e dinâmicas.<br/>
+    <strong>Motivação:</strong> Encontrar ferramentas interativas para compreender fenômenos atmosféricos e preparar apresentações escolares.
   </div>
 </div>
 
-### Contexto de Uso
-Camila está preparando um trabalho escolar interdisciplinar de Geografia e Física sobre a importância da Bacia Amazônica na distribuição de umidade continental e procura fontes inovadoras da NASA para apresentar à turma.
-
-### Objetivos de Utilização
-- Apresentar um projeto interativo e envolvente que surpreenda seus colegas e professores.
-- Ouvir a dinâmica da chuva em sua própria região (Amazônia Central) e relacionar a frequência sonora com a intensidade física.
-
 ### Necessidades Principais
-- Interface responsiva, rápida e intuitiva que funcione sem instalação prévia no navegador.
-- Explicações claras e diretas sobre as grandezas físicas (o que significa uma taxa de 15 mm/h).
-- Controles visuais atraentes que sincronizem o avanço do mapa com o som emitido.
+- **Compreensão de Fenômenos Terrestres:** Entender como tempestades tropicais se formam e se dissipam no espaço e no tempo.
+- **Exploração Interativa:** Relacionar a intensidade da chuva expressa em milímetros por hora (`mm/h`) com a frequência sonora emitida.
+- **Sincronização Multissensorial:** Ver o mapa 2D destacar a região enquanto escuta a evolução dos pulsos sonoros.
 
-### Dificuldades e Dores Enfrentadas
-- Portais científicos oficiais com linguagem hermética e navegação truncada voltada apenas para doutores.
-- Dificuldade em visualizar dados de satélite de forma atraente para apresentações escolares.
+### Dificuldades e Barreiras Enfrentadas
+- Artigos e portais científicos com terminologia densa, tabelas estáticas frias e gráficos de difícil interpretação.
+- Falta de contextualização sobre o impacto real dos números e das taxas de precipitação.
 
-### Cenário de Uso Hipotético
-Camila conecta seu notebook ao projetor e à caixa de som da sala de aula. Ao reproduzir o SONATLAS, ela demonstra aos colegas como a passagem de uma linha de instabilidade tropical sobre a Amazônia pode ser percebida como uma aceleração rítmica e elevação do tom acústico.
+### Cenário de Uso Típico
+Lucas utiliza o SONATLAS durante um trabalho sobre o ciclo hidrológico da Amazônia. Ele conecta o fone de ouvido, seleciona a série temporal e percebe nitidamente pelo aumento do *pitch* (som agudo) e aceleração dos pulsos como uma linha de instabilidade tropical atinge seu pico convectivo.
 
 ---
 
-## 4. Persona 3 (Secundária): Educadora / Divulgadora Científica
+## 4. PERSONA 03 — Mariana (Educadora / Divulgadora Científica)
 
 <div class="sonatlas-card">
-  <div class="sonatlas-card-number">Persona 03 &bull; Divulgação Científica</div>
-  <div class="sonatlas-card-title">Profa. Dra. Mariana Esteves, 42 anos</div>
+  <div class="sonatlas-card-number">Persona 03 &bull; Prática Pedagógica Inclusiva</div>
+  <div class="sonatlas-card-title">Mariana &bull; Professora e divulgadora científica</div>
   <div class="sonatlas-card-text">
-    <strong>Ocupação:</strong> Professora de Ciências e Coordenadora de Feira de Ciências no Ensino Fundamental.<br/>
-    <strong>Localização:</strong> Belo Horizonte, Minas Gerais, Brasil.<br/>
-    <strong>Perfil Tecnológico:</strong> Usuária experiente de plataformas de ensino e ferramentas multimídia.
+    <strong>Perfil:</strong> Docente de Ciências / Geografia no Ensino Fundamental e Médio, coordenadora de feiras científicas escolares.<br/>
+    <strong>Tecnologias Utilizadas:</strong> Projetores multimídia, computadores e plataformas educacionais digitais.<br/>
+    <strong>Motivação:</strong> Promover dinâmicas inclusivas em sala de aula onde alunos videntes e com deficiência visual participem com igualdade cognitiva.
   </div>
 </div>
 
-### Contexto de Uso
-Mariana planeja atividades pedagógicas integradas entre Física (acústica e ondas), Geografia (climatologia e sensoriamento remoto) e Cidadania (inclusão de alunos com deficiência visual na sala de aula regular).
-
-### Objetivos de Utilização
-- Utilizar a sonificação como recurso didático para ensinar que som é informação e onda física.
-- Promover uma atividade inclusiva onde estudantes com e sem deficiência visual colaborem no mesmo nível de percepção.
-
 ### Necessidades Principais
-- Rastreabilidade e fundamentação teórica: saber exatamente de onde vêm os dados (GPM IMERG) e como foram processados.
-- Controle passo a passo: poder pausar a qualquer instante, inspecionar a observação e debater com os estudantes.
-- Diferenciação clara entre taxa de precipitação instantânea (`mm/h`) e acumulação total (`mm`).
+- **Recurso Didático Inclusivo:** Ensinar conceitos de ondas sonoras, climatologia e sensoriamento remoto de forma tangível e integrada.
+- **Controles Didáticos Precisos:** Poder congelar um instante da série temporal para debater com a turma o que aquele som representa.
+- **Rigor Terminológico:** Garantia de que a plataforma diferencie explicitamente taxa de precipitação (`mm/h`) de precipitação acumulada (`mm`).
 
-### Dificuldades e Dores Enfrentadas
-- Softwares educativos que simplificam excessivamente os dados científicos ou usam simulações irreais.
-- Escassez de ferramentas acessíveis para demonstrar ciências da Terra a estudantes cegos.
+### Dificuldades e Barreiras Enfrentadas
+- Escassez de ferramentas pedagógicas digitais que contemplem estudantes cegos no ensino de ciências exatas e da Terra.
+- Plataformas que utilizam efeitos sonoros puramente fantasiosos sem correspondência matemática com os dados.
 
-### Cenário de Uso Hipotético
-Mariana propõe uma dinâmica em aula onde todos os estudantes vendam os olhos por alguns minutos e escutam a série temporal do SONATLAS. Ao final, pede que desenhem ou descrevam em que instante a chuva esteve mais concentrada, revelando a eficácia do canal auditivo na interpretação científica.
+### Cenário de Uso Típico
+Mariana projeta o SONATLAS na sala de aula e pede aos alunos que fechem os olhos por dois minutos para escutarem a sonificação da Amazônia Central. Ela pausa a reprodução no terceiro passo e conduz uma discussão sobre como a densidade de pulsos permitiu inferir a porcentagem de área coberta pela chuva.
 
 ---
 
-## 5. Persona 4 (Secundária): Pesquisador / Analista Ambiental
+## 5. PERSONA 04 — Rafael (Pesquisador / Analista de Dados)
 
 <div class="sonatlas-card">
-  <div class="sonatlas-card-number">Persona 04 &bull; Especialista em Geociências</div>
-  <div class="sonatlas-card-title">Dr. Lucas Ndong, 36 anos</div>
+  <div class="sonatlas-card-number">Persona 04 &bull; Rigor Científico e Validação</div>
+  <div class="sonatlas-card-title">Rafael &bull; Pesquisador interessado em dados de observação da Terra</div>
   <div class="sonatlas-card-text">
-    <strong>Ocupação:</strong> Pesquisador em Hidrologia Tropical e Sensoriamento Remoto.<br/>
-    <strong>Localização:</strong> Libreville, Gabão / Cooperação Internacional.<br/>
-    <strong>Perfil Tecnológico:</strong> Especialista em Python, GIS, dados NetCDF/HDF5 e computação em nuvem.
+    <strong>Perfil:</strong> Geógrafo e pesquisador de pós-graduação em meteorologia tropical e sensoriamento remoto por satélite.<br/>
+    <strong>Tecnologias Utilizadas:</strong> Python, GIS, dados NetCDF/HDF5 e ferramentas de exploração analítica.<br/>
+    <strong>Motivação:</strong> Avaliar métodos não visuais para triagem rápida de grandes volumes de séries temporais de precipitação.
   </div>
 </div>
 
-### Contexto de Uso
-Lucas realiza estudos comparativos do regime pluviométrico entre bacias florestais tropicais equatoriais (Bacia Amazônica e Bacia do Congo) e tem interesse em metodologias de Análise Exploratória de Dados (*Exploratory Data Analysis - EDA*) alternativas à visualização comum.
-
-### Objetivos de Utilização
-- Avaliar a viabilidade da sonificação como ferramenta rápida para triagem de anomalias ou descontinuidades temporais em grandes volumes de dados.
-- Verificar a integridade metodológica do tratamento de dados geoespaciais e ausência de dados no pipeline.
-
 ### Necessidades Principais
-- Dicionário de dados formal com metadados claros (versão do produto, satélite, flags de qualidade).
-- Garantia de que a plataforma não inventa ou interpola dados sem registrar o indicador de validade.
-- Acesso à documentação da metodologia de ponderação da área pela latitude.
+- **Transparência de Fontes:** Identificar com precisão o produto da NASA (GPM IMERG V07), resolução espacial ($0.1^\circ$) e versão do algoritmo.
+- **Rastreabilidade Metodológica:** Compreender a função de agregação espacial (ponderação pelo cosseno da latitude) e o limiar de detecção ($0.1 \text{ mm/h}$).
+- **Integridade de Dados:** Garantir que passos com dados ausentes (*missing*) não sejam mascarados ou imputados como zero.
 
-### Dificuldades e Dores Enfrentadas
-- Interfaces de demonstração que ocultam dados faltantes (*missing values*) ou os convertem em zero sem avisar.
-- Falta de padronização nas unidades de medida entre diferentes ferramentas de satélite.
+### Dificuldades e Barreiras Enfrentadas
+- Ferramentas de divulgação científica que modificam ou interpolam dados sem documentar os limites e flags de qualidade.
+- Ausência de metadados explícitos sobre o fuso horário (UTC) e janelas temporais de coleta.
 
-### Cenário de Uso Hipotético
-Lucas inspeciona a documentação técnica do SONATLAS, revisa o arquivo `data-dictionary.md`, analisa a ponderação cosseno adotada no pipeline Python e constata que a ferramenta respeita as premissas físicas do produto GPM IMERG.
+### Cenário de Uso Típico
+Rafael consulta a documentação metodológica do SONATLAS, inspeciona o dicionário de dados JSON e verifica que as grandezas físicas respeitam os padrões do produto GPM IMERG. Ele utiliza o player para identificar momentos de anomalia na série temporal e constata a consistência entre a taxa física calculada e a resposta sonora gerada.
