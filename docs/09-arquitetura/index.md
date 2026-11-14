@@ -108,7 +108,20 @@ sonatlas/
 
 ---
 
-## 4. Registro de Decisões Arquiteturais (ADRs)
+## 4. Contratos de integração do frontend
+
+`frontend/src/types/dataset.ts` é o contrato compartilhado para a integração:
+
+- **Ciência / dados:** publica `RegionDataset` em JSON em `frontend/public/data/`. `region_id`, `observations`, `timestamp_utc`, `availability` e `scientific_indicators` mantêm o formato definido pelas interfaces existentes. Marque `is_sample: true` para amostras; a interface as identifica como demonstrativas.
+- **Mapa:** recebe `boundingBox`, `regionName` e `isPlaceholder` em `MapView`; a página apenas encaminha a região e seus limites.
+- **Sonificação e player:** `TemporalObservation` é a unidade temporal compartilhada. O player recebe os passos e o índice selecionado; o motor de áudio permanece no módulo `audio/`.
+- **Composição:** `HomePage` seleciona uma região, carrega seu dataset e encaminha a mesma observação ativa ao resumo e aos controles temporais.
+
+Estados da interface: carregamento e falha do fetch são estados da página; série vazia é indisponibilidade de observações; `availability` descreve células ausentes dentro de uma observação; `is_sample` identifica dados demonstrativos. Não interprete nenhum desses estados como precipitação zero.
+
+Os módulos de mapa, processamento científico e áudio/player mantêm seus arquivos e implementação próprios; esta integração consome seus contratos existentes.
+
+## 5. Registro de Decisões Arquiteturais (ADRs)
 
 ### ADR-01: Desacoplamento Total via Arquivos JSON Estáticos
 - **Contexto:** Necessidade de permitir que o frontend funcione com latência mínima, zero custo de hospedagem de backend e total portabilidade para o hackathon.

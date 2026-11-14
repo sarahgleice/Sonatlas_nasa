@@ -19,7 +19,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenShortcuts }) => {
           </div>
         </div>
 
-        <nav aria-label="Navegação de apoio">
+        <nav className="header-nav" aria-label="Navegação principal">
+          <a href="#region">Região</a>
+          <a href="#map">Mapa</a>
+          <a href="#indicators">Indicadores</a>
+          <a href="#playback">Sonificação</a>
           <button
             onClick={onOpenShortcuts}
             className="btn btn-secondary btn-sm"

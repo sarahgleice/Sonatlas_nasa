@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { AlertTriangle, CloudRain, Map, Waves } from 'lucide-react';
 import { RegionDataset } from '../types/dataset';
 import { DataService, AVAILABLE_REGIONS } from '../services/dataService';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
@@ -30,6 +31,7 @@ export const HomePage: React.FC = () => {
 
     setLoading(true);
     setErrorMessage(null);
+    setDataset(null);
 
     DataService.loadRegionDataset(regionOpt.filePath)
       .then((data) => {
@@ -97,11 +99,28 @@ export const HomePage: React.FC = () => {
 
       <main id="main-content" className="main-content" tabIndex={-1}>
         <div className="container">
-          {/* Seletor de Região */}
-          <RegionSelector
-            selectedRegionId={selectedRegionId}
-            onSelectRegion={setSelectedRegionId}
-          />
+          <section className="explorer-intro" aria-labelledby="explorer-title">
+            <p className="eyebrow">EARTH INFORMATION, EXPERIENCED DIFFERENTLY</p>
+            <h2 id="explorer-title">A Terra tem um ritmo. Escute.</h2>
+            <p>Explore padrões de precipitação por região e ao longo do tempo, com contexto científico acessível.</p>
+          </section>
+
+          <div id="region" className="workspace-region">
+            <RegionSelector
+              selectedRegionId={selectedRegionId}
+              onSelectRegion={setSelectedRegionId}
+            />
+            {dataset && (
+              <div className="region-context" aria-live="polite">
+                <span className="region-context-icon" aria-hidden="true"><Map size={18} /></span>
+                <div>
+                  <span className="eyebrow">REGIÃO EM EXPLORAÇÃO</span>
+                  <h3>{dataset.region_name}</h3>
+                  <p>{dataset.country} <span aria-hidden="true">·</span> Precipitação <span aria-hidden="true">·</span> Resolução {dataset.temporal_resolution.replace('_', ' ')}</p>
+                </div>
+              </div>
+            )}
+          </div>
 
           {loading && (
             <div className="card loading-card" role="status">
@@ -115,11 +134,48 @@ export const HomePage: React.FC = () => {
             </div>
           )}
 
+          {!loading && !errorMessage && dataset?.is_sample && (
+            <aside className="sample-notice" aria-label="Aviso sobre dados demonstrativos">
+              <AlertTriangle size={19} aria-hidden="true" />
+              <p><strong>Amostra técnica demonstrativa.</strong> Estes valores servem para validar a interface e não representam observações reais verificadas da NASA.</p>
+            </aside>
+          )}
+
           {!loading && !errorMessage && dataset && (
             <>
-              {/* Controles do Player e Linha do Tempo */}
-              <div className="grid grid-2">
-                <div>
+              {observations.length === 0 && (
+                <aside className="empty-notice" role="status">
+                  <CloudRain size={20} aria-hidden="true" />
+                  <p><strong>Observações indisponíveis.</strong> Ainda não há uma série temporal publicada para esta região.</p>
+                </aside>
+              )}
+
+              <div className="exploration-grid">
+                <div id="map">
+                  <MapView
+                    boundingBox={dataset.bounding_box}
+                    regionName={dataset.region_name}
+                    isPlaceholder={dataset.is_placeholder}
+                  />
+                </div>
+                <div id="indicators">
+                  {currentObservation ? (
+                    <ScientificSummary
+                      observation={currentObservation}
+                      regionName={dataset.region_name}
+                    />
+                  ) : (
+                    <section className="card" aria-labelledby="summary-title">
+                      <h2 id="summary-title" className="card-title">Indicadores Científicos</h2>
+                      <p>Indicadores indisponíveis até que uma observação temporal seja publicada para esta região.</p>
+                    </section>
+                  )}
+                </div>
+                <section id="playback" className="playback-panel" aria-labelledby="playback-heading">
+                  <div className="section-heading">
+                    <Waves size={19} aria-hidden="true" />
+                    <h2 id="playback-heading">Exploração temporal e sonora</h2>
+                  </div>
                   <AudioPlayer
                     isPlaying={isPlaying}
                     isMuted={isMuted}
@@ -137,26 +193,10 @@ export const HomePage: React.FC = () => {
                     currentIndex={currentIndex}
                     onSelectStep={setStep}
                   />
+                </section>
+                <div className="exploration-legend">
+                  <SoundLegend />
                 </div>
-
-                <div>
-                  {/* Sumário Científico Textual */}
-                  <ScientificSummary
-                    observation={currentObservation}
-                    regionName={dataset.region_name}
-                  />
-                </div>
-              </div>
-
-              {/* Mapa 2D e Legenda Sonora */}
-              <div className="grid grid-2 mt-4">
-                <MapView
-                  boundingBox={dataset.bounding_box}
-                  regionName={dataset.region_name}
-                  isPlaceholder={dataset.is_placeholder}
-                />
-
-                <SoundLegend />
               </div>
             </>
           )}
