@@ -1,9 +1,9 @@
 site_name: SONATLAS
 site_description: "Explore Earth Through Sound — Portal de Documentação Oficial"
 site_author: "Equipe SONATLAS — NASA Space Apps Challenge 2026"
-site_url: "https://sarahgleice.github.io/sonatlas/"
-repo_name: "sarahgleice/sonatlas"
-repo_url: "https://github.com/sarahgleice/sonatlas"
+site_url: "https://sarahgleice.github.io/Sonatlas_nasa/"
+repo_name: "sarahgleice/Sonatlas_nasa"
+repo_url: "https://github.com/sarahgleice/Sonatlas_nasa"
 copyright: "Copyright &copy; 2026 SONATLAS — Licença MIT — Desenvolvido para o NASA Space Apps Challenge 2026"
 
 theme:

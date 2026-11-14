@@ -18,8 +18,8 @@ Este guia estabelece os procedimentos para instalação do ambiente local, conve
 
 ### 2.1. Clonar o Repositório
 ```bash
-git clone https://github.com/sarahgleice/sonatlas.git
-cd sonatlas
+git clone https://github.com/sarahgleice/Sonatlas_nasa.git
+cd Sonatlas_nasa
 ```
 
 ### 2.2. Executar o Frontend (React + Vite + TypeScript)
