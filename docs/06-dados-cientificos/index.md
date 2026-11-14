@@ -27,10 +27,13 @@ flowchart TD
 - **Repositório GES DISC:** [https://gpm1.gesdisc.eosdis.nasa.gov/data/GPM_L3/GPM_3IMERGHH.07/](https://gpm1.gesdisc.eosdis.nasa.gov/data/GPM_L3/GPM_3IMERGHH.07/)
 
 ### 1.2. Especificações do Produto IMERG V07B
-- **Produtos Utilizados:** `GPM_3IMERGHHE` (Early Run, latência ~4h) e `GPM_3IMERGHH` (Final Run com calibração de pluviômetros, para pesquisa).
+- **Produtos IMERG V07B:** `GPM_3IMERGHHE` (Early Run, baixa latência) e `GPM_3IMERGHH` (Final Run, com calibração de pluviômetros e apropriado para pesquisa). São execuções distintas; não atribua ao dataset Early as características de calibração do Final.
 - **Formato Nativo:** HDF5 estruturado sob o grupo `/Grid` (ou NetCDF-4 `.nc4`).
 - **Resolução Espacial:** Grade regular global de $0.1^\circ \times 0.1^\circ$ (aproximadamente $11 \text{ km} \times 11 \text{ km}$ no equador).
 - **Resolução Temporal:** Passo de 30 minutos (*half-hourly*).
+
+### 1.3. Estado do dataset publicado
+O dataset Early V07B está publicado em `frontend/public/data/amazon/observations.json`. Sua validação estrutural foi concluída; a validação científica permanece preliminar e a recalculação independente dos indicadores diretamente dos arquivos HDF5 ainda está pendente. A publicação e a validação estrutural não equivalem à validação científica final. O produto Early é uma estimativa de baixa latência (~4 h) e pode ser revisado; o produto Final tem latência maior e incorpora calibração de pluviômetros. Não trate a série Early como equivalente ao produto Final.
 
 ---
 
@@ -39,7 +42,7 @@ flowchart TD
 ### 2.1. `/Grid/precipitationCal` vs `/Grid/precipitation`
 Na documentação oficial da versão **IMERG V07B**:
 - **Variável Principal:** `/Grid/precipitationCal`  
-  - **Definição Oficial:** Estimativa de taxa de precipitação multissatélite calibrada com dados de pluviômetros e sensores de micro-ondas.
+  - **Definição:** Estimativa de taxa de precipitação derivada de observações multissatélite. O ajuste por pluviômetros depende da execução do produto; o Early V07B publicado no SONATLAS não deve ser descrito como o produto Final calibrado.
   - **Unidade de Medida:** **`mm/hr`** (milímetros por hora &mdash; taxa instantânea).
   - **Valor Sentinela (`_FillValue`):** `-9999.9` (representa dados ausentes ou sem cobertura instrumental).
 - **Variável Secundária (`Grid/precipitation`):** Utilizada em alguns produtos derivados diários (em mm/day) ou subsetters GeoTIFF/GIS.
@@ -86,10 +89,17 @@ O motor de sonificação traduz primordialmente a **taxa de precipitação insta
 - **`processing/scripts/run_pipeline.py --demo`:** Script de demonstração offline para gerar o arquivo sintético de bootstrap [`processing/data/samples/amazon_central_sample.json`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/processing/data/samples/amazon_central_sample.json) (`is_sample: true`).
 - A autenticidade científica dos dados é garantida pela rastreabilidade e proveniência dos grânulos brutos HDF5 arquivados, e não exclusivamente por flags booleanas.
 
-### 4.2. Região Internacional: Área de Estudo Candidata
-- **Status:** <span class="badge-review">Candidata Preliminar Sob Validação</span>
-- **Região Candidata em Estudo:** Bacia do Congo (África Central).
-- **Diretriz de Integridade Científica:** A escolha definitiva da segunda região ainda aguarda validação formal da equipe. Em estrito respeito às boas práticas científicas, **nenhuma coordenada arbitrária ou dado fictício foi associado à região**; o repositório mantém apenas arquivos de orientação estrutural (*placeholders*) até a homologação dos dados reais.
+### 4.2. Região Internacional: Bacia do Congo (Janela de Kisangani, RDC)
+- **Status:** <span class="badge-verified">Verificada com Dados Reais NASA IMERG</span>
+- **Coordenadas de Referência (WGS84):**
+  - Latitude: $-0.8^\circ$ a $+1.7^\circ$ Norte (25 células de $0.1^\circ$)
+  - Longitude: $23.7^\circ$ a $26.7^\circ$ Leste (30 células de $0.1^\circ$)
+  - **Total de Células:** 750 células espaciais (simetria dimensional exata 1:1 com a Amazônia Central).
+- **Série Temporal Real Processada:** Sequência de seis grânulos vespertinos em 01/01/2024 (17:00:00 UTC a 19:59:59 UTC) extraídos do produto `GPM_3IMERGHHE.07` (Early Run V07B).
+- **Dataset Real Oficial:** Publicado em [`frontend/public/data/congo/observations.json`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/frontend/public/data/congo/observations.json) (e [`processing/data/processed/congo_kisangani_real_series.json`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/processing/data/processed/congo_kisangani_real_series.json)), com `is_sample: false`.
+- **Pipeline Científico de Processamento:** [`processing/scripts/process_congo_real.py`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/processing/scripts/process_congo_real.py).
+- **Contexto Bioclimático:** Janela em torno de Kisangani (República Democrática do Congo), na transição equatorial da Bacia do Congo. Na janela UTC adotada (17:00 a 19:30 UTC = 19:00 a 21:30 horário local CAT), registra a evolução da convecção noturna equatorial, atingindo pico máximo pontual de $12.70 \text{ mm/h}$ às 19:30 UTC.
+- **Ressalva Metodológica:** Identificada estritamente como *Janela de Amostragem de Kisangani* para comparação bioclimática controlada, e não como representação integral de toda a extensão hidrográfica da Bacia do Congo.
 
 ---
 
@@ -110,12 +120,16 @@ Permite discernir eventos de convecção isolada de tempestades amplas e general
 
 $$\text{RAF} = \frac{\sum_{i \in \text{Válidos}} \mathbb{I}(R_i \ge 0.1 \text{ mm/h}) \cdot \cos(\phi_i)}{\sum_{i \in \text{Válidos}} \cos(\phi_i)}$$
 
-O limiar de $0.1 \text{ mm/h}$ corresponde ao limite inferior confiável de detecção dos radiômetros de micro-ondas da constelação GPM.
+O limiar de $0.1 \text{ mm/h}$ é o critério operacional adotado pelo SONATLAS para classificar a área com chuva e orientar o mapeamento sonoro; não deve ser apresentado como limite instrumental universal de detecção sem validação científica específica.
+
+Na interface, esse limiar também é comunicado como **regra operacional do mapeamento sonoro**: para $0 \le R < 0.1$ mm/h, o valor observado continua sendo o valor numérico (positivo subthreshold não é zero). Esse rótulo de apresentação não altera a medição, seu arredondamento, o indicador nem o algoritmo de áudio. Zero exato, taxa positiva abaixo do limiar e valor ausente são estados distintos.
 
 ### 5.3. Variabilidade Temporal ($\Delta R$)
 Expressa o aumento ou dissipação da chuva em relação ao passo imediatamente anterior:
 
 $$\Delta R_k = \bar{R}(t_k) - \bar{R}(t_{k-1})$$
+
+No JSON publicado, `temporal_difference` é o campo canônico para esta diferença. `temporal_variance` ainda aparece como alias legado com o mesmo valor e descrição; não representa variância estatística e não deve ser interpretado como tal sem uma decisão científica e uma unidade apropriada.
 
 ---
 

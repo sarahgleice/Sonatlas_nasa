@@ -67,7 +67,10 @@ processing/
 │   ├── __init__.py
 │   ├── inspect_imerg.py      # Inspeção detalhada de arquivos IMERG HDF5
 │   ├── run_pipeline.py       # Gerador de amostras demonstrativas sintéticas (--demo)
-│   └── process_amazon_real.py# Pipeline científico oficial para grânulos reais HDF5
+│   ├── process_amazon_real.py# Pipeline científico oficial da madrugada na Amazônia Central
+│   ├── process_amazon_afternoon.py # Pipeline científico oficial da tarde na Amazônia Central
+│   ├── process_congo_real.py # Pipeline científico oficial para a janela de Kisangani (Congo)
+│   └── download_afternoon_granules.py # Download automatizado de grânulos no GES DISC
 │
 ├── tests/                    # Suíte de testes automatizados com Pytest
 │   ├── __init__.py

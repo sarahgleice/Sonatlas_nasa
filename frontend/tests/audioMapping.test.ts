@@ -72,5 +72,42 @@ describe('sonificationMapping', () => {
     const params = createObservationSonificationParams(missingObs);
     expect(params.isMissing).toBe(true);
     expect(params.frequency).toBe(FREQ_ALERT);
+    expect(params.pulseCount).toBe(2);
+    expect(params.durationMs).toBe(1500);
+  });
+
+  it('uses the missing-data alert when partial observations have unknown rain coverage', () => {
+    const partial: TemporalObservation = {
+      observation_id: 'test_partial', step_index: 0, timestamp_utc: '2026-10-12T12:00:00Z',
+      availability: { status: 'partial', valid_cells_ratio: 0.5, missing_cells_count: 1, total_cells_count: 2 },
+      scientific_indicators: {
+        mean_precipitation_rate: { value: 2, unit: 'mm/h', description: '' },
+        rain_area_fraction: { value: null, unit: 'percentage', description: '' }
+      },
+      visual_frame_reference: { frame_id: 'f1', image_path: '', source_system: '', synchronization_status: 'pending_official_validation', alt_text: '' },
+      textual_summary: ''
+    };
+    const params = createObservationSonificationParams(partial, 900);
+    expect(params.isMissing).toBe(true);
+    expect(params.frequency).toBe(FREQ_ALERT);
+    expect(params.pulseCount).toBe(2);
+    expect(params.durationMs).toBe(900);
+  });
+
+  it('keeps a known zero coverage distinct from unknown coverage in a partial observation', () => {
+    const partial: TemporalObservation = {
+      observation_id: 'test_partial_zero', step_index: 0, timestamp_utc: '2026-10-12T12:00:00Z',
+      availability: { status: 'partial', valid_cells_ratio: 0.5, missing_cells_count: 1, total_cells_count: 2 },
+      scientific_indicators: {
+        mean_precipitation_rate: { value: 0, unit: 'mm/h', description: '' },
+        rain_area_fraction: { value: 0, unit: 'percentage', description: '' }
+      },
+      visual_frame_reference: { frame_id: 'f1', image_path: '', source_system: '', synchronization_status: 'pending_official_validation', alt_text: '' },
+      textual_summary: ''
+    };
+    const params = createObservationSonificationParams(partial);
+    expect(params.isMissing).toBe(false);
+    expect(params.frequency).toBe(FREQ_REST);
+    expect(params.pulseCount).toBe(1);
   });
 });

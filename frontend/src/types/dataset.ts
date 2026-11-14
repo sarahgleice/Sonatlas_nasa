@@ -71,12 +71,26 @@ export interface RegionDataset {
   observations: TemporalObservation[];
 }
 
+export interface TimeSeriesOption {
+  id: string;
+  name: string;
+  periodLabel: string;
+  timeRangeUtc: string;
+  localTimeRange: string;
+  filePath: string;
+  description: string;
+  granulesCount: number;
+}
+
 export interface RegionOption {
   id: string;
   name: string;
   country: string;
   filePath: string;
   status: 'active' | 'candidate';
+  description?: string;
+  aliases?: string[];
+  series: TimeSeriesOption[];
 }
 
 export interface SonificationParams {

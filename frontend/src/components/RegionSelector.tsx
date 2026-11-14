@@ -1,45 +1,139 @@
 import React from 'react';
-import { AVAILABLE_REGIONS } from '../services/dataService';
-import { Globe2 } from 'lucide-react';
+import { AVAILABLE_REGIONS, findRegionOption } from '../services/dataService';
+import { Globe2, CalendarClock } from 'lucide-react';
 
 interface RegionSelectorProps {
   selectedRegionId: string;
   onSelectRegion: (regionId: string) => void;
+  selectedSeriesId?: string;
+  onSelectSeries?: (seriesId: string) => void;
 }
 
 export const RegionSelector: React.FC<RegionSelectorProps> = ({
   selectedRegionId,
-  onSelectRegion
+  onSelectRegion,
+  selectedSeriesId = 'morning',
+  onSelectSeries
 }) => {
+  const currentRegion = findRegionOption(selectedRegionId) ?? AVAILABLE_REGIONS[0];
+  const availableSeries = currentRegion.series;
+  const currentSeries = availableSeries.find((s) => s.id === selectedSeriesId) ?? availableSeries[0];
+
+  const handleRegionChange = (newRegionId: string) => {
+    onSelectRegion(newRegionId);
+    if (onSelectSeries) {
+      const nextRegion = findRegionOption(newRegionId);
+      if (nextRegion && nextRegion.series.length > 0) {
+        // Se a série atual não existe na nova região, seleciona a primeira da nova região
+        const exists = nextRegion.series.some((s) => s.id === selectedSeriesId);
+        if (!exists) {
+          onSelectSeries(nextRegion.series[0].id);
+        }
+      }
+    }
+  };
+
   return (
     <section className="card region-selector-card" aria-labelledby="region-selector-title">
       <div className="card-header">
         <Globe2 size={20} className="card-icon" aria-hidden="true" />
         <h2 id="region-selector-title" className="card-title">
-          Seleção da Região de Estudo
+          Seleção da Experiência
         </h2>
       </div>
 
       <div className="form-group">
         <label htmlFor="region-select" className="form-label">
-          Região
+          Região de Estudo
         </label>
         <select
           id="region-select"
           className="form-select"
-          value={selectedRegionId}
-          onChange={(e) => onSelectRegion(e.target.value)}
+          value={currentRegion.id}
+          onChange={(e) => handleRegionChange(e.target.value)}
           aria-describedby="region-helper-text"
         >
-          {AVAILABLE_REGIONS.filter((region) => region.id === 'amazon_central').map((region) => (
+          {AVAILABLE_REGIONS.map((region) => (
             <option key={region.id} value={region.id}>
               {region.name} ({region.country})
             </option>
           ))}
         </select>
         <p id="region-helper-text" className="form-helper">
-          Atualmente, apenas a Amazônia Central está disponível.
+          {currentRegion.description ?? 'Recorte espacial homologado com 750 células regulares (0,1°).'}
         </p>
+      </div>
+
+      <div className="form-group" style={{ marginTop: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+          <CalendarClock size={14} className="card-icon" aria-hidden="true" />
+          <label htmlFor="series-select" className="form-label" style={{ margin: 0 }}>
+            Série Temporal (Período)
+          </label>
+        </div>
+        <select
+          id="series-select"
+          className="form-select"
+          value={currentSeries.id}
+          onChange={(e) => onSelectSeries && onSelectSeries(e.target.value)}
+          aria-describedby="series-helper-text"
+        >
+          {availableSeries.map((series) => (
+            <option key={series.id} value={series.id}>
+              {series.name}
+            </option>
+          ))}
+        </select>
+        <p id="series-helper-text" className="form-helper">
+          {currentSeries.description}
+        </p>
+      </div>
+
+      <div
+        className="series-metadata-box"
+        style={{
+          marginTop: '0.75rem',
+          padding: '0.6rem 0.65rem',
+          border: '1px solid var(--color-border)',
+          borderRadius: '4px',
+          background: 'var(--color-background)',
+          fontSize: '0.68rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.35rem'
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
+          <span style={{ color: 'var(--color-muted)' }}>Data:</span>
+          <strong style={{ color: 'var(--color-text)' }}>01/01/2024</strong>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
+          <span style={{ color: 'var(--color-muted)' }}>Janela UTC:</span>
+          <strong style={{ color: 'var(--color-map)' }}>{currentSeries.timeRangeUtc}</strong>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
+          <span style={{ color: 'var(--color-muted)' }}>Horário local:</span>
+          <span style={{ color: 'var(--color-text)' }}>{currentSeries.localTimeRange}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
+          <span style={{ color: 'var(--color-muted)' }}>Origem dos dados:</span>
+          <span style={{ color: 'var(--color-text)' }}>NASA GPM IMERG Early V07B (Real)</span>
+        </div>
+        {currentRegion.id === 'congo_basin_kisangani' && (
+          <p
+            style={{
+              margin: '0.3rem 0 0',
+              padding: '0.35rem',
+              borderLeft: '2px solid var(--color-map)',
+              background: 'rgba(0, 213, 245, 0.05)',
+              color: 'var(--color-muted)',
+              fontSize: '0.62rem',
+              lineHeight: '1.4'
+            }}
+          >
+            Amostragem em Kisangani (RDC) para comparação bioclimática controlada 1:1. Não representa a totalidade da Bacia do Rio Congo.
+          </p>
+        )}
       </div>
     </section>
   );

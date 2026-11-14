@@ -9,6 +9,7 @@ export const FREQ_REST = 130; // Hz - Tom de repouso (C3) para calmaria / sem ch
 export const FREQ_MIN = 220;  // Hz - Limiar de chuva fraca (A3)
 export const FREQ_MAX = 880;  // Hz - Limiar de chuva extrema (A5)
 export const FREQ_ALERT = 300; // Hz - Tom de advertência para dados faltantes
+export const RAIN_DETECTION_THRESHOLD_MM_H = 0.1; // mm/h - abaixo disso: sem precipitação mensurável
 
 /**
  * Converte taxa média de precipitação (mm/h) em frequência fundamental (Hz).
@@ -17,7 +18,7 @@ export function mapRateToFrequency(rate: number | null | undefined): number {
   if (rate === null || rate === undefined) {
     return FREQ_ALERT;
   }
-  if (rate < 0.1) {
+  if (rate < RAIN_DETECTION_THRESHOLD_MM_H) {
     return FREQ_REST;
   }
   // Mapeamento logarítmico: f(R) = f_min + (f_max - f_min) * (log10(1 + R) / log10(1 + R_max))
@@ -48,7 +49,8 @@ export function createObservationSonificationParams(
   stepDurationMs: number = 1500
 ): SonificationParams {
   const isMissing = observation.availability.status === 'missing' ||
-    observation.scientific_indicators.mean_precipitation_rate.value === null;
+    observation.scientific_indicators.mean_precipitation_rate.value === null ||
+    observation.scientific_indicators.rain_area_fraction.value === null;
 
   if (isMissing) {
     return {

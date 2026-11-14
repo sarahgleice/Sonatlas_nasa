@@ -67,6 +67,20 @@ Este documento formaliza a estratégia de garantia de qualidade (QA) e validaç�
 - **Procedimento:** Inicializar o NVDA e alternar passos temporais no player.
 - **Critério:** O NVDA deve ler de maneira inteligível o anúncio contendo passo, data/hora e valores meteorológicos sem atropelar a fala anterior.
 
+### 4.3. Testes automatizados do player e da acessibilidade (Vitest, ambiente Node)
+Executados com `npm run test` em `frontend/`, sem dependências extras (funções puras e `renderToStaticMarkup`):
+
+| Arquivo | Cobertura |
+|---|---|
+| `announcements.test.ts` | Política anti-spam: slider silencioso, alerta só ao entrar em dado ausente, nunca "0 mm/h" para ausente |
+| `scientificExplanation.test.ts` | "Entenda o que você ouviu": linha de base, subida, queda, estável, zero exato, pós-ausência, série real |
+| `playerLogic.test.ts` | Próximo/anterior com e sem repetição, fim de série, velocidade sem alterar frequência/pulsos |
+| `shortcuts.test.ts` | Espaço não interceptado em botões; slider; modificadores; `?` via AltGr |
+| `timeline.test.tsx` | Teclado do slider, `aria-valuetext`, marcadores decorativos, ausente vs zero, multi-dia |
+| `audioPlayer.test.tsx`, `soundLegend.test.tsx`, `scientificSummary.test.tsx`, `regionSelector.test.tsx`, `shortcutsModal.test.tsx`, `ariaLiveAnnouncer.test.tsx` | Marcação acessível (rótulos, `aria-pressed`, `aria-disabled`, seções, canais live) |
+
+**Limite conhecido:** timers do hook, foco real e leitura por NVDA/VoiceOver não são cobertos sem jsdom; seguem o roteiro manual de olhos fechados da seção de acessibilidade.
+
 ---
 
 ## 5. Próximas Etapas de Validação (Planejadas)

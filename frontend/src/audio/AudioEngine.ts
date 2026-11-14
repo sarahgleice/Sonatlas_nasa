@@ -1,5 +1,5 @@
 import { TemporalObservation, SonificationParams } from '../types/dataset';
-import { createObservationSonificationParams } from './sonificationMapping';
+import { createObservationSonificationParams, FREQ_ALERT } from './sonificationMapping';
 
 /**
  * Motor nativo de áudio para síntese em tempo real via Web Audio API.
@@ -237,7 +237,7 @@ export class AudioEngine {
     const totalDurationSec = params.durationMs / 1000;
 
     if (params.isMissing) {
-      this.playAlertTone(this.ctx, startTime);
+      this.playAlertTone(this.ctx, startTime, totalDurationSec);
       return;
     }
 
@@ -284,29 +284,33 @@ export class AudioEngine {
     osc.stop(startTime + duration + 0.05);
   }
 
-  private playAlertTone(ctx: AudioContext, startTime: number): void {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(240, startTime);
-    osc.frequency.linearRampToValueAtTime(180, startTime + 0.3);
-
-    gain.gain.setValueAtTime(0.001, startTime);
-    gain.gain.exponentialRampToValueAtTime(0.2, startTime + 0.05);
-    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
-
-    osc.connect(gain);
-    if (this.masterGain) gain.connect(this.masterGain);
-
-    osc.start(startTime);
-    this.activeOscillators.add(osc);
-    osc.addEventListener('ended', () => {
-      this.activeOscillators.delete(osc);
-      osc.disconnect();
-      gain.disconnect();
-    }, { once: true });
-    osc.stop(startTime + 0.4);
+  /**
+   * Sinal acústico de advertência para dados faltantes.
+   * Integra o padrão de duplo pulso da main com a onda triangular.
+   */
+  private playAlertTone(ctx: AudioContext, startTime: number, duration: number): void {
+    const interval = duration / 3;
+    for (let i = 0; i < 2; i++) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const start = startTime + i * interval;
+      const pulse = interval * 0.6;
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(FREQ_ALERT, start);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.2, start + Math.min(0.02, pulse / 3));
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + pulse);
+      osc.connect(gain);
+      if (this.masterGain) gain.connect(this.masterGain);
+      osc.start(start);
+      this.activeOscillators.add(osc);
+      osc.addEventListener('ended', () => {
+        this.activeOscillators.delete(osc);
+        osc.disconnect();
+        gain.disconnect();
+      }, { once: true });
+      osc.stop(start + pulse);
+    }
   }
 
   public dispose(): void {
