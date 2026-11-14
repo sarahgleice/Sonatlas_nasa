@@ -53,6 +53,10 @@ class GPMExtractor:
             lats = grid["lat"][:] if "lat" in grid else None
             lons = grid["lon"][:] if "lon" in grid else None
 
+            # Tratar dimensão temporal unitária se presente (ex: shape (1, 3600, 1800) -> (3600, 1800))
+            if raw_matrix.ndim == 3 and raw_matrix.shape[0] == 1:
+                raw_matrix = raw_matrix[0]
+
             # Transposição se a matriz for (lon, lat) para retornar em (lat, lon)
             if raw_matrix.ndim == 2 and lons is not None and lats is not None:
                 if raw_matrix.shape == (len(lons), len(lats)):
