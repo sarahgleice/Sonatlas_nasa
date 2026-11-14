@@ -1,13 +1,26 @@
-import { SonificationParams } from '../types/dataset';
+import { TemporalObservation, SonificationParams } from '../types/dataset';
+import { createObservationSonificationParams } from './sonificationMapping';
 
 /**
  * Motor nativo de áudio para síntese em tempo real via Web Audio API.
- * Não requer bibliotecas externas pesadas e funciona em qualquer navegador moderno.
+ * Implementa agendamento preciso (Lookahead) para sequências temporais.
  */
 export class AudioEngine {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private isMuted: boolean = false;
+
+  // Estado de controle da sequência
+  private isPlaying: boolean = false;
+  private currentSequence: TemporalObservation[] = [];
+  private currentIndex: number = 0;
+  private nextSegmentTime: number = 0;
+  private scheduleTimer: number | null = null;
+  private speedMultiplier: number = 1.0;
+  
+  // Parâmetros de agendamento (A Tale of Two Clocks)
+  private readonly LOOKAHEAD_MS = 25; // Frequência da checagem do loop
+  private readonly SCHEDULE_AHEAD_SEC = 0.1; // Antecedência para agendar o nó de áudio
 
   private initContext(): AudioContext {
     if (!this.ctx) {
@@ -34,18 +47,86 @@ export class AudioEngine {
     return this.isMuted;
   }
 
+  public setSpeed(multiplier: number): void {
+    this.speedMultiplier = Math.max(0.1, multiplier);
+  }
+
+  public pause(): void {
+    this.isPlaying = false;
+    if (this.ctx && this.ctx.state === 'running') {
+      this.ctx.suspend();
+    }
+    if (this.scheduleTimer) {
+      window.clearTimeout(this.scheduleTimer);
+      this.scheduleTimer = null;
+    }
+  }
+
+  public async resume(): Promise<void> {
+    if (!this.ctx) return;
+    this.isPlaying = true;
+    await this.ctx.resume();
+    // Reprograma o próximo segmento para iniciar logo após o resume
+    this.nextSegmentTime = this.ctx.currentTime + 0.1;
+    this.scheduler();
+  }
+
   /**
-   * Executa a sonificação de um conjunto de parâmetros (frequência + pulsos).
+   * Inicia a reprodução de uma sequência de dados da NASA (IMERG).
    */
-  public playParams(params: SonificationParams): void {
+  public async playSequence(sequence: TemporalObservation[]): Promise<void> {
     if (this.isMuted) return;
     const ctx = this.initContext();
-    const now = ctx.currentTime;
+    
+    this.currentSequence = sequence;
+    this.currentIndex = 0;
+    this.isPlaying = true;
+    
+    await ctx.resume();
+    this.nextSegmentTime = ctx.currentTime + 0.1;
+    this.scheduler();
+  }
+
+  /**
+   * Loop de agendamento que mantém a UI livre e delega a precisão para o Web Audio API.
+   * Pedro (Player) vai consumir o estado currentIndex para sincronizar a linha do tempo.
+   */
+  private scheduler = (): void => {
+    if (!this.isPlaying || !this.ctx) return;
+
+    while (this.nextSegmentTime < this.ctx.currentTime + this.SCHEDULE_AHEAD_SEC && this.currentIndex < this.currentSequence.length) {
+      const obs = this.currentSequence[this.currentIndex];
+      
+      // Duração base de 1.5s ajustada pela velocidade atual
+      const baseDurationMs = 1500; 
+      const adjustedDurationMs = baseDurationMs / this.speedMultiplier;
+      
+      // Mapeamento extrai os parâmetros da observação atual
+      const params = createObservationSonificationParams(obs, adjustedDurationMs);
+      
+      this.scheduleParams(params, this.nextSegmentTime);
+      
+      this.nextSegmentTime += (adjustedDurationMs / 1000);
+      this.currentIndex++;
+    }
+
+    if (this.currentIndex < this.currentSequence.length) {
+      this.scheduleTimer = window.setTimeout(this.scheduler, this.LOOKAHEAD_MS);
+    } else {
+      this.isPlaying = false;
+      this.scheduleTimer = null;
+    }
+  }
+
+  /**
+   * Executa a sonificação distribuindo os pulsos no tempo agendado.
+   */
+  private scheduleParams(params: SonificationParams, startTime: number): void {
+    if (!this.ctx) return;
     const totalDurationSec = params.durationMs / 1000;
 
     if (params.isMissing) {
-      // Sinal de dado ausente: dois pulsos suaves em onda quadrada atenuada
-      this.playAlertTone(ctx, now);
+      this.playAlertTone(this.ctx, startTime);
       return;
     }
 
@@ -53,13 +134,13 @@ export class AudioEngine {
     const pulseActiveDuration = Math.min(pulseInterval * 0.65, 0.25);
 
     for (let i = 0; i < params.pulseCount; i++) {
-      const pulseStart = now + i * pulseInterval;
-      this.synthesizePulse(ctx, params.frequency, pulseStart, pulseActiveDuration);
+      const pulseStart = startTime + i * pulseInterval;
+      this.synthesizePulse(this.ctx, params.frequency, pulseStart, pulseActiveDuration);
     }
   }
 
   /**
-   * Sintetiza um pulso tonal individual com envoltória suave de ganho para evitar cliques.
+   * Sintetiza um pulso tonal individual com envoltória suave de ganho.
    */
   private synthesizePulse(
     ctx: AudioContext,
@@ -73,7 +154,6 @@ export class AudioEngine {
     osc.type = 'sine';
     osc.frequency.setValueAtTime(frequency, startTime);
 
-    // Envoltória ADSR suave (Attack e Release)
     const attackTime = 0.02;
     const releaseTime = duration * 0.4;
     const peakTime = startTime + attackTime;
@@ -118,6 +198,7 @@ export class AudioEngine {
   }
 
   public dispose(): void {
+    this.pause();
     if (this.ctx && this.ctx.state !== 'closed') {
       this.ctx.close();
       this.ctx = null;
@@ -125,5 +206,4 @@ export class AudioEngine {
   }
 }
 
-// Instância singleton para uso em toda a aplicação
 export const globalAudioEngine = new AudioEngine();
