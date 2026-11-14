@@ -12,16 +12,17 @@ import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { formatPrecipitationRate, formatTimestamp } from '../utils/formatters';
 import { Header } from '../components/Header';
+import { EducationalPanel } from '../components/EducationalPanel';
 import { Footer } from '../components/Footer';
 import { RegionSelector } from '../components/RegionSelector';
 import { VariableSelector } from '../components/VariableSelector';
 import { AudioPlayer } from '../components/AudioPlayer';
 import { Timeline } from '../components/Timeline';
 import { ScientificSummary } from '../components/ScientificSummary';
+import { PrecipitationChart } from '../components/PrecipitationChart';
 import { SoundLegend } from '../components/SoundLegend';
 import { MapView } from '../maps/MapView';
 import { AriaLiveAnnouncer } from '../accessibility/AriaLiveAnnouncer';
-import { KeyboardShortcutsModal } from '../accessibility/KeyboardShortcutsModal';
 
 export const HomePage: React.FC = () => {
   const [selectedRegionId, setSelectedRegionId] = useState('amazon_central');
@@ -29,7 +30,7 @@ export const HomePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [liveAnnouncement, setLiveAnnouncement] = useState('');
-  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isEducationalOpen, setIsEducationalOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -87,13 +88,14 @@ export const HomePage: React.FC = () => {
     onTogglePlay: togglePlay,
     onNextStep: nextStep,
     onPrevStep: prevStep,
-    onToggleMute: toggleMute
+    onToggleMute: toggleMute,
+    enabled: !isEducationalOpen
   });
 
   return (
     <div className="app-layout">
       <AriaLiveAnnouncer message={liveAnnouncement} />
-      <Header onOpenShortcuts={() => setIsShortcutsOpen(true)} />
+      <Header onOpenEducational={() => setIsEducationalOpen(true)} />
 
       <main id="main-content" className="main-content">
         <h1 className="sr-only">Sonatlas Earth Explorer</h1>
@@ -146,6 +148,14 @@ export const HomePage: React.FC = () => {
                 <h2 id="signal-title">Dados e som</h2>
               </div>
               <section id="indicators" className="data-section" aria-label="Indicadores científicos">
+                <PrecipitationChart
+                  observations={observations}
+                  currentIndex={currentIndex}
+                  onSelectStep={setStep}
+                  isSample={dataset?.is_sample ?? false}
+                  loading={loading}
+                  error={errorMessage}
+                />
                 {dataset?.is_sample && (
                   <p className="sample-status">Amostra técnica — não é observação NASA verificada.</p>
                 )}
@@ -217,7 +227,7 @@ export const HomePage: React.FC = () => {
       </main>
 
       <Footer />
-      <KeyboardShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
+      <EducationalPanel isOpen={isEducationalOpen} dataset={dataset} loading={loading} error={errorMessage} onClose={() => setIsEducationalOpen(false)} />
     </div>
   );
 };

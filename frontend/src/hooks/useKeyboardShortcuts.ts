@@ -5,15 +5,18 @@ interface UseKeyboardShortcutsProps {
   onNextStep: () => void;
   onPrevStep: () => void;
   onToggleMute: () => void;
+  enabled?: boolean;
 }
 
 export function useKeyboardShortcuts({
   onTogglePlay,
   onNextStep,
   onPrevStep,
-  onToggleMute
+  onToggleMute,
+  enabled = true
 }: UseKeyboardShortcutsProps) {
   useEffect(() => {
+    if (!enabled) return;
     function handleKeyDown(event: KeyboardEvent) {
       // Ignorar se o usuário estiver digitando em campos de texto
       const target = event.target as HTMLElement;
@@ -45,5 +48,5 @@ export function useKeyboardShortcuts({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onTogglePlay, onNextStep, onPrevStep, onToggleMute]);
+  }, [enabled, onTogglePlay, onNextStep, onPrevStep, onToggleMute]);
 }
