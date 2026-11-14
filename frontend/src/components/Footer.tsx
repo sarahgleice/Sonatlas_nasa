@@ -2,7 +2,7 @@ import React from 'react';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="app-footer" role="contentinfo">
+    <footer id="about" className="app-footer" role="contentinfo">
       <div className="footer-container">
         <p>
           <strong>SONATLAS</strong> — Desenvolvido para o <em>NASA Space Apps Challenge 2026</em> no desafio <em>The Earth Information Jukebox</em>.

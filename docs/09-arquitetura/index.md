@@ -121,6 +121,12 @@ Estados da interface: carregamento e falha do fetch são estados da página; sé
 
 Os módulos de mapa, processamento científico e áudio/player mantêm seus arquivos e implementação próprios; esta integração consome seus contratos existentes.
 
+### Estado da integração IMERG
+
+O contrato de integração do frontend é o `RegionDataset` em `frontend/src/types/dataset.ts`, publicado como JSON estático em `frontend/public/data/`. O arquivo `amazon_central_series.json` atualmente disponível está marcado com `is_sample: true`. O `processing/scripts/run_pipeline.py` gera essa amostra demonstrativa; `GPMExtractor` recebe matrizes e faz o recorte espacial, mas não baixa nem extrai grânulos IMERG. Portanto, os valores atuais não são observações NASA reais.
+
+Para integrar observações oficiais, o pipeline existente deve exportar o mesmo contrato após extração e validação: produto/versão e origem, limites geográficos, resolução temporal, timestamps UTC, unidade de cada indicador, estado e razão de disponibilidade por observação, nulos preservados e `is_sample: false` somente após validação da proveniência. O frontend não deve alterar ou inferir medições para preencher campos ausentes.
+
 ## 5. Registro de Decisões Arquiteturais (ADRs)
 
 ### ADR-01: Desacoplamento Total via Arquivos JSON Estáticos

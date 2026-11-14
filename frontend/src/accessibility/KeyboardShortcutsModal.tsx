@@ -26,7 +26,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
       >
         <div className="modal-header">
           <h2 id="shortcuts-modal-title" className="modal-title">
-            Atalhos de Teclado
+            Ajuda e atalhos de teclado
           </h2>
           <button
             onClick={onClose}
