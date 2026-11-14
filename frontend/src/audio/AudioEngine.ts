@@ -154,7 +154,7 @@ export class AudioEngine {
     if (!this.ctx) return;
     for (const osc of this.activeOscillators) {
       try {
-        osc.stop(this.ctx.currentTime); // <- Correção exigida pelo teste
+        osc.stop(this.ctx.currentTime); 
         osc.disconnect();
       } catch (e) {
         // Ignora erros caso o nó já tenha sido finalizado pelo tempo
