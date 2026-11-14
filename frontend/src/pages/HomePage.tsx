@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   CalendarClock,
@@ -6,10 +6,11 @@ import {
   Map,
   Waves
 } from 'lucide-react';
-import { RegionDataset } from '../types/dataset';
+import { RegionDataset, TemporalObservation } from '../types/dataset';
 import { DataService, AVAILABLE_REGIONS, findRegionOption } from '../services/dataService';
 import { globalAudioEngine } from '../audio/AudioEngine';
-import { useAudioPlayer } from '../hooks/useAudioPlayer';
+import { useAudioPlayer, PlayerBoundary, StepTransition } from '../hooks/useAudioPlayer';
+import { buildAnnouncement } from '../utils/announcements';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { formatPrecipitationRate, formatTimestamp } from '../utils/formatters';
 import { Header } from '../components/Header';
@@ -28,6 +29,8 @@ import { geoApiService } from '../services/geoApiService';
 import { parseAmazonCentralApiFeature } from '../maps/amazonGeometry';
 
 type GeoApiState = 'unconfigured' | 'loading' | 'connected' | 'fallback';
+
+const EMPTY_OBSERVATIONS: TemporalObservation[] = [];
 
 export const HomePage: React.FC = () => {
   const [selectedRegionId, setSelectedRegionId] = useState('amazon_central');
@@ -130,15 +133,26 @@ export const HomePage: React.FC = () => {
     };
   }, [dataset]);
 
-  const observations = dataset?.observations ?? [];
-  const handleStepChange = (index: number) => {
-    const observation = observations[index];
-    if (!observation) return;
-    const rate = observation.scientific_indicators.mean_precipitation_rate.value;
-    setLiveAnnouncement(
-      `Passo ${index + 1} de ${observations.length}. ${rate === null ? 'Dados não disponíveis.' : `${rate} milímetros por hora.`}`
-    );
-  };
+  const observations = useMemo(() => dataset?.observations ?? EMPTY_OBSERVATIONS, [dataset]);
+
+  const handleTransition = useCallback((transition: StepTransition) => {
+    const announcement = buildAnnouncement({
+      source: transition.source,
+      observation: transition.observation,
+      index: transition.index,
+      total: observations.length,
+      previousObservation: transition.previousIndex !== null && transition.previousIndex !== transition.index
+        ? observations[transition.previousIndex] ?? null
+        : null
+    });
+    if (announcement) {
+      setLiveAnnouncement(announcement.text);
+    }
+  }, [observations]);
+
+  const handleBoundary = useCallback((boundary: PlayerBoundary) => {
+    setLiveAnnouncement(boundary === 'end' ? 'Você está no último passo da série.' : 'Você está no primeiro passo da série.');
+  }, []);
 
   const selectRegion = (regionId: string) => {
     const region = findRegionOption(regionId);
@@ -173,7 +187,12 @@ export const HomePage: React.FC = () => {
     prevStep,
     setStep,
     toggleMute
-  } = useAudioPlayer({ observations, stepDurationMs: 1500, onStepChange: handleStepChange });
+  } = useAudioPlayer({
+    observations,
+    stepDurationMs: 1500,
+    onTransition: handleTransition,
+    onBoundary: handleBoundary
+  });
 
   useKeyboardShortcuts({
     onTogglePlay: togglePlay,
@@ -317,7 +336,7 @@ export const HomePage: React.FC = () => {
               <div>
                 <h2 id="timeline-panel-title">Linha temporal</h2>
               </div>
-              <div className="selected-period" aria-live="polite">
+              <div className="selected-period">
                 <CalendarClock size={16} aria-hidden="true" />
                 <span>{currentObservation ? formatTimestamp(currentObservation.timestamp_utc) : 'Nenhum período selecionado'}</span>
               </div>
