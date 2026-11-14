@@ -23,7 +23,10 @@ interface MapViewProps {
   regionName: string;
   isPlaceholder?: boolean;
   regionId?: string;
+  apiGeometry?: GeoJSON.GeoJsonObject | null;
+  geoApiStatus?: 'unconfigured' | 'loading' | 'connected' | 'fallback';
   onRegionSelect?: (regionId: string) => void;
+  onMapPoint?: (lat: number, lon: number) => void;
 }
 
 export const MapView: React.FC<MapViewProps> = ({
@@ -31,7 +34,10 @@ export const MapView: React.FC<MapViewProps> = ({
   regionName,
   isPlaceholder = false,
   regionId = 'amazon_central',
-  onRegionSelect
+  apiGeometry = null,
+  geoApiStatus = 'unconfigured',
+  onRegionSelect,
+  onMapPoint
 }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -73,9 +79,12 @@ export const MapView: React.FC<MapViewProps> = ({
     }
 
     let regionLayer: L.Layer | null = null;
-    if (regionId === 'amazon_central' && amazonCentralGeoJson) {
+    const geoJsonSources = [apiGeometry, amazonCentralGeoJson];
+    if (regionId === 'amazon_central') {
+      for (const geoJson of geoJsonSources) {
+        if (!geoJson) continue;
       try {
-        const geoJsonLayer = L.geoJSON(amazonCentralGeoJson, {
+        const geoJsonLayer = L.geoJSON(geoJson, {
           style: {
             color: '#0284c7',
             fillColor: '#38bdf8',
@@ -86,9 +95,11 @@ export const MapView: React.FC<MapViewProps> = ({
         if (geometryMatchesDataset(geoJsonLayer, boundingBox)) {
           geoJsonLayer.bindPopup(`<strong>${regionName}</strong><br/>Área de Amostragem do SONATLAS`);
           regionLayer = geoJsonLayer.addTo(map);
+          break;
         }
       } catch {
-        regionLayer = null;
+          regionLayer = null;
+        }
       }
     }
 
@@ -108,7 +119,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
     // Ajustar visão para os limites da bounding box
     map.fitBounds(limitsToBounds(boundingBox), { padding: [20, 20] });
-  }, [boundingBox, regionId, regionName, isPlaceholder]);
+  }, [apiGeometry, boundingBox, regionId, regionName, isPlaceholder]);
 
   useEffect(() => {
     const map = mapInstanceRef.current;
@@ -121,14 +132,36 @@ export const MapView: React.FC<MapViewProps> = ({
       if (!amazon) return;
       const datasetRegion = { ...amazon, limits: boundingBox };
       const region = findRegionAtPoint(lat, lng, [datasetRegion]);
-      if (region) onRegionSelect(region.id);
+      if (region) {
+        if (onMapPoint) onMapPoint(lat, lng);
+        else onRegionSelect(region.id);
+      }
     };
 
     map.on('click', selectRegion);
     return () => {
       map.off('click', selectRegion);
     };
-  }, [boundingBox, regionId, onRegionSelect]);
+  }, [boundingBox, regionId, onRegionSelect, onMapPoint]);
+
+  useEffect(() => {
+    const layer = polygonLayerRef.current;
+    if (!layer || !boundingBox || !onMapPoint) return;
+
+    const locateRegion = (event: L.LeafletMouseEvent) => {
+      L.DomEvent.stopPropagation(event.originalEvent);
+      if (regionId !== 'amazon_central') return;
+      const amazon = STUDY_REGIONS.find((region) => region.id === 'amazon_central');
+      if (amazon && findRegionAtPoint(event.latlng.lat, event.latlng.lng, [{ ...amazon, limits: boundingBox }])) {
+        onMapPoint(event.latlng.lat, event.latlng.lng);
+      }
+    };
+
+    layer.on('click', locateRegion);
+    return () => {
+      layer.off('click', locateRegion);
+    };
+  }, [apiGeometry, boundingBox, onMapPoint, regionId]);
 
   // Limpeza
   useEffect(() => {
@@ -177,6 +210,15 @@ export const MapView: React.FC<MapViewProps> = ({
             {geometryFallback && (
               <p className="map-caption" role="note">
                 A geometria GeoJSON não pôde ser usada; o contorno exibido usa o bounding box do dataset.
+              </p>
+            )}
+            {geoApiStatus !== 'connected' && (
+              <p className="map-caption" role="status">
+                {geoApiStatus === 'loading'
+                  ? 'Verificando serviço geoespacial; o mapa local continua disponível.'
+                  : geoApiStatus === 'fallback'
+                    ? 'Serviço geoespacial indisponível ou inconsistente; usando GeoJSON local.'
+                    : 'Serviço geoespacial não configurado; usando GeoJSON local.'}
               </p>
             )}
             {onRegionSelect && (

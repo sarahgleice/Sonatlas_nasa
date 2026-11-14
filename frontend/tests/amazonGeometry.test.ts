@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import amazonCentralGeometrySource from '../../processing/geometry/amazon/central_amazon_bbox.geojson?raw';
 import dataset from '../public/data/amazon_central_series.json';
-import { parseAmazonCentralGeoJson } from '../src/maps/amazonGeometry';
+import { parseAmazonCentralApiFeature, parseAmazonCentralGeoJson } from '../src/maps/amazonGeometry';
 
 describe('geometria GeoJSON da Amazônia Central', () => {
   it('valida o Feature ativo e seus limites coincidem com o bounding box do dataset', () => {
@@ -27,5 +27,15 @@ describe('geometria GeoJSON da Amazônia Central', () => {
     malformed.features[0].geometry.coordinates[0].pop();
 
     expect(parseAmazonCentralGeoJson(JSON.stringify(malformed))).toBeNull();
+  });
+
+  it('aceita Feature da API apenas quando identidade e limites coincidem com o dataset', () => {
+    const feature = JSON.parse(amazonCentralGeometrySource).features[0];
+    expect(parseAmazonCentralApiFeature(feature, dataset.bounding_box)?.type).toBe('FeatureCollection');
+    expect(parseAmazonCentralApiFeature({ ...feature, properties: { ...feature.properties, region_id: 'congo_basin_kisangani' } }, dataset.bounding_box)).toBeNull();
+    expect(parseAmazonCentralApiFeature(feature, {
+      ...dataset.bounding_box,
+      max_longitude: dataset.bounding_box.max_longitude - 0.1,
+    })).toBeNull();
   });
 });
