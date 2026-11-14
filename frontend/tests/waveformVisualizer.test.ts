@@ -65,6 +65,8 @@ describe('integração do AudioEngine com o visualizador', () => {
     expect(engine.getAnalyser()).toBe(analyser);
     expect(gain.connect).toHaveBeenCalledWith(analyser);
     expect(analyser.connect).toHaveBeenCalledWith(context.destination);
+    
+    // Verifica se stopPlayback interrompe as fontes ativas corretamente
     engine.stopPlayback();
     expect(oscillator.stop).toHaveBeenCalledWith(context.currentTime);
 
@@ -86,7 +88,7 @@ describe('integração do AudioEngine com o visualizador', () => {
     engine.dispose();
   });
 
-  it('reports asynchronous AudioContext resume failures', async () => {
+  it('reports asynchronous AudioContext resume failures for playParams', async () => {
     const parameter = () => ({ setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() });
     const gain = { gain: parameter(), connect: vi.fn(), disconnect: vi.fn() };
     const analyser = { connect: vi.fn(), disconnect: vi.fn(), fftSize: 32 };
@@ -105,6 +107,35 @@ describe('integração do AudioEngine com o visualizador', () => {
     engine.playParams({ frequency: 440, pulseCount: 1, durationMs: 1000, isMissing: false });
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(onError).toHaveBeenLastCalledWith('retomada bloqueada');
+    engine.dispose();
+  });
+
+  it('reports asynchronous AudioContext resume failures for sequence controls', async () => {
+    const parameter = () => ({ setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() });
+    const gain = { gain: parameter(), connect: vi.fn(), disconnect: vi.fn() };
+    const analyser = { connect: vi.fn(), disconnect: vi.fn(), fftSize: 32 };
+    const context = {
+      state: 'suspended', currentTime: 1, destination: {},
+      createGain: vi.fn(() => gain), createAnalyser: vi.fn(() => analyser),
+      resume: vi.fn().mockRejectedValue(new Error('sequência bloqueada')),
+      close: vi.fn().mockResolvedValue(undefined)
+    };
+    vi.stubGlobal('window', { AudioContext: vi.fn(() => context) });
+    const engine = new AudioEngine();
+    const onError = vi.fn();
+    engine.subscribeError(onError);
+
+    // Adiciona sequência fictícia para passar na checagem inicial do resume()
+    engine['currentSequence'] = [{}] as any; 
+    
+    // Testa falha no resume()
+    await engine.resume();
+    expect(onError).toHaveBeenLastCalledWith('sequência bloqueada');
+
+    // Testa falha no playSequence()
+    await engine.playSequence([{} as any]);
+    expect(onError).toHaveBeenLastCalledWith('sequência bloqueada');
+    
     engine.dispose();
   });
 });

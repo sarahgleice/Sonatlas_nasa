@@ -13,6 +13,7 @@ export class AudioEngine {
 
   private isMuted: boolean = false;
   private speedMultiplier: number = 1.0;
+  private currentVolume: number = 0.3;
 
   // Estado de controle da sequência
   private isPlaying: boolean = false;
@@ -35,7 +36,7 @@ export class AudioEngine {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       this.ctx = new AudioCtx();
       this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+      this.masterGain.gain.setValueAtTime(this.isMuted ? 0.0 : this.currentVolume, this.ctx.currentTime);
       this.analyser = this.ctx.createAnalyser();
       this.masterGain.connect(this.analyser);
       this.analyser.connect(this.ctx.destination);
@@ -48,10 +49,23 @@ export class AudioEngine {
     return this.ctx;
   }
 
+  // --- CONTROLES DE VOLUME E MUDO ---
+
+  public setVolume(volume: number): void {
+    this.currentVolume = Math.max(0.0, Math.min(1.0, volume));
+    if (this.masterGain && this.ctx && !this.isMuted) {
+      this.masterGain.gain.setValueAtTime(this.currentVolume, this.ctx.currentTime);
+    }
+  }
+
+  public getVolume(): number {
+    return this.currentVolume;
+  }
+
   public setMuted(muted: boolean): void {
     this.isMuted = muted;
     if (this.masterGain && this.ctx) {
-      this.masterGain.gain.setValueAtTime(muted ? 0.0 : 0.3, this.ctx.currentTime);
+      this.masterGain.gain.setValueAtTime(muted ? 0.0 : this.currentVolume, this.ctx.currentTime);
     }
   }
 
@@ -137,8 +151,6 @@ export class AudioEngine {
     if (this.isMuted) return;
     const ctx = this.initContext();
 
-    this.stopPlayback();
-
     if (ctx.state === 'suspended') {
       void ctx.resume().catch((error: unknown) => {
         this.notifyError(error instanceof Error ? error.message : 'Não foi possível iniciar o áudio.');
@@ -154,9 +166,9 @@ export class AudioEngine {
     if (!this.ctx) return;
     for (const osc of this.activeOscillators) {
       try {
-        osc.stop(this.ctx.currentTime); 
+        osc.stop(this.ctx.currentTime);
         osc.disconnect();
-      } catch (e) {
+      } catch {
         // Ignora erros caso o nó já tenha sido finalizado pelo tempo
       }
     }
@@ -276,11 +288,12 @@ export class AudioEngine {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
 
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(150, startTime);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(240, startTime);
+    osc.frequency.linearRampToValueAtTime(180, startTime + 0.3);
 
     gain.gain.setValueAtTime(0.001, startTime);
-    gain.gain.exponentialRampToValueAtTime(0.08, startTime + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.2, startTime + 0.05);
     gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
 
     osc.connect(gain);
