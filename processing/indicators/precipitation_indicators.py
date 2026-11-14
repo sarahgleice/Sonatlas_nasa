@@ -13,10 +13,12 @@ def calculate_mean_precipitation_rate(
     precipitation_matrix: np.ndarray,
     latitudes: np.ndarray,
     missing_value: float = -9999.9,
-    min_valid_ratio: float = 0.10
+    min_valid_ratio: float = 0.10,
+    round_decimals: Optional[int] = None
 ) -> Tuple[Optional[float], float, int, int]:
     """
     Calcula a taxa média espacial ponderada pelo cosseno da latitude (mm/h).
+    Preserva a precisão original de ponto flutuante por padrão (sem arredondamento forçado).
     
     Retorna:
         Tuple: (mean_rate_or_none, valid_cells_ratio, valid_count, total_count)
@@ -53,18 +55,23 @@ def calculate_mean_precipitation_rate(
     weighted_precip = np.sum(precipitation_matrix * valid_weights)
     mean_rate = float(weighted_precip / sum_weights)
 
-    return round(mean_rate, 2), round(valid_ratio, 3), valid_count, total_cells
+    if round_decimals is not None:
+        mean_rate = round(mean_rate, round_decimals)
+
+    return mean_rate, round(valid_ratio, 4), valid_count, total_cells
 
 
 def calculate_rain_area_fraction(
     precipitation_matrix: np.ndarray,
     latitudes: np.ndarray,
     threshold_rate_mm_h: float = 0.1,
-    missing_value: float = -9999.9
+    missing_value: float = -9999.9,
+    round_decimals: Optional[int] = None
 ) -> Optional[float]:
     """
     Calcula a proporção da área com chuva estimada positiva (>= threshold_rate_mm_h),
     ponderada pelo cosseno da latitude sobre as células válidas.
+    Retorna uma fração adimensional entre 0.0 e 1.0.
     """
     valid_mask = (~np.isnan(precipitation_matrix)) & (precipitation_matrix > missing_value)
     if not np.any(valid_mask):
@@ -87,19 +94,30 @@ def calculate_rain_area_fraction(
     rain_weights = weights * rain_mask
     fraction = float(np.sum(rain_weights) / sum_valid_weights)
 
-    return round(fraction, 3)
+    if round_decimals is not None:
+        fraction = round(fraction, round_decimals)
+
+    return fraction
 
 
-def calculate_temporal_variance(
+def calculate_temporal_difference(
     current_mean: Optional[float],
-    previous_mean: Optional[float]
+    previous_mean: Optional[float],
+    round_decimals: Optional[int] = None
 ) -> Optional[float]:
     """
-    Calcula a variação temporal de taxa de precipitação entre observações adjacentes.
+    Calcula a diferença temporal de taxa média de precipitação entre observações adjacentes (Rt - Rt-1).
     """
     if current_mean is None or previous_mean is None:
         return None
-    return round(float(current_mean - previous_mean), 2)
+    diff = float(current_mean - previous_mean)
+    if round_decimals is not None:
+        diff = round(diff, round_decimals)
+    return diff
+
+
+# Alias semântico para retrocompatibilidade
+calculate_temporal_variance = calculate_temporal_difference
 
 
 def compute_observation_indicators(
@@ -135,13 +153,22 @@ def compute_observation_indicators(
     # Resumo textual amigável e acessível
     if mean_rate is None or avail_status == "missing":
         summary = f"Observação em {timestamp_utc}: Dados científicos não disponíveis para este intervalo."
+    elif mean_rate == 0.0 and (rain_fraction or 0.0) == 0.0:
+        summary = f"Observação em {timestamp_utc}: Condições de calmaria sem precipitação detectada na Amazônia Central."
     else:
         intensity_label = "leve" if mean_rate < 2.5 else "moderada" if mean_rate < 10.0 else "forte"
         pct = round((rain_fraction or 0.0) * 100, 1)
+        rate_str = f"{mean_rate:.3f}" if (0.0 < mean_rate < 0.01) else f"{mean_rate:.2f}"
         summary = (
-            f"Precipitação {intensity_label} com taxa média de {mean_rate} mm/h cobrindo "
+            f"Precipitação {intensity_label} com taxa média de {rate_str} mm/h cobrindo "
             f"aproximadamente {pct}% da área de estudo."
         )
+
+    temporal_metric = {
+        "value": temporal_var,
+        "unit": "mm/h",
+        "description": "Diferença temporal da taxa média em relação à observação anterior (Rt - Rt-1)"
+    }
 
     return {
         "observation_id": f"{observation_id_prefix}_{step_index:03d}",
@@ -162,25 +189,22 @@ def compute_observation_indicators(
             },
             "rain_area_fraction": {
                 "value": rain_fraction,
-                "unit": "percentage",
+                "unit": "fraction",
                 "threshold_rate_mm_h": 0.1,
-                "description": "Proporção da área com taxa de precipitação >= 0.1 mm/h"
+                "description": "Fração da área com taxa de precipitação >= 0.1 mm/h (adimensional entre 0 e 1)"
             },
             "max_precipitation_rate": {
                 "value": max_rate,
                 "unit": "mm/h",
                 "description": "Pico máximo pontual de precipitação registrado"
             },
-            "temporal_variance": {
-                "value": temporal_var,
-                "unit": "mm/h",
-                "description": "Variação da taxa média em relação à observação anterior"
-            }
+            "temporal_difference": temporal_metric,
+            "temporal_variance": temporal_metric
         },
         "visual_frame_reference": {
             "frame_id": f"frame_{step_index:03d}",
-            "image_path": f"/visualizations/frame_{step_index:03d}.png",
-            "source_system": "NASA Earth Information Center (EIC)",
+            "image_path": "",
+            "source_system": "NASA Scientific Visualization Studio (SVS 4285) / Earth Information Center",
             "synchronization_status": "pending_official_validation",
             "alt_text": summary
         },

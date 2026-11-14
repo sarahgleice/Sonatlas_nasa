@@ -29,6 +29,8 @@ export interface ScientificIndicators {
   mean_precipitation_rate: MetricValue<number>;
   rain_area_fraction: MetricValue<number>;
   max_precipitation_rate?: MetricValue<number>;
+  temporal_difference?: MetricValue<number>;
+  temporal_change?: MetricValue<number>;
   temporal_variance?: MetricValue<number>;
 }
 

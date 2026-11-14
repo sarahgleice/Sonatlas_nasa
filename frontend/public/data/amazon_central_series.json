@@ -30,33 +30,38 @@
       },
       "scientific_indicators": {
         "mean_precipitation_rate": {
-          "value": 0.38,
+          "value": 0.3817381262779236,
           "unit": "mm/h",
           "metric_type": "rate",
           "description": "Taxa média espacial de precipitação ponderada pela área da célula"
         },
         "rain_area_fraction": {
-          "value": 0.352,
-          "unit": "percentage",
+          "value": 0.3519376218318939,
+          "unit": "fraction",
           "threshold_rate_mm_h": 0.1,
-          "description": "Proporção da área com taxa de precipitação >= 0.1 mm/h"
+          "description": "Fração da área com taxa de precipitação >= 0.1 mm/h (adimensional entre 0 e 1)"
         },
         "max_precipitation_rate": {
-          "value": 6.01,
+          "value": 6.009999752044678,
           "unit": "mm/h",
           "description": "Pico máximo pontual de precipitação registrado"
+        },
+        "temporal_difference": {
+          "value": null,
+          "unit": "mm/h",
+          "description": "Diferença temporal da taxa média em relação à observação anterior (Rt - Rt-1)"
         },
         "temporal_variance": {
           "value": null,
           "unit": "mm/h",
-          "description": "Variação da taxa média em relação à observação anterior"
+          "description": "Diferença temporal da taxa média em relação à observação anterior (Rt - Rt-1)"
         }
       },
       "visual_frame_reference": {
         "frame_id": "frame_amazon_000",
-        "image_path": "/visualizations/amazon/frame_000.png",
-        "source_system": "NASA GPM IMERG Early V07B",
-        "synchronization_status": "verified",
+        "image_path": "",
+        "source_system": "NASA Scientific Visualization Studio (SVS 4285) / Earth Information Center",
+        "synchronization_status": "pending_official_validation",
         "alt_text": "Precipitação leve com taxa média de 0.38 mm/h cobrindo aproximadamente 35.2% da área da Amazônia Central."
       },
       "textual_summary": "Precipitação leve com taxa média de 0.38 mm/h cobrindo aproximadamente 35.2% da área da Amazônia Central."
@@ -73,33 +78,38 @@
       },
       "scientific_indicators": {
         "mean_precipitation_rate": {
-          "value": 0.27,
+          "value": 0.2668643593788147,
           "unit": "mm/h",
           "metric_type": "rate",
           "description": "Taxa média espacial de precipitação ponderada pela área da célula"
         },
         "rain_area_fraction": {
-          "value": 0.265,
-          "unit": "percentage",
+          "value": 0.2652603089809418,
+          "unit": "fraction",
           "threshold_rate_mm_h": 0.1,
-          "description": "Proporção da área com taxa de precipitação >= 0.1 mm/h"
+          "description": "Fração da área com taxa de precipitação >= 0.1 mm/h (adimensional entre 0 e 1)"
         },
         "max_precipitation_rate": {
-          "value": 5.29,
+          "value": 5.289999961853027,
           "unit": "mm/h",
           "description": "Pico máximo pontual de precipitação registrado"
         },
-        "temporal_variance": {
-          "value": -0.11,
+        "temporal_difference": {
+          "value": -0.11487376689910889,
           "unit": "mm/h",
-          "description": "Variação da taxa média em relação à observação anterior"
+          "description": "Diferença temporal da taxa média em relação à observação anterior (Rt - Rt-1)"
+        },
+        "temporal_variance": {
+          "value": -0.11487376689910889,
+          "unit": "mm/h",
+          "description": "Diferença temporal da taxa média em relação à observação anterior (Rt - Rt-1)"
         }
       },
       "visual_frame_reference": {
         "frame_id": "frame_amazon_001",
-        "image_path": "/visualizations/amazon/frame_001.png",
-        "source_system": "NASA GPM IMERG Early V07B",
-        "synchronization_status": "verified",
+        "image_path": "",
+        "source_system": "NASA Scientific Visualization Studio (SVS 4285) / Earth Information Center",
+        "synchronization_status": "pending_official_validation",
         "alt_text": "Precipitação leve com taxa média de 0.27 mm/h cobrindo aproximadamente 26.5% da área da Amazônia Central."
       },
       "textual_summary": "Precipitação leve com taxa média de 0.27 mm/h cobrindo aproximadamente 26.5% da área da Amazônia Central."
@@ -116,36 +126,41 @@
       },
       "scientific_indicators": {
         "mean_precipitation_rate": {
-          "value": 0.0,
+          "value": 0.0013476971071213484,
           "unit": "mm/h",
           "metric_type": "rate",
           "description": "Taxa média espacial de precipitação ponderada pela área da célula"
         },
         "rain_area_fraction": {
-          "value": 0.003,
-          "unit": "percentage",
+          "value": 0.002668707398697734,
+          "unit": "fraction",
           "threshold_rate_mm_h": 0.1,
-          "description": "Proporção da área com taxa de precipitação >= 0.1 mm/h"
+          "description": "Fração da área com taxa de precipitação >= 0.1 mm/h (adimensional entre 0 e 1)"
         },
         "max_precipitation_rate": {
-          "value": 0.51,
+          "value": 0.5099999904632568,
           "unit": "mm/h",
           "description": "Pico máximo pontual de precipitação registrado"
         },
-        "temporal_variance": {
-          "value": -0.27,
+        "temporal_difference": {
+          "value": -0.26551666227169335,
           "unit": "mm/h",
-          "description": "Variação da taxa média em relação à observação anterior"
+          "description": "Diferença temporal da taxa média em relação à observação anterior (Rt - Rt-1)"
+        },
+        "temporal_variance": {
+          "value": -0.26551666227169335,
+          "unit": "mm/h",
+          "description": "Diferença temporal da taxa média em relação à observação anterior (Rt - Rt-1)"
         }
       },
       "visual_frame_reference": {
         "frame_id": "frame_amazon_002",
-        "image_path": "/visualizations/amazon/frame_002.png",
-        "source_system": "NASA GPM IMERG Early V07B",
-        "synchronization_status": "verified",
-        "alt_text": "Precipitação leve com taxa média de 0.0 mm/h cobrindo aproximadamente 0.3% da área da Amazônia Central."
+        "image_path": "",
+        "source_system": "NASA Scientific Visualization Studio (SVS 4285) / Earth Information Center",
+        "synchronization_status": "pending_official_validation",
+        "alt_text": "Precipitação leve com taxa média de 0.001 mm/h cobrindo aproximadamente 0.3% da área da Amazônia Central."
       },
-      "textual_summary": "Precipitação leve com taxa média de 0.0 mm/h cobrindo aproximadamente 0.3% da área da Amazônia Central."
+      "textual_summary": "Precipitação leve com taxa média de 0.001 mm/h cobrindo aproximadamente 0.3% da área da Amazônia Central."
     },
     {
       "observation_id": "obs_amazon_003",
@@ -159,36 +174,41 @@
       },
       "scientific_indicators": {
         "mean_precipitation_rate": {
-          "value": 0.0,
+          "value": 0.0012942519970238209,
           "unit": "mm/h",
           "metric_type": "rate",
           "description": "Taxa média espacial de precipitação ponderada pela área da célula"
         },
         "rain_area_fraction": {
-          "value": 0.003,
-          "unit": "percentage",
+          "value": 0.0026685609482228756,
+          "unit": "fraction",
           "threshold_rate_mm_h": 0.1,
-          "description": "Proporção da área com taxa de precipitação >= 0.1 mm/h"
+          "description": "Fração da área com taxa de precipitação >= 0.1 mm/h (adimensional entre 0 e 1)"
         },
         "max_precipitation_rate": {
-          "value": 0.49,
+          "value": 0.4899999797344208,
           "unit": "mm/h",
           "description": "Pico máximo pontual de precipitação registrado"
         },
-        "temporal_variance": {
-          "value": 0.0,
+        "temporal_difference": {
+          "value": -5.3445110097527504e-05,
           "unit": "mm/h",
-          "description": "Variação da taxa média em relação à observação anterior"
+          "description": "Diferença temporal da taxa média em relação à observação anterior (Rt - Rt-1)"
+        },
+        "temporal_variance": {
+          "value": -5.3445110097527504e-05,
+          "unit": "mm/h",
+          "description": "Diferença temporal da taxa média em relação à observação anterior (Rt - Rt-1)"
         }
       },
       "visual_frame_reference": {
         "frame_id": "frame_amazon_003",
-        "image_path": "/visualizations/amazon/frame_003.png",
-        "source_system": "NASA GPM IMERG Early V07B",
-        "synchronization_status": "verified",
-        "alt_text": "Precipitação leve com taxa média de 0.0 mm/h cobrindo aproximadamente 0.3% da área da Amazônia Central."
+        "image_path": "",
+        "source_system": "NASA Scientific Visualization Studio (SVS 4285) / Earth Information Center",
+        "synchronization_status": "pending_official_validation",
+        "alt_text": "Precipitação leve com taxa média de 0.001 mm/h cobrindo aproximadamente 0.3% da área da Amazônia Central."
       },
-      "textual_summary": "Precipitação leve com taxa média de 0.0 mm/h cobrindo aproximadamente 0.3% da área da Amazônia Central."
+      "textual_summary": "Precipitação leve com taxa média de 0.001 mm/h cobrindo aproximadamente 0.3% da área da Amazônia Central."
     },
     {
       "observation_id": "obs_amazon_004",
@@ -202,36 +222,41 @@
       },
       "scientific_indicators": {
         "mean_precipitation_rate": {
-          "value": 0.0,
+          "value": 0.0006671015871688724,
           "unit": "mm/h",
           "metric_type": "rate",
           "description": "Taxa média espacial de precipitação ponderada pela área da célula"
         },
         "rain_area_fraction": {
-          "value": 0.001,
-          "unit": "percentage",
+          "value": 0.0013342031743377447,
+          "unit": "fraction",
           "threshold_rate_mm_h": 0.1,
-          "description": "Proporção da área com taxa de precipitação >= 0.1 mm/h"
+          "description": "Fração da área com taxa de precipitação >= 0.1 mm/h (adimensional entre 0 e 1)"
         },
         "max_precipitation_rate": {
           "value": 0.5,
           "unit": "mm/h",
           "description": "Pico máximo pontual de precipitação registrado"
         },
-        "temporal_variance": {
-          "value": 0.0,
+        "temporal_difference": {
+          "value": -0.0006271504098549485,
           "unit": "mm/h",
-          "description": "Variação da taxa média em relação à observação anterior"
+          "description": "Diferença temporal da taxa média em relação à observação anterior (Rt - Rt-1)"
+        },
+        "temporal_variance": {
+          "value": -0.0006271504098549485,
+          "unit": "mm/h",
+          "description": "Diferença temporal da taxa média em relação à observação anterior (Rt - Rt-1)"
         }
       },
       "visual_frame_reference": {
         "frame_id": "frame_amazon_004",
-        "image_path": "/visualizations/amazon/frame_004.png",
-        "source_system": "NASA GPM IMERG Early V07B",
-        "synchronization_status": "verified",
-        "alt_text": "Precipitação leve com taxa média de 0.0 mm/h cobrindo aproximadamente 0.1% da área da Amazônia Central."
+        "image_path": "",
+        "source_system": "NASA Scientific Visualization Studio (SVS 4285) / Earth Information Center",
+        "synchronization_status": "pending_official_validation",
+        "alt_text": "Precipitação leve com taxa média de 0.001 mm/h cobrindo aproximadamente 0.1% da área da Amazônia Central."
       },
-      "textual_summary": "Precipitação leve com taxa média de 0.0 mm/h cobrindo aproximadamente 0.1% da área da Amazônia Central."
+      "textual_summary": "Precipitação leve com taxa média de 0.001 mm/h cobrindo aproximadamente 0.1% da área da Amazônia Central."
     },
     {
       "observation_id": "obs_amazon_005",
@@ -252,26 +277,31 @@
         },
         "rain_area_fraction": {
           "value": 0.0,
-          "unit": "percentage",
+          "unit": "fraction",
           "threshold_rate_mm_h": 0.1,
-          "description": "Proporção da área com taxa de precipitação >= 0.1 mm/h"
+          "description": "Fração da área com taxa de precipitação >= 0.1 mm/h (adimensional entre 0 e 1)"
         },
         "max_precipitation_rate": {
           "value": 0.0,
           "unit": "mm/h",
           "description": "Pico máximo pontual de precipitação registrado"
         },
-        "temporal_variance": {
-          "value": 0.0,
+        "temporal_difference": {
+          "value": -0.0006671015871688724,
           "unit": "mm/h",
-          "description": "Variação da taxa média em relação à observação anterior"
+          "description": "Diferença temporal da taxa média em relação à observação anterior (Rt - Rt-1)"
+        },
+        "temporal_variance": {
+          "value": -0.0006671015871688724,
+          "unit": "mm/h",
+          "description": "Diferença temporal da taxa média em relação à observação anterior (Rt - Rt-1)"
         }
       },
       "visual_frame_reference": {
         "frame_id": "frame_amazon_005",
-        "image_path": "/visualizations/amazon/frame_005.png",
-        "source_system": "NASA GPM IMERG Early V07B",
-        "synchronization_status": "verified",
+        "image_path": "",
+        "source_system": "NASA Scientific Visualization Studio (SVS 4285) / Earth Information Center",
+        "synchronization_status": "pending_official_validation",
         "alt_text": "Observação em 2024-01-01T02:30:00Z: Condições de calmaria sem precipitação detectada na Amazônia Central."
       },
       "textual_summary": "Observação em 2024-01-01T02:30:00Z: Condições de calmaria sem precipitação detectada na Amazônia Central."

@@ -2,6 +2,11 @@
 Processamento espacial dos dados reais NASA GPM IMERG Early V07B para a Amazônia Central.
 Gera a série temporal oficial com 6 observações de 30 minutos em formato JSON,
 estritamente compatível com o motor de sonificação e contrato TypeScript do SONATLAS.
+Auditado na Etapa 3.1:
+- Preservação da precisão numérica em mean_precipitation_rate (sem truncamento/arredondamento forçado).
+- Unidade 'fraction' para rain_area_fraction (adimensional entre 0 e 1).
+- Renomeação semântica para 'temporal_difference' (diferença entre passos adjacentes) com alias retrocompatível.
+- synchronization_status: 'pending_official_validation' para referências visuais não homologadas.
 """
 
 import os
@@ -23,7 +28,7 @@ from extraction.gpm_extractor import GPMExtractor
 from indicators.precipitation_indicators import (
     calculate_mean_precipitation_rate,
     calculate_rain_area_fraction,
-    calculate_temporal_variance
+    calculate_temporal_difference
 )
 from validation.data_validator import DataValidator
 
@@ -36,7 +41,6 @@ def load_amazon_geometry() -> Dict[str, float]:
     with open(geojson_path, "r", encoding="utf-8") as f:
         geom_data = json.load(f)
 
-    # Coordenadas: [[lon, lat], ...]
     coords = geom_data["features"][0]["geometry"]["coordinates"][0]
     lons = [p[0] for p in coords]
     lats = [p[1] for p in coords]
@@ -50,7 +54,7 @@ def load_amazon_geometry() -> Dict[str, float]:
 
 
 def process_real_observations() -> Dict[str, Any]:
-    """Lê os grânulos reais, recorta a grade e calcula os indicadores físicos."""
+    """Lê os grânulos reais, recorta a grade e calcula os indicadores físicos com alta fidelidade."""
     raw_dir = os.path.join(PROCESSING_DIR, "data", "raw")
     hdf5_files = sorted(glob.glob(os.path.join(raw_dir, "3B-HHR-E.*.V07B.HDF5")))
 
@@ -85,24 +89,24 @@ def process_real_observations() -> Dict[str, Any]:
         lons = clipped["longitudes"]
 
         # 3. Formatação do Timestamp UTC a partir do padrão de nomenclatura oficial da NASA
-        # Ex: 3B-HHR-E.MS.MRG.3IMERG.20240101-S000000-E002959.0000.V07B.HDF5
         filename = os.path.basename(fpath)
         date_part = filename.split("3IMERG.")[1].split("-S")[0]   # 20240101
         time_part = filename.split("-S")[1].split("-E")[0]       # 000000, 003000...
         timestamp_utc = f"{date_part[:4]}-{date_part[4:6]}-{date_part[6:8]}T{time_part[:2]}:{time_part[2:4]}:{time_part[4:6]}Z"
 
         # 4. Cálculo dos Indicadores Científicos com ponderação pelo cosseno da latitude
+        # Preserva a precisão original de ponto flutuante (sem arredondamento forçado que descaracteriza traços)
         mean_rate, valid_ratio, valid_count, total_cells = calculate_mean_precipitation_rate(
             matrix, lats, missing_value=-9999.0
         )
         rain_fraction = calculate_rain_area_fraction(
             matrix, lats, threshold_rate_mm_h=0.1, missing_value=-9999.0
         )
-        temp_var = calculate_temporal_variance(mean_rate, previous_mean)
+        temp_diff = calculate_temporal_difference(mean_rate, previous_mean)
 
         # Células válidas e pico máximo pontual
         valid_cells = matrix[(~np.isnan(matrix)) & (matrix > -9999.0)]
-        max_rate = round(float(np.max(valid_cells)), 2) if valid_cells.size > 0 else None
+        max_rate = float(np.max(valid_cells)) if valid_cells.size > 0 else None
 
         # Status de disponibilidade conforme contrato da equipe
         if valid_ratio >= 0.80:
@@ -127,10 +131,17 @@ def process_real_observations() -> Dict[str, Any]:
                 "leve" if mean_rate < 2.5 else "moderada" if mean_rate < 10.0 else "forte"
             )
             pct = round((rain_fraction or 0.0) * 100, 1)
+            rate_disp = f"{mean_rate:.3f}" if (0.0 < mean_rate < 0.01) else f"{mean_rate:.2f}"
             textual_summary = (
-                f"Precipitação {intensity_label} com taxa média de {mean_rate} mm/h cobrindo "
+                f"Precipitação {intensity_label} com taxa média de {rate_disp} mm/h cobrindo "
                 f"aproximadamente {pct}% da área da Amazônia Central."
             )
+
+        temporal_metric = {
+            "value": temp_diff,
+            "unit": "mm/h",
+            "description": "Diferença temporal da taxa média em relação à observação anterior (Rt - Rt-1)"
+        }
 
         observation_entry: Dict[str, Any] = {
             "observation_id": f"obs_amazon_{idx:03d}",
@@ -138,7 +149,7 @@ def process_real_observations() -> Dict[str, Any]:
             "timestamp_utc": timestamp_utc,
             "availability": {
                 "status": avail_status,
-                "valid_cells_ratio": round(valid_ratio, 4),
+                "valid_cells_ratio": valid_ratio,
                 "missing_cells_count": total_cells - valid_count,
                 "total_cells_count": total_cells
             },
@@ -151,26 +162,23 @@ def process_real_observations() -> Dict[str, Any]:
                 },
                 "rain_area_fraction": {
                     "value": rain_fraction,
-                    "unit": "percentage",
+                    "unit": "fraction",
                     "threshold_rate_mm_h": 0.1,
-                    "description": "Proporção da área com taxa de precipitação >= 0.1 mm/h"
+                    "description": "Fração da área com taxa de precipitação >= 0.1 mm/h (adimensional entre 0 e 1)"
                 },
                 "max_precipitation_rate": {
                     "value": max_rate,
                     "unit": "mm/h",
                     "description": "Pico máximo pontual de precipitação registrado"
                 },
-                "temporal_variance": {
-                    "value": temp_var,
-                    "unit": "mm/h",
-                    "description": "Variação da taxa média em relação à observação anterior"
-                }
+                "temporal_difference": temporal_metric,
+                "temporal_variance": temporal_metric
             },
             "visual_frame_reference": {
                 "frame_id": f"frame_amazon_{idx:03d}",
-                "image_path": f"/visualizations/amazon/frame_{idx:03d}.png",
-                "source_system": "NASA GPM IMERG Early V07B",
-                "synchronization_status": "verified",
+                "image_path": "",
+                "source_system": "NASA Scientific Visualization Studio (SVS 4285) / Earth Information Center",
+                "synchronization_status": "pending_official_validation",
                 "alt_text": textual_summary
             },
             "textual_summary": textual_summary
@@ -200,7 +208,7 @@ def process_real_observations() -> Dict[str, Any]:
 
 
 def main():
-    print("[SONATLAS] Iniciando processamento espacial e temporal dos dados reais da NASA...")
+    print("[SONATLAS Etapa 3.1] Iniciando auditoria e reprocessamento com semântica corrigida...")
     dataset = process_real_observations()
 
     # Validação com DataValidator
@@ -221,13 +229,13 @@ def main():
     os.makedirs(dest_amazon_dir, exist_ok=True)
     os.makedirs(dest_processed_dir, exist_ok=True)
 
-    # 1. Arquivo solicitado na especificação: frontend/public/data/amazon/observations.json
+    # 1. Arquivo oficial: frontend/public/data/amazon/observations.json
     observations_file = os.path.join(dest_amazon_dir, "observations.json")
     with open(observations_file, "w", encoding="utf-8") as f:
         json.dump(dataset, f, indent=2, ensure_ascii=False)
     print(f"[Export] Arquivo oficial gerado em: {observations_file}")
 
-    # 2. Atualizar também amazon_central_series.json para integração visual imediata
+    # 2. Atualizar amazon_central_series.json para manter consistência absoluta
     series_file = os.path.join(dest_data_dir, "amazon_central_series.json")
     with open(series_file, "w", encoding="utf-8") as f:
         json.dump(dataset, f, indent=2, ensure_ascii=False)
@@ -239,15 +247,17 @@ def main():
         json.dump(dataset, f, indent=2, ensure_ascii=False)
     print(f"[Export] Cópia persistida em: {processed_file}")
 
-    print("\n--- RESUMO DAS OBSERVAÇÕES GERADAS ---")
+    print("\n--- RESUMO DAS OBSERVAÇÕES AUDITADAS ---")
     for obs in dataset["observations"]:
         idx = obs["step_index"]
         ts = obs["timestamp_utc"]
         rate = obs["scientific_indicators"]["mean_precipitation_rate"]["value"]
         cov = obs["scientific_indicators"]["rain_area_fraction"]["value"]
         max_r = obs["scientific_indicators"]["max_precipitation_rate"]["value"]
+        diff = obs["scientific_indicators"]["temporal_difference"]["value"]
         status = obs["availability"]["status"]
-        print(f"Passo {idx} | {ts} | Taxa Média: {rate} mm/h | Cobertura: {cov} ({cov*100:.1f}%) | Máx: {max_r} mm/h | Status: {status}")
+        diff_str = f"{diff:+.6f}" if diff is not None else "N/A"
+        print(f"Passo {idx} | {ts} | Média: {rate:.6f} mm/h | Fração: {cov:.6f} | Delta: {diff_str} | Máx: {max_r:.2f} mm/h | Status: {status}")
 
 
 if __name__ == "__main__":

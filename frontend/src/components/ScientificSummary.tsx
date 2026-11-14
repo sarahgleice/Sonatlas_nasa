@@ -82,13 +82,16 @@ export const ScientificSummary: React.FC<ScientificSummaryProps> = ({
         </div>
 
         <div className="metric-box">
-          <span className="metric-label">Variação Temporal (&Delta;R)</span>
+          <span className="metric-label">Diferença Temporal (&Delta;R)</span>
           <span className="metric-value">
-            {scientific_indicators.temporal_variance?.value !== null && scientific_indicators.temporal_variance?.value !== undefined
-              ? `${scientific_indicators.temporal_variance.value > 0 ? '+' : ''}${scientific_indicators.temporal_variance.value.toFixed(1)} mm/h`
-              : 'Linha base'}
+            {(() => {
+              const tempDiff = scientific_indicators.temporal_difference ?? scientific_indicators.temporal_change ?? scientific_indicators.temporal_variance;
+              return tempDiff?.value !== null && tempDiff?.value !== undefined
+                ? `${tempDiff.value > 0 ? '+' : ''}${tempDiff.value.toFixed(2)} mm/h`
+                : 'Linha base';
+            })()}
           </span>
-          <span className="metric-caption">Em relação ao passo anterior</span>
+          <span className="metric-caption">Em relação ao passo anterior (Rt - Rt-1)</span>
         </div>
       </div>
 
