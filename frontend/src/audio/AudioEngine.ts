@@ -10,15 +10,16 @@ export class AudioEngine {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private analyser: AnalyserNode | null = null;
-  private isMuted: boolean = false;
 
-  // Estado de controle da sequência (Hazel)
+  private isMuted: boolean = false;
+  private speedMultiplier: number = 1.0;
+
+  // Estado de controle da sequência
   private isPlaying: boolean = false;
   private currentSequence: TemporalObservation[] = [];
   private currentIndex: number = 0;
   private nextSegmentTime: number = 0;
   private scheduleTimer: number | null = null;
-  private speedMultiplier: number = 1.0;
 
   // Rastreio de osciladores ativos
   private activeOscillators = new Set<OscillatorNode>();
@@ -58,6 +59,8 @@ export class AudioEngine {
     return this.isMuted;
   }
 
+  // --- MÉTODOS DO ANALISADOR E ERROS (MAIN) ---
+
   public getAnalyser(): AnalyserNode | null {
     return this.analyser;
   }
@@ -77,11 +80,11 @@ export class AudioEngine {
     this.errorListeners.forEach((listener) => listener(message));
   }
 
+  // --- CONTROLES DE REPRODUÇÃO ---
+
   public setSpeed(multiplier: number): void {
     this.speedMultiplier = Math.max(0.1, multiplier);
   }
-
-  // --- CONTROLES DE REPRODUÇÃO ---
 
   public pause(): void {
     this.isPlaying = false;
@@ -97,7 +100,12 @@ export class AudioEngine {
   public async resume(): Promise<void> {
     if (!this.ctx || this.currentSequence.length === 0) return;
     this.isPlaying = true;
-    await this.ctx.resume();
+    try {
+      await this.ctx.resume();
+    } catch (error: unknown) {
+      this.notifyError(error instanceof Error ? error.message : 'Erro ao retomar áudio.');
+      return;
+    }
     this.nextSegmentTime = this.ctx.currentTime + 0.1;
     this.scheduler();
   }
@@ -111,12 +119,49 @@ export class AudioEngine {
     this.isPlaying = true;
 
     this.stopPlayback();
-    await ctx.resume();
+    try {
+      await ctx.resume();
+    } catch (error: unknown) {
+      this.notifyError(error instanceof Error ? error.message : 'Erro ao iniciar áudio.');
+      return;
+    }
     this.nextSegmentTime = ctx.currentTime + 0.1;
     this.scheduler();
   }
 
-  // --- CONTROLES DE NAVEGAÇÃO ---
+  /**
+   * Toca um único parâmetro sonoro imediatamente.
+   * Usado pela interface do Jukebox quando o utilizador navega passo a passo.
+   */
+  public playParams(params: SonificationParams): void {
+    if (this.isMuted) return;
+    const ctx = this.initContext();
+
+    this.stopPlayback();
+
+    if (ctx.state === 'suspended') {
+      void ctx.resume().catch((error: unknown) => {
+        this.notifyError(error instanceof Error ? error.message : 'Não foi possível iniciar o áudio.');
+      });
+    }
+
+    this.scheduleParams(params, ctx.currentTime);
+  }
+
+  // --- CONTROLES DE NAVEGAÇÃO E PARADA ---
+
+  public stopPlayback(): void {
+    if (!this.ctx) return;
+    for (const osc of this.activeOscillators) {
+      try {
+        osc.stop(this.ctx.currentTime); 
+        osc.disconnect();
+      } catch (e) {
+        // Ignora erros caso o nó já tenha sido finalizado pelo tempo
+      }
+    }
+    this.activeOscillators.clear();
+  }
 
   public next(): void {
     if (this.currentIndex < this.currentSequence.length - 1) {
@@ -147,19 +192,6 @@ export class AudioEngine {
     }
   }
 
-  public stopPlayback(): void {
-    if (!this.ctx) return;
-    for (const oscillator of this.activeOscillators) {
-      try {
-        oscillator.stop(this.ctx.currentTime);
-        oscillator.disconnect();
-      } catch {
-        // Oscillatoros que já terminaram
-      }
-    }
-    this.activeOscillators.clear();
-  }
-
   // --- LOOP DE AGENDAMENTO ---
 
   private scheduler = (): void => {
@@ -186,26 +218,18 @@ export class AudioEngine {
     }
   }
 
-  /**
-   * Executa a sonificação de um conjunto de parâmetros imediatamente.
-   */
-  public playParams(params: SonificationParams): void {
-    if (this.isMuted) return;
-    const ctx = this.initContext();
-    this.scheduleParams(params, ctx.currentTime);
-  }
-
   // --- SÍNTESE DE ÁUDIO ---
 
   private scheduleParams(params: SonificationParams, startTime: number): void {
     if (!this.ctx) return;
+    const totalDurationSec = params.durationMs / 1000;
 
     if (params.isMissing) {
       this.playAlertTone(this.ctx, startTime);
       return;
     }
 
-    const pulseInterval = (params.durationMs / 1000) / params.pulseCount;
+    const pulseInterval = totalDurationSec / params.pulseCount;
     const pulseActiveDuration = Math.min(pulseInterval * 0.65, 0.25);
 
     for (let i = 0; i < params.pulseCount; i++) {
