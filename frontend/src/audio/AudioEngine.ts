@@ -3,17 +3,16 @@ import { createObservationSonificationParams } from './sonificationMapping';
 
 /**
  * Motor nativo de áudio para síntese em tempo real via Web Audio API.
- * Implementa agendamento preciso (Lookahead) para sequências temporais.
+ * Implementa agendamento preciso (Lookahead) para sequências temporais
+ * e integração com nós de análise (waveform) e gestão de erros.
  */
 export class AudioEngine {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private analyser: AnalyserNode | null = null;
-  
-  private activeOscillators = new Set<OscillatorNode>();
-  private errorListeners = new Set<(message: string | null) => void>();
-  private lastError: string | null = null;
+
   private isMuted: boolean = false;
+  private speedMultiplier: number = 1.0;
 
   // Estado de controle da sequência
   private isPlaying: boolean = false;
@@ -21,11 +20,15 @@ export class AudioEngine {
   private currentIndex: number = 0;
   private nextSegmentTime: number = 0;
   private scheduleTimer: number | null = null;
-  private speedMultiplier: number = 1.0;
-  
+
+  // Rastreio de osciladores ativos
+  private activeOscillators = new Set<OscillatorNode>();
+  private errorListeners = new Set<(message: string | null) => void>();
+  private lastError: string | null = null;
+
   // Parâmetros de agendamento (A Tale of Two Clocks)
-  private readonly LOOKAHEAD_MS = 25; 
-  private readonly SCHEDULE_AHEAD_SEC = 0.1; 
+  private readonly LOOKAHEAD_MS = 25;
+  private readonly SCHEDULE_AHEAD_SEC = 0.1;
 
   private initContext(): AudioContext {
     if (!this.ctx) {
@@ -57,7 +60,7 @@ export class AudioEngine {
   }
 
   // --- MÉTODOS DO ANALISADOR E ERROS (MAIN) ---
-  
+
   public getAnalyser(): AnalyserNode | null {
     return this.analyser;
   }
@@ -77,7 +80,7 @@ export class AudioEngine {
     this.errorListeners.forEach((listener) => listener(message));
   }
 
-  // --- CONTROLES DE REPRODUÇÃO (HAZEL) ---
+  // --- CONTROLES DE REPRODUÇÃO ---
 
   public setSpeed(multiplier: number): void {
     this.speedMultiplier = Math.max(0.1, multiplier);
@@ -85,8 +88,8 @@ export class AudioEngine {
 
   public pause(): void {
     this.isPlaying = false;
-    if (this.ctx && this.ctx.state === 'running') {
-      this.ctx.suspend();
+    if (this.ctx && this.ctx.state === 'running' && typeof this.ctx.suspend === 'function') {
+      void this.ctx.suspend();
     }
     if (this.scheduleTimer) {
       window.clearTimeout(this.scheduleTimer);
@@ -97,7 +100,12 @@ export class AudioEngine {
   public async resume(): Promise<void> {
     if (!this.ctx || this.currentSequence.length === 0) return;
     this.isPlaying = true;
-    await this.ctx.resume();
+    try {
+      await this.ctx.resume();
+    } catch (error: unknown) {
+      this.notifyError(error instanceof Error ? error.message : 'Erro ao retomar áudio.');
+      return;
+    }
     this.nextSegmentTime = this.ctx.currentTime + 0.1;
     this.scheduler();
   }
@@ -105,40 +113,54 @@ export class AudioEngine {
   public async playSequence(sequence: TemporalObservation[]): Promise<void> {
     this.currentSequence = sequence;
     this.currentIndex = 0;
-    
+
     if (this.isMuted) return;
     const ctx = this.initContext();
     this.isPlaying = true;
-    
-    this.stopActiveSounds();
-    await ctx.resume();
+
+    this.stopPlayback();
+    try {
+      await ctx.resume();
+    } catch (error: unknown) {
+      this.notifyError(error instanceof Error ? error.message : 'Erro ao iniciar áudio.');
+      return;
+    }
     this.nextSegmentTime = ctx.currentTime + 0.1;
     this.scheduler();
   }
 
   /**
-   * Toca um único parâmetro sonoro imediatamente. 
+   * Toca um único parâmetro sonoro imediatamente.
    * Usado pela interface do Jukebox quando o utilizador navega passo a passo.
    */
   public playParams(params: SonificationParams): void {
     if (this.isMuted) return;
     const ctx = this.initContext();
-    
-    // Interrompe o som anterior para não encavalar
-    this.stopActiveSounds();
-    
+
+    this.stopPlayback();
+
     if (ctx.state === 'suspended') {
-      void ctx.resume();
+      void ctx.resume().catch((error: unknown) => {
+        this.notifyError(error instanceof Error ? error.message : 'Não foi possível iniciar o áudio.');
+      });
     }
-    
-    // Agenda o som para tocar exatamente agora
+
     this.scheduleParams(params, ctx.currentTime);
   }
 
   // --- CONTROLES DE NAVEGAÇÃO E PARADA ---
 
   public stopPlayback(): void {
-    this.stopActiveSounds();
+    if (!this.ctx) return;
+    for (const osc of this.activeOscillators) {
+      try {
+        osc.stop(this.ctx.currentTime); // <- Correção exigida pelo teste
+        osc.disconnect();
+      } catch (e) {
+        // Ignora erros caso o nó já tenha sido finalizado pelo tempo
+      }
+    }
+    this.activeOscillators.clear();
   }
 
   public next(): void {
@@ -156,30 +178,18 @@ export class AudioEngine {
   public goToIndex(index: number): void {
     if (index >= 0 && index < this.currentSequence.length) {
       this.currentIndex = index;
-      
-      this.stopActiveSounds();
-      
+
+      this.stopPlayback();
+
       if (this.ctx) {
-        this.nextSegmentTime = this.ctx.currentTime; 
+        this.nextSegmentTime = this.ctx.currentTime;
       }
-      
+
       if (this.isPlaying) {
         if (this.scheduleTimer) window.clearTimeout(this.scheduleTimer);
         this.scheduler();
       }
     }
-  }
-
-  private stopActiveSounds(): void {
-    for (const osc of this.activeOscillators) {
-      try {
-        osc.stop();
-        osc.disconnect();
-      } catch (e) {
-        // Ignora erros caso o nó já tenha sido finalizado pelo tempo
-      }
-    }
-    this.activeOscillators.clear();
   }
 
   // --- LOOP DE AGENDAMENTO ---
@@ -189,13 +199,13 @@ export class AudioEngine {
 
     while (this.nextSegmentTime < this.ctx.currentTime + this.SCHEDULE_AHEAD_SEC && this.currentIndex < this.currentSequence.length) {
       const obs = this.currentSequence[this.currentIndex];
-      
-      const baseDurationMs = 1500; 
+
+      const baseDurationMs = 1500;
       const adjustedDurationMs = baseDurationMs / this.speedMultiplier;
-      
+
       const params = createObservationSonificationParams(obs, adjustedDurationMs);
       this.scheduleParams(params, this.nextSegmentTime);
-      
+
       this.nextSegmentTime += (adjustedDurationMs / 1000);
       this.currentIndex++;
     }
@@ -243,11 +253,10 @@ export class AudioEngine {
     const attackTime = 0.02;
     const releaseTime = duration * 0.4;
     const peakTime = startTime + attackTime;
-    const decayStart = startTime + duration - releaseTime;
 
     gain.gain.setValueAtTime(0.0001, startTime);
-    gain.gain.exponentialRampToValueAtTime(0.4, peakTime);
-    gain.gain.setValueAtTime(0.4, Math.max(peakTime, decayStart));
+    gain.gain.exponentialRampToValueAtTime(0.3, peakTime);
+    gain.gain.setValueAtTime(0.3, startTime + duration - releaseTime);
     gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
 
     osc.connect(gain);
@@ -267,12 +276,11 @@ export class AudioEngine {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
 
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(240, startTime);
-    osc.frequency.linearRampToValueAtTime(180, startTime + 0.3);
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(150, startTime);
 
     gain.gain.setValueAtTime(0.001, startTime);
-    gain.gain.exponentialRampToValueAtTime(0.2, startTime + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.08, startTime + 0.05);
     gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
 
     osc.connect(gain);
@@ -290,7 +298,7 @@ export class AudioEngine {
 
   public dispose(): void {
     this.pause();
-    this.stopActiveSounds();
+    this.stopPlayback();
     if (this.ctx) {
       if (this.ctx.state !== 'closed') {
         this.masterGain?.disconnect();
