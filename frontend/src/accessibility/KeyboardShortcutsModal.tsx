@@ -1,5 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import { SHORTCUTS } from '../types/player';
+import { useModalDialog } from './useModalDialog';
 
 interface KeyboardShortcutsModalProps {
   isOpen: boolean;
@@ -10,70 +12,51 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
   isOpen,
   onClose
 }) => {
-  if (!isOpen) return null;
+  const { dialogRef, handleClose, handleBackdropClick, requestClose } = useModalDialog(isOpen, onClose);
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
+      className="shortcuts-dialog"
       aria-labelledby="shortcuts-modal-title"
-      className="modal-backdrop"
-      onClick={onClose}
+      onClose={handleClose}
+      onClick={handleBackdropClick}
     >
-      <div
-        className="modal-card"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="dialog-surface">
         <div className="modal-header">
           <h2 id="shortcuts-modal-title" className="modal-title">
-            Ajuda e atalhos de teclado
+            Atalhos de teclado
           </h2>
           <button
-            onClick={onClose}
+            type="button"
+            onClick={requestClose}
             className="btn-close"
             aria-label="Fechar janela de atalhos de teclado"
           >
-            <X size={20} />
+            <X size={20} aria-hidden="true" />
           </button>
         </div>
 
         <ul className="shortcuts-list">
-          <li>
-            <kbd>Espaço</kbd>
-            <span>Alternar Reproduzir / Pausar a sonificação</span>
-          </li>
-          <li>
-            <kbd>→</kbd>
-            <span>Avançar um passo temporal</span>
-          </li>
-          <li>
-            <kbd>←</kbd>
-            <span>Retroceder um passo temporal</span>
-          </li>
-          <li>
-            <kbd>M</kbd>
-            <span>Silenciar / Ativar áudio</span>
-          </li>
-          <li>
-            <kbd>Tab</kbd>
-            <span>Navegar para o próximo elemento interativo</span>
-          </li>
-          <li>
-            <kbd>Shift + Tab</kbd>
-            <span>Retornar ao elemento anterior</span>
-          </li>
+          {SHORTCUTS.map((shortcut) => (
+            <li key={shortcut.keys}>
+              <kbd>{shortcut.keys}</kbd>
+              <span>{shortcut.description}</span>
+            </li>
+          ))}
         </ul>
 
+        <p className="shortcuts-note">
+          Usuários de NVDA ou JAWS: no modo de navegação, ative o modo de foco (NVDA + Espaço) para que
+          os atalhos de reprodução cheguem à página; os botões também funcionam com Enter e Espaço.
+        </p>
+
         <div className="modal-footer">
-          <button
-            onClick={onClose}
-            className="btn btn-primary"
-            autoFocus
-          >
+          <button type="button" onClick={requestClose} className="btn btn-primary">
             Entendido
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 };

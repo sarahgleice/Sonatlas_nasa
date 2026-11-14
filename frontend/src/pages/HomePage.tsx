@@ -16,6 +16,7 @@ import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { formatPrecipitationRate, formatTimestamp } from '../utils/formatters';
 import { Header } from '../components/Header';
 import { EducationalPanel } from '../components/EducationalPanel';
+import { KeyboardShortcutsModal } from '../accessibility/KeyboardShortcutsModal';
 import { Footer } from '../components/Footer';
 import { RegionSelector } from '../components/RegionSelector';
 import { VariableSelector } from '../components/VariableSelector';
@@ -46,6 +47,7 @@ export const HomePage: React.FC = () => {
     setLiveAnnouncement({ id: announcementIdRef.current, text, politeness });
   }, []);
   const [isEducationalOpen, setIsEducationalOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [geoApiState, setGeoApiState] = useState<GeoApiState>('unconfigured');
   const [apiGeometry, setApiGeometry] = useState<GeoJSON.GeoJsonObject | null>(null);
 
@@ -190,6 +192,9 @@ export const HomePage: React.FC = () => {
     nextStep,
     prevStep,
     setStep,
+    firstStep,
+    lastStep,
+    toggleLoop,
     toggleMute
   } = useAudioPlayer({
     observations,
@@ -198,18 +203,27 @@ export const HomePage: React.FC = () => {
     onBoundary: handleBoundary
   });
 
+  const openShortcuts = useCallback(() => setIsShortcutsOpen(true), []);
+
   useKeyboardShortcuts({
     onTogglePlay: togglePlay,
     onNextStep: nextStep,
     onPrevStep: prevStep,
     onToggleMute: toggleMute,
-    enabled: !isEducationalOpen
+    onFirstStep: firstStep,
+    onLastStep: lastStep,
+    onToggleLoop: toggleLoop,
+    onOpenShortcuts: openShortcuts,
+    enabled: !isEducationalOpen && !isShortcutsOpen
   });
 
   return (
     <div className="app-layout">
       <AriaLiveAnnouncer announcement={liveAnnouncement} />
-      <Header onOpenEducational={() => setIsEducationalOpen(true)} />
+      <Header
+        onOpenEducational={() => setIsEducationalOpen(true)}
+        onOpenShortcuts={openShortcuts}
+      />
 
       <main id="main-content" className="main-content">
         <h1 className="sr-only">Sonatlas Earth Explorer</h1>
@@ -355,6 +369,7 @@ export const HomePage: React.FC = () => {
       </main>
 
       <Footer />
+      <KeyboardShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
       <EducationalPanel isOpen={isEducationalOpen} dataset={dataset} loading={loading} error={errorMessage} onClose={() => setIsEducationalOpen(false)} />
     </div>
   );

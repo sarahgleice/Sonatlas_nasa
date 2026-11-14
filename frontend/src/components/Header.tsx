@@ -1,11 +1,12 @@
 import React from 'react';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Keyboard } from 'lucide-react';
 
 interface HeaderProps {
   onOpenEducational: () => void;
+  onOpenShortcuts: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenEducational }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenEducational, onOpenShortcuts }) => {
   return (
     <header className="app-header" role="banner">
       <div className="header-container">
@@ -17,6 +18,18 @@ export const Header: React.FC<HeaderProps> = ({ onOpenEducational }) => {
         <nav className="header-nav" aria-label="Informações do projeto e ajuda">
           <a href="#about">Sobre o projeto</a>
           <button
+            type="button"
+            onClick={onOpenShortcuts}
+            className="btn btn-secondary btn-sm"
+            aria-haspopup="dialog"
+            aria-keyshortcuts="?"
+            aria-label="Abrir atalhos de teclado (tecla ?)"
+          >
+            <Keyboard size={18} aria-hidden="true" />
+            <span>Atalhos</span>
+          </button>
+          <button
+            type="button"
             onClick={onOpenEducational}
             className="btn btn-secondary btn-sm"
             aria-haspopup="dialog"
