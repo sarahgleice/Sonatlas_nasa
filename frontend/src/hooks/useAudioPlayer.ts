@@ -25,6 +25,8 @@ export interface NextStepResult {
   ended: boolean;
 }
 
+export type PlaybackMode = 'paused' | 'continuous' | 'preview';
+
 /**
  * Calcula o próximo passo da série. Sem repetição, o último passo é terminal
  * (`ended: true`) e o índice permanece nele; com repetição, volta ao início.
@@ -77,13 +79,15 @@ export function useAudioPlayer({
   onBoundary
 }: UseAudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [isPreviewing, setIsPreviewing] = useState<boolean>(false);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
-  const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [isMuted, setIsMuted] = useState<boolean>(() => globalAudioEngine.getIsMuted());
   const [speed, setSpeedState] = useState<PlaybackSpeed>(1);
   const [isLooping, setIsLooping] = useState<boolean>(false);
   const [audioError, setAudioError] = useState<string | null>(null);
 
   const timerRef = useRef<number | null>(null);
+  const previewTimerRef = useRef<number | null>(null);
   const expectedTickRef = useRef<number>(0);
   const currentIndexRef = useRef<number>(0);
   const isPlayingRef = useRef<boolean>(false);
@@ -107,6 +111,13 @@ export function useAudioPlayer({
     if (timerRef.current !== null) {
       window.clearTimeout(timerRef.current);
       timerRef.current = null;
+    }
+  }, []);
+
+  const clearPreviewTimer = useCallback(() => {
+    if (previewTimerRef.current !== null) {
+      window.clearTimeout(previewTimerRef.current);
+      previewTimerRef.current = null;
     }
   }, []);
 
@@ -144,10 +155,12 @@ export function useAudioPlayer({
 
   const stopInternal = useCallback(() => {
     clearTimer();
+    clearPreviewTimer();
     isPlayingRef.current = false;
     setIsPlaying(false);
+    setIsPreviewing(false);
     globalAudioEngine.stopPlayback();
-  }, [clearTimer]);
+  }, [clearPreviewTimer, clearTimer]);
 
   const tickRef = useRef<() => void>(() => undefined);
 
@@ -199,6 +212,8 @@ export function useAudioPlayer({
 
   const startPlayback = useCallback((startIndex: number) => {
     if (observationsRef.current.length === 0) return;
+    clearPreviewTimer();
+    setIsPreviewing(false);
     // AudioContext só é criado/retomado aqui, dentro de um gesto explícito do usuário.
     if (!soundStep(startIndex)) return;
 
@@ -218,7 +233,7 @@ export function useAudioPlayer({
       source: 'play_start',
       observation: observationsRef.current[startIndex] ?? null
     });
-  }, [scheduleNext, soundStep, stepDuration]);
+  }, [clearPreviewTimer, scheduleNext, soundStep, stepDuration]);
 
   const play = useCallback(() => {
     if (isPlayingRef.current) return;
@@ -250,10 +265,30 @@ export function useAudioPlayer({
   const goToStep = useCallback((index: number, source: StepChangeSource) => {
     const total = observationsRef.current.length;
     if (index < 0 || index >= total) return;
+    clearPreviewTimer();
+    if (!isPlayingRef.current) {
+      globalAudioEngine.stopPlayback();
+      setIsPreviewing(false);
+    }
     moveTo(index, source);
-    soundStep(index);
-    resync();
-  }, [moveTo, resync, soundStep]);
+    if (isPlayingRef.current) {
+      soundStep(index);
+      resync();
+    }
+  }, [clearPreviewTimer, moveTo, resync, soundStep]);
+
+  const previewStep = useCallback((index: number) => {
+    if (index < 0 || index >= observationsRef.current.length) return;
+    stopInternal();
+    moveTo(index, 'manual_step');
+    if (!soundStep(index)) return;
+    setIsPreviewing(true);
+    previewTimerRef.current = window.setTimeout(() => {
+      previewTimerRef.current = null;
+      globalAudioEngine.stopPlayback();
+      setIsPreviewing(false);
+    }, stepDuration());
+  }, [moveTo, soundStep, stepDuration, stopInternal]);
 
   const setStep = useCallback((index: number, source: StepChangeSource = 'manual_step') => {
     goToStep(index, source);
@@ -326,25 +361,31 @@ export function useAudioPlayer({
   // Desmontagem: para som e timer, sem destruir o singleton (StrictMode monta duas vezes).
   useEffect(() => () => {
     clearTimer();
+    clearPreviewTimer();
     isPlayingRef.current = false;
     globalAudioEngine.stopPlayback();
-  }, [clearTimer]);
+  }, [clearPreviewTimer, clearTimer]);
 
   // Troca de região/lista: reinicia silenciosamente, sem emitir transição
   // (o anúncio de "Região alterada" pertence à página).
   useEffect(() => {
     clearTimer();
+    clearPreviewTimer();
     isPlayingRef.current = false;
     currentIndexRef.current = 0;
     setIsPlaying(false);
+    setIsPreviewing(false);
     setCurrentIndex(0);
     globalAudioEngine.stopPlayback();
-  }, [observations, clearTimer]);
+  }, [observations, clearPreviewTimer, clearTimer]);
 
   const lastIndex = totalSteps - 1;
+  const mode: PlaybackMode = isPlaying ? 'continuous' : isPreviewing ? 'preview' : 'paused';
 
   return {
     isPlaying,
+    isPreviewing,
+    mode,
     currentIndex,
     totalSteps,
     isMuted,
@@ -367,6 +408,7 @@ export function useAudioPlayer({
     setStep,
     setSpeed,
     toggleLoop,
-    toggleMute
+    toggleMute,
+    previewStep
   };
 }

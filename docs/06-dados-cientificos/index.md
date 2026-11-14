@@ -27,10 +27,13 @@ flowchart TD
 - **Repositório GES DISC:** [https://gpm1.gesdisc.eosdis.nasa.gov/data/GPM_L3/GPM_3IMERGHH.07/](https://gpm1.gesdisc.eosdis.nasa.gov/data/GPM_L3/GPM_3IMERGHH.07/)
 
 ### 1.2. Especificações do Produto IMERG V07B
-- **Produtos Utilizados:** `GPM_3IMERGHHE` (Early Run, latência ~4h) e `GPM_3IMERGHH` (Final Run com calibração de pluviômetros, para pesquisa).
+- **Produtos IMERG V07B:** `GPM_3IMERGHHE` (Early Run, baixa latência) e `GPM_3IMERGHH` (Final Run, com calibração de pluviômetros e apropriado para pesquisa). São execuções distintas; não atribua ao dataset Early as características de calibração do Final.
 - **Formato Nativo:** HDF5 estruturado sob o grupo `/Grid` (ou NetCDF-4 `.nc4`).
 - **Resolução Espacial:** Grade regular global de $0.1^\circ \times 0.1^\circ$ (aproximadamente $11 \text{ km} \times 11 \text{ km}$ no equador).
 - **Resolução Temporal:** Passo de 30 minutos (*half-hourly*).
+
+### 1.3. Estado do dataset publicado
+O dataset Early V07B está publicado em `frontend/public/data/amazon/observations.json`. Sua validação estrutural foi concluída; a validação científica permanece preliminar e a recalculação independente dos indicadores diretamente dos arquivos HDF5 ainda está pendente. A publicação e a validação estrutural não equivalem à validação científica final. O produto Early é uma estimativa de baixa latência (~4 h) e pode ser revisado; o produto Final tem latência maior e incorpora calibração de pluviômetros. Não trate a série Early como equivalente ao produto Final.
 
 ---
 
@@ -39,7 +42,7 @@ flowchart TD
 ### 2.1. `/Grid/precipitationCal` vs `/Grid/precipitation`
 Na documentação oficial da versão **IMERG V07B**:
 - **Variável Principal:** `/Grid/precipitationCal`  
-  - **Definição Oficial:** Estimativa de taxa de precipitação multissatélite calibrada com dados de pluviômetros e sensores de micro-ondas.
+  - **Definição:** Estimativa de taxa de precipitação derivada de observações multissatélite. O ajuste por pluviômetros depende da execução do produto; o Early V07B publicado no SONATLAS não deve ser descrito como o produto Final calibrado.
   - **Unidade de Medida:** **`mm/hr`** (milímetros por hora &mdash; taxa instantânea).
   - **Valor Sentinela (`_FillValue`):** `-9999.9` (representa dados ausentes ou sem cobertura instrumental).
 - **Variável Secundária (`Grid/precipitation`):** Utilizada em alguns produtos derivados diários (em mm/day) ou subsetters GeoTIFF/GIS.
@@ -117,12 +120,16 @@ Permite discernir eventos de convecção isolada de tempestades amplas e general
 
 $$\text{RAF} = \frac{\sum_{i \in \text{Válidos}} \mathbb{I}(R_i \ge 0.1 \text{ mm/h}) \cdot \cos(\phi_i)}{\sum_{i \in \text{Válidos}} \cos(\phi_i)}$$
 
-O limiar de $0.1 \text{ mm/h}$ corresponde ao limite inferior confiável de detecção dos radiômetros de micro-ondas da constelação GPM.
+O limiar de $0.1 \text{ mm/h}$ é o critério operacional adotado pelo SONATLAS para classificar a área com chuva e orientar o mapeamento sonoro; não deve ser apresentado como limite instrumental universal de detecção sem validação científica específica.
+
+Na interface, esse limiar também é comunicado como **regra operacional do mapeamento sonoro**: para $0 \le R < 0.1$ mm/h, o valor observado continua sendo o valor numérico (positivo subthreshold não é zero). Esse rótulo de apresentação não altera a medição, seu arredondamento, o indicador nem o algoritmo de áudio. Zero exato, taxa positiva abaixo do limiar e valor ausente são estados distintos.
 
 ### 5.3. Variabilidade Temporal ($\Delta R$)
 Expressa o aumento ou dissipação da chuva em relação ao passo imediatamente anterior:
 
 $$\Delta R_k = \bar{R}(t_k) - \bar{R}(t_{k-1})$$
+
+No JSON publicado, `temporal_difference` é o campo canônico para esta diferença. `temporal_variance` ainda aparece como alias legado com o mesmo valor e descrição; não representa variância estatística e não deve ser interpretado como tal sem uma decisão científica e uma unidade apropriada.
 
 ---
 

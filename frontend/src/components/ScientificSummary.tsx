@@ -6,7 +6,8 @@ import {
   formatAvailabilityStatus,
   formatTimestamp,
   getIntensityLabel,
-  getObservationDataState
+  getObservationDataState,
+  getRatePresentationNote
 } from '../utils/formatters';
 import { buildSonificationExplanation } from '../utils/scientificExplanation';
 import { Activity, AlertTriangle, CheckCircle, Headphones } from 'lucide-react';
@@ -40,6 +41,7 @@ export const ScientificSummary: React.FC<ScientificSummaryProps> = ({
   const isMissing = dataState === 'missing';
   const isPartial = availability.status === 'partial';
   const meanRate = scientific_indicators.mean_precipitation_rate.value;
+  const ratePresentationNote = getRatePresentationNote(meanRate);
   const areaFraction = scientific_indicators.rain_area_fraction.value;
   const explanation = buildSonificationExplanation(observation, previousObservation, index, total);
 
@@ -103,6 +105,7 @@ export const ScientificSummary: React.FC<ScientificSummaryProps> = ({
           <span className="metric-label">Taxa Média de Precipitação</span>
           <span className="metric-value">{formatPrecipitationRate(meanRate)}</span>
           <span className="metric-caption">{getIntensityLabel(meanRate)}</span>
+          {ratePresentationNote && <p className="availability-status">{ratePresentationNote}</p>}
         </div>
 
         <div className="metric-box">

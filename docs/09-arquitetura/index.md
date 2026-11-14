@@ -123,30 +123,16 @@ Os módulos de mapa, processamento científico e áudio/player mantêm seus arqu
 
 ### Estado da integração IMERG
 
-O contrato de integração do frontend é o `RegionDataset` em `frontend/src/types/dataset.ts`, publicado como JSON estático em `frontend/public/data/`.
+O contrato de integração do frontend é o `RegionDataset` em `frontend/src/types/dataset.ts`, publicado como JSON estático em `frontend/public/data/`. O dataset Early V07B `frontend/public/data/amazon/observations.json` está publicado, tem `is_sample: false` e passou pela validação estrutural. Esse campo identifica dados de origem, não uma validação científica definitiva: `validation_status` permanece `preliminary_verified`, e a recalculação independente a partir dos HDF5 está pendente. O produto Early tem baixa latência e pode ser revisado; o produto Final, com maior latência, incorpora calibração de pluviômetros e não deve ser descrito como equivalente ao Early. Publicação não significa validação científica final.
 
-A integração com **dados reais da NASA** para a Amazônia Central foi implementada e auditada tecnicamente:
+Para novas séries oficiais, o pipeline existente deve exportar o mesmo contrato após extração e validação: produto/versão e origem, limites geográficos, resolução temporal, timestamps UTC, unidade de cada indicador, estado e razão de disponibilidade por observação, nulos preservados e `is_sample: false` somente após a validação da proveniência. O frontend não altera nem infere medições para preencher campos ausentes.
 
-- **Fonte Oficial:** NASA Earthdata GES DISC — Missão Global Precipitation Measurement (GPM).
-- **Produto e Versão:** `GPM_3IMERGHHE` (IMERG Early Run), versão **V07B**.
-- **Data e Janela Temporal:** 01/01/2024, cobrindo seis passos consecutivos de 30 minutos das 00:00:00 às 02:59:59 UTC (horários de início em 00:00, 00:30, 01:00, 01:30, 02:00 e 02:30 UTC).
-- **Variável e Unidade:** `/Grid/precipitation` em taxa instantânea de **`mm/hr`**.
-- **Recorte Espacial da Amazônia Central:** Bounding box delimitada pelas latitudes $-4.0^\circ$ a $-1.5^\circ$ Sul e longitudes $-61.5^\circ$ a $-58.5^\circ$ Oeste, totalizando **750 células espaciais** ($25 \times 30$ células de $0.1^\circ \times 0.1^\circ$).
-- **Dataset Real Publicado:** [`frontend/public/data/amazon/observations.json`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/frontend/public/data/amazon/observations.json) (espelhado em [`frontend/public/data/amazon_central_series.json`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/frontend/public/data/amazon_central_series.json)), com `is_sample: false` comprovado por proveniência direta dos grânulos HDF5.
-- **Pipeline Científico Oficial:** [`processing/scripts/process_amazon_real.py`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/processing/scripts/process_amazon_real.py), responsável pela leitura dos grânulos HDF5, tratamento de `_FillValue`, transposição matricial `(lat, lon)` e cálculo de média ponderada por cosseno da latitude.
+No dataset Early publicado, alguns `textual_summary` e `visual_frame_reference.alt_text` ainda usam o rótulo legado “precipitação leve” em taxas positivas inferiores a 0,1 mm/h. A interface apresenta nesses casos uma explicação derivada do valor numérico e da regra sonora operacional, sem alterar o JSON científico nem os indicadores. Como `image_path` está vazio, esses textos de frame não são usados para imagens na interface atual; outros consumidores do JSON ainda devem tratá-los com cautela. A atualização da geração desses resumos depende de trabalho posterior no pipeline e não faz parte desta correção.
 
-#### Diferenciação entre Dados Reais e Sintéticos
+### Métrica nula com status `available` — regra proposta
+Proposta ainda não implementada: permitir `null` em um indicador individual mesmo quando `availability.status` for `available`, pois o status descreve a disponibilidade agregada de células e não garante que todo indicador tenha sido calculável. O frontend deveria apresentar esse indicador como indisponível sem convertê-lo em zero, mantendo os outros indicadores utilizáveis. Isso exige rever o validador/schema e contratos de consumidores; afeta resumos, anúncios acessíveis e qualquer regra de áudio que pressuponha um valor numérico. Até essa decisão e atualização coordenada, o contrato atual e sua validação permanecem vigentes.
 
-Para preservar a rastreabilidade e integridade científica do projeto:
-- **`processing/scripts/run_pipeline.py --demo`:** Script de bootstrap que gera a amostra sintética [`processing/data/samples/amazon_central_sample.json`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/processing/data/samples/amazon_central_sample.json) (`is_sample: true`), voltado a testes rápidos offline de desenvolvimento sem necessidade de credenciais NASA.
-- **`processing/scripts/process_amazon_real.py`:** Orquestrador científico oficial que processa grânulos brutos HDF5 reais baixados do GES DISC (`processing/data/raw/*.HDF5`) e gera observações oficiais auditadas (`is_sample: false`).
-- Nenhum arquivo é considerado real unicamente pela flag `is_sample: false`; a autenticidade é garantida pela proveniência dos grânulos brutos baixados e verificados numericamente.
-
-#### Limitações Científicas da Prova de Conceito
-
-1. **Janela Temporal:** A demonstração atual processa uma sequência de seis observações de 30 minutos (janela de 3 horas), servindo como prova de conceito da esteira ponta a ponta e da sonificação, não constituindo uma caracterização climatológica de longo prazo da Amazônia.
-2. **Delimitação Espacial:** O recorte adotado é uma *bounding box* retangular de referência geofísica, e não o contorno hidrográfico ou biomático exato da floresta amazônica.
-3. **Produto Early Run:** Utiliza o produto `GPM_3IMERGHHE` (Early Run, latência de ~4h), voltado a monitoramento rápido, e não o `GPM_3IMERGHH` (Final Run), cuja calibração com a rede global de pluviômetros de superfície (GPCC) requer meses de consolidação.
+O limiar de 0,1 mm/h usado na apresentação sonora é uma regra operacional do mapeamento. A camada textual pode explicá-lo sem alterar ou arredondar o valor observado: taxa positiva abaixo do limiar não é zero, zero exato é zero e `null` permanece indisponível.
 
 ## 5. Registro de Decisões Arquiteturais (ADRs)
 

@@ -44,11 +44,12 @@ function makeObs(
 describe('formatters', () => {
   it('formata taxa de precipitação com unidade estrita mm/h e preserva traços residuais', () => {
     expect(formatPrecipitationRate(5.24)).toBe('5.2 mm/h');
-    expect(formatPrecipitationRate(0.0)).toBe('0.0 mm/h');
-    expect(formatPrecipitationRate(0.00134)).toBe('0.0013 mm/h');
+    expect(formatPrecipitationRate(0.001347697)).toBe('0,00135 mm/h');
+    expect(formatPrecipitationRate(0)).toBe('0.0 mm/h');
+    expect(formatPrecipitationRate(0.00134)).toBe('0,00134 mm/h');
+    expect(formatPrecipitationRate(0.00067)).toBe('0,00067 mm/h');
     expect(formatPrecipitationRate(0.00129)).not.toBe(formatPrecipitationRate(0.00145));
-    expect(formatPrecipitationRate(0.00067)).toBe('0.0007 mm/h');
-    expect(formatPrecipitationRate(0.06)).toBe('0.060 mm/h');
+    expect(formatPrecipitationRate(0.06)).toBe('0,06 mm/h');
     expect(formatPrecipitationRate(0.1)).toBe('0.1 mm/h');
     expect(formatPrecipitationRate(null)).toBe('Não disponível');
   });
@@ -60,8 +61,9 @@ describe('formatters', () => {
 
   it('classifica rótulo de intensidade distinguindo zero exato, traço e indisponível', () => {
     expect(getIntensityLabel(null)).toBe('Indisponível');
-    expect(getIntensityLabel(0.0)).toBe('Sem precipitação (tempo seco)');
-    expect(getIntensityLabel(0.05)).toBe('Sem precipitação mensurável');
+    expect(getIntensityLabel(0.0)).toBe('Taxa média registrada como zero');
+    expect(getIntensityLabel(0.04)).toBe('Abaixo do limiar operacional do som');
+    expect(getIntensityLabel(0.05)).toBe('Abaixo do limiar operacional do som');
     expect(getIntensityLabel(1.5)).toBe('Chuva fraca');
     expect(getIntensityLabel(5.0)).toBe('Chuva moderada');
     expect(getIntensityLabel(25.0)).toBe('Chuva forte / tempestade');

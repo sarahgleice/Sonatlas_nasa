@@ -2,6 +2,7 @@ import React from 'react';
 import {
   AlertTriangle,
   CloudRain,
+  Headphones,
   Pause,
   Play,
   Repeat,
@@ -28,6 +29,7 @@ interface AudioPlayerProps {
   canGoPrevious?: boolean;
   canGoNext?: boolean;
   onTogglePlay: () => void;
+  onPreview?: () => void;
   onNextStep: () => void;
   onPrevStep: () => void;
   onToggleMute: () => void;
@@ -63,6 +65,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   canGoPrevious = true,
   canGoNext = true,
   onTogglePlay,
+  onPreview,
   onNextStep,
   onPrevStep,
   onToggleMute,
@@ -133,6 +136,12 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         >
           <SkipForward size={22} aria-hidden="true" />
         </button>
+
+        {onPreview && (
+          <button type="button" onClick={onPreview} disabled={disabled || !hasSteps} className="btn btn-secondary btn-icon" aria-label="Ouvir prévia desta observação" title="Ouvir prévia">
+            <Headphones size={20} aria-hidden="true" />
+          </button>
+        )}
 
         <button
           type="button"

@@ -196,6 +196,7 @@ export const HomePage: React.FC = () => {
     restart,
     setSpeed,
     togglePlay,
+    previewStep,
     nextStep,
     prevStep,
     setStep,
@@ -354,6 +355,7 @@ export const HomePage: React.FC = () => {
                   onRestart={restart}
                   onSpeedChange={setSpeed}
                   onTogglePlay={togglePlay}
+                  onPreview={() => previewStep(currentIndex)}
                   onNextStep={nextStep}
                   onPrevStep={prevStep}
                   onToggleMute={toggleMute}

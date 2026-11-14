@@ -1,5 +1,5 @@
 import { TemporalObservation, SonificationParams } from '../types/dataset';
-import { createObservationSonificationParams } from './sonificationMapping';
+import { createObservationSonificationParams, FREQ_ALERT } from './sonificationMapping';
 
 /**
  * Motor nativo de áudio para síntese em tempo real via Web Audio API.
@@ -10,16 +10,15 @@ export class AudioEngine {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private analyser: AnalyserNode | null = null;
-
   private isMuted: boolean = false;
-  private speedMultiplier: number = 1.0;
 
-  // Estado de controle da sequência
+  // Estado de controle da sequência (Hazel)
   private isPlaying: boolean = false;
   private currentSequence: TemporalObservation[] = [];
   private currentIndex: number = 0;
   private nextSegmentTime: number = 0;
   private scheduleTimer: number | null = null;
+  private speedMultiplier: number = 1.0;
 
   // Rastreio de osciladores ativos
   private activeOscillators = new Set<OscillatorNode>();
@@ -59,8 +58,6 @@ export class AudioEngine {
     return this.isMuted;
   }
 
-  // --- MÉTODOS DO ANALISADOR E ERROS (MAIN) ---
-
   public getAnalyser(): AnalyserNode | null {
     return this.analyser;
   }
@@ -80,11 +77,11 @@ export class AudioEngine {
     this.errorListeners.forEach((listener) => listener(message));
   }
 
-  // --- CONTROLES DE REPRODUÇÃO ---
-
   public setSpeed(multiplier: number): void {
     this.speedMultiplier = Math.max(0.1, multiplier);
   }
+
+  // --- CONTROLES DE REPRODUÇÃO ---
 
   public pause(): void {
     this.isPlaying = false;
@@ -100,12 +97,7 @@ export class AudioEngine {
   public async resume(): Promise<void> {
     if (!this.ctx || this.currentSequence.length === 0) return;
     this.isPlaying = true;
-    try {
-      await this.ctx.resume();
-    } catch (error: unknown) {
-      this.notifyError(error instanceof Error ? error.message : 'Erro ao retomar áudio.');
-      return;
-    }
+    await this.ctx.resume();
     this.nextSegmentTime = this.ctx.currentTime + 0.1;
     this.scheduler();
   }
@@ -119,49 +111,12 @@ export class AudioEngine {
     this.isPlaying = true;
 
     this.stopPlayback();
-    try {
-      await ctx.resume();
-    } catch (error: unknown) {
-      this.notifyError(error instanceof Error ? error.message : 'Erro ao iniciar áudio.');
-      return;
-    }
+    await ctx.resume();
     this.nextSegmentTime = ctx.currentTime + 0.1;
     this.scheduler();
   }
 
-  /**
-   * Toca um único parâmetro sonoro imediatamente.
-   * Usado pela interface do Jukebox quando o utilizador navega passo a passo.
-   */
-  public playParams(params: SonificationParams): void {
-    if (this.isMuted) return;
-    const ctx = this.initContext();
-
-    this.stopPlayback();
-
-    if (ctx.state === 'suspended') {
-      void ctx.resume().catch((error: unknown) => {
-        this.notifyError(error instanceof Error ? error.message : 'Não foi possível iniciar o áudio.');
-      });
-    }
-
-    this.scheduleParams(params, ctx.currentTime);
-  }
-
-  // --- CONTROLES DE NAVEGAÇÃO E PARADA ---
-
-  public stopPlayback(): void {
-    if (!this.ctx) return;
-    for (const osc of this.activeOscillators) {
-      try {
-        osc.stop(this.ctx.currentTime); 
-        osc.disconnect();
-      } catch (e) {
-        // Ignora erros caso o nó já tenha sido finalizado pelo tempo
-      }
-    }
-    this.activeOscillators.clear();
-  }
+  // --- CONTROLES DE NAVEGAÇÃO ---
 
   public next(): void {
     if (this.currentIndex < this.currentSequence.length - 1) {
@@ -192,6 +147,19 @@ export class AudioEngine {
     }
   }
 
+  public stopPlayback(): void {
+    if (!this.ctx) return;
+    for (const oscillator of this.activeOscillators) {
+      try {
+        oscillator.stop(this.ctx.currentTime);
+      } catch {
+        // Oscillatoros que já terminaram
+      }
+      oscillator.disconnect();
+    }
+    this.activeOscillators.clear();
+  }
+
   // --- LOOP DE AGENDAMENTO ---
 
   private scheduler = (): void => {
@@ -218,18 +186,26 @@ export class AudioEngine {
     }
   }
 
+  /**
+   * Executa a sonificação de um conjunto de parâmetros imediatamente.
+   */
+  public playParams(params: SonificationParams): void {
+    if (this.isMuted) return;
+    const ctx = this.initContext();
+    this.scheduleParams(params, ctx.currentTime);
+  }
+
   // --- SÍNTESE DE ÁUDIO ---
 
   private scheduleParams(params: SonificationParams, startTime: number): void {
     if (!this.ctx) return;
-    const totalDurationSec = params.durationMs / 1000;
 
     if (params.isMissing) {
-      this.playAlertTone(this.ctx, startTime);
+      this.playAlertTone(this.ctx, startTime, params.durationMs / 1000);
       return;
     }
 
-    const pulseInterval = totalDurationSec / params.pulseCount;
+    const pulseInterval = (params.durationMs / 1000) / params.pulseCount;
     const pulseActiveDuration = Math.min(pulseInterval * 0.65, 0.25);
 
     for (let i = 0; i < params.pulseCount; i++) {
@@ -272,28 +248,32 @@ export class AudioEngine {
     osc.stop(startTime + duration + 0.05);
   }
 
-  private playAlertTone(ctx: AudioContext, startTime: number): void {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(150, startTime);
-
-    gain.gain.setValueAtTime(0.001, startTime);
-    gain.gain.exponentialRampToValueAtTime(0.08, startTime + 0.05);
-    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
-
-    osc.connect(gain);
-    if (this.masterGain) gain.connect(this.masterGain);
-
-    osc.start(startTime);
-    this.activeOscillators.add(osc);
-    osc.addEventListener('ended', () => {
-      this.activeOscillators.delete(osc);
-      osc.disconnect();
-      gain.disconnect();
-    }, { once: true });
-    osc.stop(startTime + 0.4);
+  /**
+   * Sinal acústico de advertência para dados faltantes.
+   */
+  private playAlertTone(ctx: AudioContext, startTime: number, duration: number): void {
+    const interval = duration / 3;
+    for (let i = 0; i < 2; i++) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const start = startTime + i * interval;
+      const pulse = interval * 0.6;
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(FREQ_ALERT, start);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.2, start + Math.min(0.02, pulse / 3));
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + pulse);
+      osc.connect(gain);
+      this.masterGain && gain.connect(this.masterGain);
+      osc.start(start);
+      this.activeOscillators.add(osc);
+      osc.addEventListener('ended', () => {
+        this.activeOscillators.delete(osc);
+        osc.disconnect();
+        gain.disconnect();
+      }, { once: true });
+      osc.stop(start + pulse);
+    }
   }
 
   public dispose(): void {
