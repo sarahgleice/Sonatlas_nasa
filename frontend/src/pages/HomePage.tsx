@@ -76,6 +76,8 @@ export const HomePage: React.FC = () => {
     isPlaying,
     currentIndex,
     isMuted,
+    audioError,
+    analyser,
     currentObservation,
     togglePlay,
     nextStep,
@@ -107,6 +109,13 @@ export const HomePage: React.FC = () => {
                 boundingBox={dataset.bounding_box}
                 regionName={dataset.region_name}
                 isPlaceholder={dataset.is_placeholder}
+                regionId={selectedRegionId}
+                onRegionSelect={(regionId) => {
+                  const region = AVAILABLE_REGIONS.find((item) => item.id === regionId && item.status === 'active');
+                  if (!region) return;
+                  setSelectedRegionId(region.id);
+                  setLiveAnnouncement(`${region.name} selecionada pelo mapa.`);
+                }}
               />
             ) : (
               <div className="map-loading-state" role={errorMessage ? 'alert' : 'status'}>
@@ -196,6 +205,8 @@ export const HomePage: React.FC = () => {
                   onNextStep={nextStep}
                   onPrevStep={prevStep}
                   onToggleMute={toggleMute}
+                  analyser={analyser}
+                  audioError={audioError}
                   disabled={observations.length === 0}
                 />
               </section>

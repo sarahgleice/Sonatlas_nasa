@@ -1,5 +1,6 @@
 import React from 'react';
 import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX } from 'lucide-react';
+import { WaveformVisualizer } from './WaveformVisualizer';
 
 interface AudioPlayerProps {
   isPlaying: boolean;
@@ -11,6 +12,8 @@ interface AudioPlayerProps {
   onPrevStep: () => void;
   onToggleMute: () => void;
   disabled?: boolean;
+  analyser: AnalyserNode | null;
+  audioError: string | null;
 }
 
 export const AudioPlayer: React.FC<AudioPlayerProps> = ({
@@ -22,7 +25,9 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   onNextStep,
   onPrevStep,
   onToggleMute,
-  disabled = false
+  disabled = false,
+  analyser,
+  audioError
 }) => {
   return (
     <section className="card player-card" aria-labelledby="player-title">
@@ -86,6 +91,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
           {isMuted ? <VolumeX size={22} aria-hidden="true" /> : <Volume2 size={22} aria-hidden="true" />}
         </button>
       </div>
+      <WaveformVisualizer analyser={analyser} isPlaying={isPlaying} error={audioError} />
     </section>
   );
 };

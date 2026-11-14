@@ -7,6 +7,10 @@ import { SonificationParams } from '../types/dataset';
 export class AudioEngine {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
+  private analyser: AnalyserNode | null = null;
+  private activeOscillators = new Set<OscillatorNode>();
+  private errorListeners = new Set<(message: string | null) => void>();
+  private lastError: string | null = null;
   private isMuted: boolean = false;
 
   private initContext(): AudioContext {
@@ -15,10 +19,14 @@ export class AudioEngine {
       this.ctx = new AudioCtx();
       this.masterGain = this.ctx.createGain();
       this.masterGain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-      this.masterGain.connect(this.ctx.destination);
+      this.analyser = this.ctx.createAnalyser();
+      this.masterGain.connect(this.analyser);
+      this.analyser.connect(this.ctx.destination);
     }
     if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      void this.ctx.resume().then(() => this.notifyError(null)).catch((error: unknown) => {
+        this.notifyError(error instanceof Error ? error.message : 'Não foi possível iniciar o áudio.');
+      });
     }
     return this.ctx;
   }
@@ -32,6 +40,36 @@ export class AudioEngine {
 
   public getIsMuted(): boolean {
     return this.isMuted;
+  }
+
+  public getAnalyser(): AnalyserNode | null {
+    return this.analyser;
+  }
+
+  public subscribeError(listener: (message: string | null) => void): () => void {
+    this.errorListeners.add(listener);
+    listener(this.lastError);
+    return () => this.errorListeners.delete(listener);
+  }
+
+  public reportError(error: unknown): void {
+    this.notifyError(error instanceof Error ? error.message : 'Não foi possível iniciar o áudio.');
+  }
+
+  private notifyError(message: string | null): void {
+    this.lastError = message;
+    this.errorListeners.forEach((listener) => listener(message));
+  }
+
+  public stopPlayback(): void {
+    if (!this.ctx) return;
+    for (const oscillator of this.activeOscillators) {
+      try {
+        oscillator.stop(this.ctx.currentTime);
+      } catch {
+        // Oscillatoros que já terminaram não precisam ser interrompidos.
+      }
+    }
   }
 
   /**
@@ -90,6 +128,12 @@ export class AudioEngine {
     }
 
     osc.start(startTime);
+    this.activeOscillators.add(osc);
+    osc.addEventListener('ended', () => {
+      this.activeOscillators.delete(osc);
+      osc.disconnect();
+      gain.disconnect();
+    }, { once: true });
     osc.stop(startTime + duration + 0.05);
   }
 
@@ -114,14 +158,29 @@ export class AudioEngine {
     }
 
     osc.start(startTime);
+    this.activeOscillators.add(osc);
+    osc.addEventListener('ended', () => {
+      this.activeOscillators.delete(osc);
+      osc.disconnect();
+      gain.disconnect();
+    }, { once: true });
     osc.stop(startTime + 0.4);
   }
 
   public dispose(): void {
-    if (this.ctx && this.ctx.state !== 'closed') {
-      this.ctx.close();
+    if (this.ctx) {
+      if (this.ctx.state !== 'closed') {
+        this.stopPlayback();
+        this.masterGain?.disconnect();
+        this.analyser?.disconnect();
+        void this.ctx.close();
+      }
       this.ctx = null;
+      this.masterGain = null;
+      this.analyser = null;
+      this.activeOscillators.clear();
     }
+    this.lastError = null;
   }
 }
 
