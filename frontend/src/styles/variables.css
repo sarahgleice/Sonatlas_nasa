@@ -1,20 +1,21 @@
 :root {
-  color-scheme: light;
-  --paper: #f2f4ef;
-  --surface: #ffffff;
-  --surface-soft: #e8ede6;
-  --ink: #1f2924;
-  --muted: #5e6b63;
-  --line: #d6ded5;
-  --accent: #176b52;
-  --accent-hover: #10563f;
-  --accent-soft: #e4f0e9;
-  --warning: #8a5916;
-  --danger: #a43d31;
-  --success: #176b52;
-  --focus: #075caa;
-  --font: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  color-scheme: dark;
+  --color-background: #080E1D;
+  --color-panel: #101C30;
+  --color-raised: #18283E;
+  --color-border: #24364F;
+  --color-map: #00D5F5;
+  --color-sound: #8B5CF6;
+  --color-sound-action: #7540D9;
+  --color-success: #34D399;
+  --color-text: #EAF4FF;
+  --color-muted: #A2B5CF;
+  --color-warning: #FBBF24;
+  --color-danger: #FB7185;
+  --color-focus: #67E8F9;
+  --font-display: 'Space Grotesk Variable', 'Space Grotesk', system-ui, sans-serif;
+  --font-ui: 'Inter Variable', Inter, system-ui, sans-serif;
+  --font-science: 'JetBrains Mono Variable', 'JetBrains Mono', monospace;
   --space-1: .25rem;
   --space-2: .5rem;
   --space-3: .75rem;
@@ -24,5 +25,5 @@
   --radius-sm: .35rem;
   --radius-md: .65rem;
   --radius-lg: .9rem;
-  --content-width: 1320px;
+  --header-height: 68px;
 }

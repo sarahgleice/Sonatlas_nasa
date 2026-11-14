@@ -22,7 +22,7 @@ export const RegionSelector: React.FC<RegionSelectorProps> = ({
 
       <div className="form-group">
         <label htmlFor="region-select" className="form-label">
-          Escolha uma área geográfica para carregar os dados de precipitação:
+          Região
         </label>
         <select
           id="region-select"
@@ -31,14 +31,14 @@ export const RegionSelector: React.FC<RegionSelectorProps> = ({
           onChange={(e) => onSelectRegion(e.target.value)}
           aria-describedby="region-helper-text"
         >
-          {AVAILABLE_REGIONS.map((region) => (
+          {AVAILABLE_REGIONS.filter((region) => region.id === 'amazon_central').map((region) => (
             <option key={region.id} value={region.id}>
-              {region.name} ({region.country}) {region.status === 'candidate' ? '— [Candidata]' : ''}
+              {region.name} ({region.country})
             </option>
           ))}
         </select>
         <p id="region-helper-text" className="form-helper">
-          * A Bacia do Congo é uma candidata preliminar para a região internacional e está sob validação científica pela equipe.
+          Atualmente, apenas a Amazônia Central está disponível.
         </p>
       </div>
     </section>
