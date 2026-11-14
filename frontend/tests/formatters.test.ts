@@ -45,8 +45,11 @@ describe('formatters', () => {
   it('formata taxa de precipitação com unidade estrita mm/h e preserva traços residuais', () => {
     expect(formatPrecipitationRate(5.24)).toBe('5.2 mm/h');
     expect(formatPrecipitationRate(0.0)).toBe('0.0 mm/h');
-    expect(formatPrecipitationRate(0.00134)).toBe('0.001 mm/h');
+    expect(formatPrecipitationRate(0.00134)).toBe('0.0013 mm/h');
+    expect(formatPrecipitationRate(0.00129)).not.toBe(formatPrecipitationRate(0.00145));
     expect(formatPrecipitationRate(0.00067)).toBe('0.0007 mm/h');
+    expect(formatPrecipitationRate(0.06)).toBe('0.060 mm/h');
+    expect(formatPrecipitationRate(0.1)).toBe('0.1 mm/h');
     expect(formatPrecipitationRate(null)).toBe('Não disponível');
   });
 
