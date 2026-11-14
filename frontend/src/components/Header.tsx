@@ -15,11 +15,15 @@ export const Header: React.FC<HeaderProps> = ({ onOpenShortcuts }) => {
           </div>
           <div>
             <h1 className="logo-title">SONATLAS</h1>
-            <p className="logo-subtitle">Explore Earth Through Sound — NASA Space Apps Challenge 2026</p>
+            <p className="logo-subtitle">Exploração sonora da Terra · NASA Space Apps 2026</p>
           </div>
         </div>
 
-        <nav aria-label="Navegação de apoio">
+        <nav className="header-nav" aria-label="Navegação principal">
+          <a href="#region">Região</a>
+          <a href="#map">Mapa</a>
+          <a href="#indicators">Indicadores</a>
+          <a href="#playback">Sonificação</a>
           <button
             onClick={onOpenShortcuts}
             className="btn btn-secondary btn-sm"
