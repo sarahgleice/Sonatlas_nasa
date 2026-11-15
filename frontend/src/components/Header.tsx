@@ -4,9 +4,11 @@ import { HelpCircle, Keyboard } from 'lucide-react';
 interface HeaderProps {
   onOpenEducational: () => void;
   onOpenShortcuts: () => void;
+  onOpenAccessibility?: () => void;
+  voiceEnabled?: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenEducational, onOpenShortcuts }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenEducational, onOpenShortcuts, onOpenAccessibility = () => undefined, voiceEnabled = false }) => {
   return (
     <header className="app-header" role="banner">
       <div className="header-container">
@@ -17,6 +19,16 @@ export const Header: React.FC<HeaderProps> = ({ onOpenEducational, onOpenShortcu
 
         <nav className="header-nav" aria-label="Informações do projeto e ajuda">
           <a href="#about">Sobre o projeto</a>
+          <button
+            type="button"
+            onClick={onOpenAccessibility}
+            className="btn btn-secondary btn-sm"
+            aria-haspopup="dialog"
+            aria-label={voiceEnabled ? 'Preferências de acessibilidade. Narração por voz ativada.' : 'Abrir preferências de acessibilidade'}
+          >
+            <span>Acessibilidade</span>
+            {voiceEnabled && <span className="accessibility-voice-active">Voz ativa</span>}
+          </button>
           <button
             type="button"
             onClick={onOpenShortcuts}

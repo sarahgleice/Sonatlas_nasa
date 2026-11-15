@@ -28,6 +28,9 @@ Testado e estruturado para plena interoperabilidade com os principais leitores d
 - **Orca** em distribuições Linux.
 - **TalkBack** no ecossistema Android.
 
+#### Preferência de narração falada
+Na primeira abertura, o app pergunta se a pessoa deseja ativar narração por voz. A preferência pode ser alterada depois pelo botão **Acessibilidade** no cabeçalho. Quando ativa, a síntese de fala em português lê mudanças manuais de período e mensagens; o controle **Ouvir descrição deste período** permite repetir a descrição científica selecionada. Durante a reprodução contínua, a narração de cada passo é suspensa para não sobrepor a sonificação. Essa opção complementa controles de teclado e leitores de tela, não os substitui. Se o navegador não oferecer `SpeechSynthesis`, a opção fica indisponível e o canal `aria-live` permanece ativo.
+
 #### Estratégia de Regiões Dinâmicas (`aria-live`)
 Para evitar a sobrecarga de anúncios que cansam o usuário cego, o SONATLAS utiliza um único canal centralizado com `aria-live="polite"` e `aria-atomic="true"`:
 ```html

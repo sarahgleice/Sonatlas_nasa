@@ -53,7 +53,7 @@ export const ScientificSummary: React.FC<ScientificSummaryProps> = ({
   if (differenceValue !== null && differenceValue !== undefined) {
     differenceText = `${differenceValue > 0 ? '+' : ''}${differenceValue.toFixed(2)} mm/h`;
   } else if (index > 0) {
-    differenceText = 'Indisponível (passo anterior ausente)';
+    differenceText = 'Indisponível (sem comparação temporal válida)';
   } else {
     differenceText = 'Linha base (primeiro passo)';
   }
@@ -90,16 +90,6 @@ export const ScientificSummary: React.FC<ScientificSummaryProps> = ({
         <strong>Instante da Coleta:</strong> {formatTimestamp(timestamp_utc)}
       </div>
 
-      <section className="listening-explanation" aria-labelledby="listening-title">
-        <h4 id="listening-title"><Headphones size={16} aria-hidden="true" /> Entenda o que você ouviu</h4>
-        <p className="listening-headline">{explanation.headline}</p>
-        <ul>
-          <li>{explanation.pitchComparison}</li>
-          {explanation.pulseComparison && <li>{explanation.pulseComparison}</li>}
-          {explanation.temporalChange && <li>{explanation.temporalChange}</li>}
-        </ul>
-      </section>
-
       <div className="metrics-grid">
         <div className="metric-box">
           <span className="metric-label">Taxa Média de Precipitação</span>
@@ -129,10 +119,22 @@ export const ScientificSummary: React.FC<ScientificSummaryProps> = ({
         </div>
       </div>
 
-      <section className="textual-summary-box" aria-labelledby="textual-summary-title">
-        <h4 id="textual-summary-title">Descrição Textual Acessível</h4>
-        <p>{textual_summary}</p>
-      </section>
+      <details className="details-disclosure scientific-explanation">
+        <summary>Interpretação científica e sonora</summary>
+        <section className="listening-explanation" aria-labelledby="listening-title">
+          <h4 id="listening-title"><Headphones size={16} aria-hidden="true" /> Entenda o que você ouviu</h4>
+          <p className="listening-headline">{explanation.headline}</p>
+          <ul>
+            <li>{explanation.pitchComparison}</li>
+            {explanation.pulseComparison && <li>{explanation.pulseComparison}</li>}
+            {explanation.temporalChange && <li>{explanation.temporalChange}</li>}
+          </ul>
+        </section>
+        <section className="textual-summary-box" aria-labelledby="textual-summary-title">
+          <h4 id="textual-summary-title">Descrição Textual Acessível</h4>
+          <p>{textual_summary}</p>
+        </section>
+      </details>
     </section>
   );
 };

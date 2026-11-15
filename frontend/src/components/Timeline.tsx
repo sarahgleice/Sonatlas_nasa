@@ -18,6 +18,14 @@ interface TimelineProps {
 
 /** Passo de PageUp/PageDown, em observações. */
 export const TIMELINE_PAGE_STEP = 5;
+const HALF_HOUR_MS = 30 * 60 * 1000;
+
+function formatGapDuration(durationMs: number): string {
+  const minutes = Math.round(durationMs / 60_000);
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  return `${hours ? `${hours}h ` : ''}${remainder ? `${remainder}min` : ''}`.trim();
+}
 
 /**
  * Texto de aria-valuetext do slider: passo, instante UTC e taxa ou estado de ausência.
@@ -87,6 +95,11 @@ export const Timeline: React.FC<TimelineProps> = ({
   const total = observations.length;
   const safeIndex = Math.min(Math.max(currentIndex, 0), total - 1);
   const includeDate = hasMultipleUtcDays(observations);
+  const temporalGaps = observations.slice(1).flatMap((observation, index) => {
+    const previous = observations[index];
+    const durationMs = Date.parse(observation.timestamp_utc) - Date.parse(previous.timestamp_utc);
+    return durationMs > HALF_HOUR_MS ? [{ previous, observation, durationMs }] : [];
+  });
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     const nextIndex = resolveTimelineKey(event.key, safeIndex, total);
@@ -147,6 +160,11 @@ export const Timeline: React.FC<TimelineProps> = ({
           })}
         </ol>
       </div>
+      {temporalGaps.map(({ previous, observation, durationMs }) => (
+        <p className="timeline-gap-note" role="note" key={`${previous.observation_id}-${observation.observation_id}`}>
+          Sem observações entre {formatUtcTimeShort(previous.timestamp_utc, includeDate)} e {formatUtcTimeShort(observation.timestamp_utc, includeDate)} UTC ({formatGapDuration(durationMs)} entre passos). A lacuna não representa precipitação zero.
+        </p>
+      ))}
     </div>
   );
 };

@@ -170,6 +170,6 @@ O acesso aos dados do GPM IMERG no NASA GES DISC é gratuito, mas requer autenti
 
 Com o intuito de manter a mais rigorosa transparência e honestidade metodológica:
 
-1. **Extensão Temporal:** A série temporal atualmente integrada cobre uma sequência de seis observações de 30 minutos (janela de 3 horas em 01/01/2024, das 00:00 às 02:59 UTC). Trata-se de uma prova de conceito funcional da pipeline e da sonificação, não devendo ser interpretada como caracterização estatística do regime pluviométrico sazonal da Amazônia.
+1. **Extensão Temporal:** A série matutina cobre seis observações de 30 minutos (00:00–02:59 UTC de 01/01/2024). A interface também oferece uma visão com essa janela e a vespertina (17:00–19:59 UTC), preservando a lacuna de 14h30 entre os timestamps extremos das janelas, sem interpolação. A cobertura permanece pontual e não deve ser interpretada como caracterização estatística do regime pluviométrico sazonal da Amazônia.
 2. **Geometria de Delimitação:** O recorte espacial é uma *bounding box* retangular delimitada por coordenadas lat/lon WGS84, não correspondendo aos limites biológicos, hidrográficos ou políticos exatos da bacia amazônica.
 3. **Produto Satelital:** Utiliza-se o algoritmo IMERG versão **Early Run V07B** (`GPM_3IMERGHHE`), que privilegia baixa latência (~4h após observação) com base em sensores de micro-ondas e infravermelho. Não se trata do produto **Final Run** (`GPM_3IMERGHH`), cuja calibração retrospectiva com dados de pluviômetros de solo (GPCC) requer meses de processamento.

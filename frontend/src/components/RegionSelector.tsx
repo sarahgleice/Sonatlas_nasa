@@ -15,11 +15,13 @@ export const RegionSelector: React.FC<RegionSelectorProps> = ({
   selectedSeriesId = 'morning',
   onSelectSeries
 }) => {
-  const currentRegion = findRegionOption(selectedRegionId) ?? AVAILABLE_REGIONS[0];
+  const selectableRegions = AVAILABLE_REGIONS.filter((region) => region.id === 'amazon_central');
+  const currentRegion = selectableRegions.find((region) => region.id === selectedRegionId) ?? selectableRegions[0];
   const availableSeries = currentRegion.series;
   const currentSeries = availableSeries.find((s) => s.id === selectedSeriesId) ?? availableSeries[0];
 
   const handleRegionChange = (newRegionId: string) => {
+    if (newRegionId !== 'amazon_central') return;
     onSelectRegion(newRegionId);
     if (onSelectSeries) {
       const nextRegion = findRegionOption(newRegionId);
@@ -53,7 +55,7 @@ export const RegionSelector: React.FC<RegionSelectorProps> = ({
           onChange={(e) => handleRegionChange(e.target.value)}
           aria-describedby="region-helper-text"
         >
-          {AVAILABLE_REGIONS.map((region) => (
+          {selectableRegions.map((region) => (
             <option key={region.id} value={region.id}>
               {region.name} ({region.country})
             </option>
@@ -119,21 +121,6 @@ export const RegionSelector: React.FC<RegionSelectorProps> = ({
           <span style={{ color: 'var(--color-muted)' }}>Origem dos dados:</span>
           <span style={{ color: 'var(--color-text)' }}>NASA GPM IMERG Early V07B (Real)</span>
         </div>
-        {currentRegion.id === 'congo_basin_kisangani' && (
-          <p
-            style={{
-              margin: '0.3rem 0 0',
-              padding: '0.35rem',
-              borderLeft: '2px solid var(--color-map)',
-              background: 'rgba(0, 213, 245, 0.05)',
-              color: 'var(--color-muted)',
-              fontSize: '0.62rem',
-              lineHeight: '1.4'
-            }}
-          >
-            Amostragem em Kisangani (RDC) para comparação bioclimática controlada 1:1. Não representa a totalidade da Bacia do Rio Congo.
-          </p>
-        )}
       </div>
     </section>
   );

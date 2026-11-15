@@ -92,8 +92,20 @@ export function buildSonificationExplanation(
     };
   }
 
+  if (!previous) {
+    const headline = `${stepLabel}: comparação temporal indisponível`;
+    const temporalChange = 'Não há observação consecutiva para comparar através desta lacuna temporal';
+    return {
+      headline,
+      pitchComparison: currentPitch,
+      pulseComparison: currentPulses,
+      temporalChange,
+      fullText: buildFullText([headline, currentPitch, currentPulses, temporalChange])
+    };
+  }
+
   // Passo anterior sem dado: retomada da série, variação indisponível.
-  if (!previous || getObservationDataState(previous) === 'missing') {
+  if (getObservationDataState(previous) === 'missing') {
     const headline = `${stepLabel}: retomada após dado ausente`;
     const temporalChange = 'O passo anterior não tem dados, então a variação (ΔR) está indisponível; não há comparação válida';
     return {

@@ -4,6 +4,7 @@ import {
   CalendarClock,
   Layers,
   Map,
+  Volume2,
   Waves
 } from 'lucide-react';
 import { RegionDataset, TemporalObservation } from '../types/dataset';
@@ -11,7 +12,7 @@ import { LiveAnnouncement } from '../types/player';
 import { DataService, AVAILABLE_REGIONS, findRegionOption } from '../services/dataService';
 import { globalAudioEngine } from '../audio/AudioEngine';
 import { useAudioPlayer, PlayerBoundary, StepTransition } from '../hooks/useAudioPlayer';
-import { buildAnnouncement } from '../utils/announcements';
+import { buildAnnouncement, formatObservationAnnouncementText } from '../utils/announcements';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { formatPrecipitationRate, formatTimestamp } from '../utils/formatters';
 import { Header } from '../components/Header';
@@ -27,30 +28,73 @@ import { PrecipitationChart } from '../components/PrecipitationChart';
 import { SoundLegend } from '../components/SoundLegend';
 import { MapView } from '../maps/MapView';
 import { AriaLiveAnnouncer } from '../accessibility/AriaLiveAnnouncer';
+import { AccessibilitySettingsDialog } from '../accessibility/AccessibilitySettingsDialog';
+import { isSpeechNarrationSupported, speakNarration, stopNarration } from '../accessibility/speechNarration';
 import { geoApiService } from '../services/geoApiService';
 import { parseAmazonCentralApiFeature } from '../maps/amazonGeometry';
 
 type GeoApiState = 'unconfigured' | 'loading' | 'connected' | 'fallback';
 
 const EMPTY_OBSERVATIONS: TemporalObservation[] = [];
+const ACCESSIBILITY_PROMPT_KEY = 'sonatlas.accessibility-prompt-seen';
+const VOICE_NARRATION_KEY = 'sonatlas.voice-narration-enabled';
+
+function readStoredBoolean(key: string, fallback: boolean): boolean {
+  try {
+    const value = window.localStorage.getItem(key);
+    return value === null ? fallback : value === 'true';
+  } catch {
+    return fallback;
+  }
+}
+
+function writeStoredBoolean(key: string, value: boolean): void {
+  try {
+    window.localStorage.setItem(key, String(value));
+  } catch {
+    // Preferência continua ativa nesta sessão quando o navegador bloqueia armazenamento.
+  }
+}
 
 export const HomePage: React.FC = () => {
   const [selectedRegionId, setSelectedRegionId] = useState('amazon_central');
-  const [selectedSeriesId, setSelectedSeriesId] = useState('morning');
+  const [selectedSeriesId, setSelectedSeriesId] = useState('day_windows');
+  const [voiceEnabled, setVoiceEnabled] = useState(() => readStoredBoolean(VOICE_NARRATION_KEY, false));
+  const [isAccessibilitySettingsOpen, setIsAccessibilitySettingsOpen] = useState(() => !readStoredBoolean(ACCESSIBILITY_PROMPT_KEY, false));
   const [dataset, setDataset] = useState<RegionDataset | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [liveAnnouncement, setLiveAnnouncement] = useState<LiveAnnouncement | null>(null);
   const announcementIdRef = useRef(0);
+  const voiceNarrationActive = voiceEnabled && isSpeechNarrationSupported();
   const announce = useCallback((text: string, politeness: LiveAnnouncement['politeness'] = 'polite') => {
     announcementIdRef.current += 1;
     setLiveAnnouncement({ id: announcementIdRef.current, text, politeness });
-  }, []);
+    if (voiceNarrationActive) speakNarration(text);
+  }, [voiceNarrationActive]);
   const [isEducationalOpen, setIsEducationalOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [geoApiState, setGeoApiState] = useState<GeoApiState>('unconfigured');
   const [apiGeometry, setApiGeometry] = useState<GeoJSON.GeoJsonObject | null>(null);
 
+  const closeAccessibilitySettings = useCallback(() => {
+    writeStoredBoolean(ACCESSIBILITY_PROMPT_KEY, true);
+    setIsAccessibilitySettingsOpen(false);
+  }, []);
+
+  const saveAccessibilitySettings = useCallback((enabled: boolean) => {
+    writeStoredBoolean(ACCESSIBILITY_PROMPT_KEY, true);
+    writeStoredBoolean(VOICE_NARRATION_KEY, enabled);
+    setVoiceEnabled(enabled);
+    setIsAccessibilitySettingsOpen(false);
+    if (enabled && !voiceNarrationActive) {
+      speakNarration('Narração por voz ativada. Use os controles para selecionar e ouvir os dados de cada período.');
+    } else if (!enabled) {
+      stopNarration();
+    }
+  }, [voiceNarrationActive]);
+
+  useEffect(() => () => stopNarration(), []);
   useEffect(() => {
     let isMounted = true;
     const regionOpt = findRegionOption(selectedRegionId) ?? AVAILABLE_REGIONS[0];
@@ -153,18 +197,19 @@ export const HomePage: React.FC = () => {
     });
     if (announcement) {
       announce(announcement.text, announcement.politeness);
+    } else if (voiceNarrationActive && transition.source === 'slider_step' && transition.observation) {
+      speakNarration(formatObservationAnnouncementText(transition.observation, transition.index, observations.length));
     }
-  }, [observations, announce]);
+  }, [observations, announce, voiceNarrationActive]);
 
   const handleBoundary = useCallback((boundary: PlayerBoundary) => {
     announce(boundary === 'end' ? 'Você está no último passo da série.' : 'Você está no primeiro passo da série.');
   }, [announce]);
 
   const selectRegion = (regionId: string) => {
-    const region = findRegionOption(regionId);
-    if (!region) return;
-    setSelectedRegionId(region.id);
-    announce(`${region.name} selecionada pelo mapa.`);
+    if (regionId !== 'amazon_central') return;
+    setSelectedRegionId(regionId);
+    announce('Amazônia Central selecionada.');
   };
 
   const handleMapPoint = async (lat: number, lon: number) => {
@@ -172,7 +217,6 @@ export const HomePage: React.FC = () => {
       const result = await geoApiService.locate(lat, lon);
       if (result.available) {
         if (result.data.regioes.includes('amazon_central')) selectRegion('amazon_central');
-        else if (result.data.regioes.includes('congo_basin_kisangani')) selectRegion('congo_basin_kisangani');
         return;
       }
     } catch {
@@ -211,7 +255,13 @@ export const HomePage: React.FC = () => {
     onBoundary: handleBoundary
   });
 
+  const comparisonObservation = previousObservation && currentObservation &&
+    Date.parse(currentObservation.timestamp_utc) - Date.parse(previousObservation.timestamp_utc) <= 30 * 60 * 1000
+    ? previousObservation
+    : null;
+
   const openShortcuts = useCallback(() => setIsShortcutsOpen(true), []);
+  const openAccessibilitySettings = useCallback(() => setIsAccessibilitySettingsOpen(true), []);
 
   useKeyboardShortcuts({
     onTogglePlay: togglePlay,
@@ -222,20 +272,36 @@ export const HomePage: React.FC = () => {
     onLastStep: lastStep,
     onToggleLoop: toggleLoop,
     onOpenShortcuts: openShortcuts,
-    enabled: !isEducationalOpen && !isShortcutsOpen
+    enabled: !isEducationalOpen && !isShortcutsOpen && !isAccessibilitySettingsOpen
   });
 
   return (
     <div className="app-layout">
-      <AriaLiveAnnouncer announcement={liveAnnouncement} />
+      <AriaLiveAnnouncer announcement={liveAnnouncement} disabled={voiceNarrationActive || isAccessibilitySettingsOpen} />
       <Header
         onOpenEducational={() => setIsEducationalOpen(true)}
         onOpenShortcuts={openShortcuts}
+        onOpenAccessibility={openAccessibilitySettings}
+        voiceEnabled={voiceNarrationActive}
       />
 
       <main id="main-content" className="main-content" tabIndex={-1}>
         <h1 className="sr-only">Sonatlas Earth Explorer</h1>
         <div className="explorer-layout">
+          <section className="side-panel left-panel" aria-labelledby="exploration-title">
+            <div className="panel-content">
+              <div className="panel-heading"><h2 id="exploration-title">Exploração</h2></div>
+              <RegionSelector selectedRegionId={selectedRegionId} onSelectRegion={selectRegion} selectedSeriesId={selectedSeriesId} onSelectSeries={setSelectedSeriesId} />
+              <VariableSelector />
+              <section className="layer-section" aria-labelledby="layers-title">
+                <div className="control-section-heading"><Layers size={16} aria-hidden="true" /><h3 id="layers-title">Camadas geográficas</h3></div>
+                <p className="layer-name">Contorno da área selecionada</p>
+              </section>
+              {loading && <p className="inline-status" role="status">Carregando dataset da região…</p>}
+              {errorMessage && <p className="inline-error" role="alert">{errorMessage}</p>}
+            </div>
+          </section>
+
           <section id="map" className="map-panel" aria-label="Área do mapa">
             <h2 className="map-heading"><Map size={17} aria-hidden="true" /> Mapa da região</h2>
             {dataset ? (
@@ -250,12 +316,7 @@ export const HomePage: React.FC = () => {
                 selectedTimestamp={currentObservation?.timestamp_utc ?? null}
                 selectedAvailability={currentObservation?.availability ?? null}
                 onMapPoint={handleMapPoint}
-                onRegionSelect={(regionId) => {
-                  const region = findRegionOption(regionId);
-                  if (!region) return;
-                  setSelectedRegionId(region.id);
-                  announce(`${region.name} selecionada pelo mapa.`);
-                }}
+                onRegionSelect={selectRegion}
               />
             ) : (
               <div className="map-loading-state" role={errorMessage ? 'alert' : 'status'}>
@@ -269,28 +330,15 @@ export const HomePage: React.FC = () => {
             )}
           </section>
 
-          <section className="side-panel left-panel" aria-labelledby="exploration-title">
-            <div className="panel-content">
-              <div className="panel-heading">
-                <h2 id="exploration-title">Exploração</h2>
-              </div>
-              <RegionSelector
-                selectedRegionId={selectedRegionId}
-                onSelectRegion={setSelectedRegionId}
-                selectedSeriesId={selectedSeriesId}
-                onSelectSeries={setSelectedSeriesId}
-              />
-              <VariableSelector />
-              <section className="layer-section" aria-labelledby="layers-title">
-                <div className="control-section-heading">
-                  <Layers size={16} aria-hidden="true" />
-                  <h3 id="layers-title">Camadas geográficas</h3>
-                </div>
-                <p className="layer-name">Contorno da área selecionada</p>
-              </section>
-              {loading && <p className="inline-status" role="status">Carregando dataset da região…</p>}
-              {errorMessage && <p className="inline-error" role="alert">{errorMessage}</p>}
-            </div>
+          <section id="playback" className="sonification-section" aria-label="Controles de sonificação">
+            <AudioPlayer
+              isPlaying={isPlaying} isMuted={isMuted} isLooping={isLooping} speed={speed}
+              currentIndex={currentIndex} totalSteps={observations.length} currentObservation={currentObservation}
+              canGoPrevious={canGoPrevious} canGoNext={canGoNext} onToggleLoop={toggleLoop} onRestart={restart}
+              onSpeedChange={setSpeed} onTogglePlay={togglePlay} onPreview={() => previewStep(currentIndex)}
+              onNextStep={nextStep} onPrevStep={prevStep} onToggleMute={toggleMute} analyser={analyser}
+              audioError={audioError} disabled={observations.length === 0}
+            />
           </section>
 
           <section className="side-panel right-panel" aria-labelledby="signal-title">
@@ -322,13 +370,17 @@ export const HomePage: React.FC = () => {
                         ? 'Dados ausentes neste período'
                         : `${currentObservation.availability.status === 'partial' ? 'Disponibilidade parcial' : 'Dados disponíveis'} · ${Math.round(currentObservation.availability.valid_cells_ratio * 100)}% de células válidas`}
                     </p>
-                    <ScientificSummary
-                      observation={currentObservation}
-                      regionName={dataset.region_name}
-                      previousObservation={previousObservation}
-                      index={currentIndex}
-                      total={observations.length}
-                    />
+                    <ScientificSummary observation={currentObservation} regionName={dataset.region_name} previousObservation={comparisonObservation} index={currentIndex} total={observations.length} />
+                    {voiceNarrationActive && (
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm voice-read-button"
+                        onClick={() => speakNarration(formatObservationAnnouncementText(currentObservation, currentIndex, observations.length))}
+                      >
+                        <Volume2 size={16} aria-hidden="true" />
+                        <span>Ouvir descrição deste período</span>
+                      </button>
+                    )}
                     <details className="details-disclosure">
                       <summary>Fonte e metadados técnicos</summary>
                       <dl className="source-metadata">
@@ -341,31 +393,6 @@ export const HomePage: React.FC = () => {
                 ) : (
                   <p className="data-empty" role="status">{loading ? 'Carregando observações…' : 'Sem observações disponíveis para este período.'}</p>
                 )}
-              </section>
-
-              <section id="playback" className="sonification-section" aria-label="Controles de sonificação">
-                <AudioPlayer
-                  isPlaying={isPlaying}
-                  isMuted={isMuted}
-                  isLooping={isLooping}
-                  speed={speed}
-                  currentIndex={currentIndex}
-                  totalSteps={observations.length}
-                  currentObservation={currentObservation}
-                  canGoPrevious={canGoPrevious}
-                  canGoNext={canGoNext}
-                  onToggleLoop={toggleLoop}
-                  onRestart={restart}
-                  onSpeedChange={setSpeed}
-                  onTogglePlay={togglePlay}
-                  onPreview={() => previewStep(currentIndex)}
-                  onNextStep={nextStep}
-                  onPrevStep={prevStep}
-                  onToggleMute={toggleMute}
-                  analyser={analyser}
-                  audioError={audioError}
-                  disabled={observations.length === 0}
-                />
               </section>
 
               <details className="details-disclosure sound-disclosure">
@@ -396,6 +423,13 @@ export const HomePage: React.FC = () => {
 
       <Footer />
       <KeyboardShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
+      <AccessibilitySettingsDialog
+        isOpen={isAccessibilitySettingsOpen}
+        voiceEnabled={voiceEnabled}
+        voiceSupported={isSpeechNarrationSupported()}
+        onSave={saveAccessibilitySettings}
+        onClose={closeAccessibilitySettings}
+      />
       <EducationalPanel isOpen={isEducationalOpen} dataset={dataset} loading={loading} error={errorMessage} onClose={() => setIsEducationalOpen(false)} />
     </div>
   );
