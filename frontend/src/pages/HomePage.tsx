@@ -31,6 +31,7 @@ import { MapView } from '../maps/MapView';
 import { AriaLiveAnnouncer } from '../accessibility/AriaLiveAnnouncer';
 import { AccessibilitySettingsDialog } from '../accessibility/AccessibilitySettingsDialog';
 import { ObjectiveAudioDialog } from '../accessibility/ObjectiveAudioDialog';
+import { useVisualPreferences } from '../accessibility/useVisualPreferences';
 import { isSpeechNarrationSupported, speakNarration, stopNarration } from '../accessibility/speechNarration';
 import { geoApiService } from '../services/geoApiService';
 import { parseAmazonCentralApiFeature } from '../maps/amazonGeometry';
@@ -62,6 +63,7 @@ function writeStoredBoolean(key: string, value: boolean): void {
 }
 
 export const HomePage: React.FC = () => {
+  const { map: visualMapTokens } = useVisualPreferences();
   const [selectedRegionId, setSelectedRegionId] = useState('amazon_central');
   const [selectedSeriesId, setSelectedSeriesId] = useState('day_windows');
   const [mapViewMode, setMapViewMode] = useState<'2d' | '3d'>('2d');
@@ -342,6 +344,7 @@ export const HomePage: React.FC = () => {
                   spatialDatasetPath={findRegionOption(selectedRegionId)?.series.find((series) => series.id === selectedSeriesId)?.filePath ?? ''}
                   selectedTimestamp={currentObservation?.timestamp_utc ?? null}
                   selectedAvailability={currentObservation?.availability ?? null}
+                  mapTokens={visualMapTokens}
                   onMapPoint={handleMapPoint}
                   onRegionSelect={selectRegion}
                   isVisible={mapViewMode === '2d'}

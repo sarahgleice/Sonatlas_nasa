@@ -43,7 +43,8 @@ export const AccessibilitySettingsDialog: React.FC<AccessibilitySettingsDialogPr
         </div>
 
         <p id="accessibility-dialog-description">
-          O Sonatlas funciona com teclado e leitores de tela. Você também pode ativar a narração falada dos dados selecionados e ajustar as cores e o contraste da interface.        </p>
+          O Sonatlas funciona com teclado e leitores de tela. Você também pode ativar a narração falada dos dados selecionados e ajustar as cores e o contraste da interface.
+        </p>
 
         <label className="accessibility-voice-option" htmlFor="voice-narration-enabled">
           <input

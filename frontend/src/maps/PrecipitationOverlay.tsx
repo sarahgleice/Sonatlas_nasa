@@ -3,22 +3,22 @@ import L from 'leaflet';
 import type { AvailabilityIndicator, BoundingBox } from '../types/dataset';
 import type { SpatialGrid } from '../types/spatialGrid';
 import { SpatialDataService } from '../services/spatialDataService';
-import { precipitationColor, spatialGridCellBounds } from './precipitationScale';
+import { precipitationColor, spatialGridCellBounds, type PrecipitationPalette } from './precipitationScale';
 import { SpatialGridTable } from './SpatialGridTable';
 import { formatTimestamp } from '../utils/formatters';
 
 type LoadState = 'loading' | 'available' | 'unavailable' | 'error';
 const PANE_NAME = 'sonatlas-precipitation';
 
-function cellStyle(value: number | null, visible: boolean): L.PathOptions {
+function cellStyle(value: number | null, visible: boolean, palette: PrecipitationPalette): L.PathOptions {
   return {
     pane: PANE_NAME,
     interactive: false,
-    color: value === null ? '#cbd5e1' : '#0f172a',
+    color: value === null ? palette.missing : '#0f172a',
     weight: value === null ? 0.7 : 0.25,
     dashArray: value === null ? '2 2' : undefined,
     opacity: visible ? 0.55 : 0,
-    fillColor: precipitationColor(value),
+    fillColor: precipitationColor(value, palette),
     fillOpacity: visible ? value === null ? 0.34 : value === 0 ? 0.48 : 0.66 : 0
   };
 }
@@ -29,7 +29,8 @@ export function PrecipitationOverlay({
   regionId,
   boundingBox,
   timestampUtc,
-  availability
+  availability,
+  palette
 }: {
   map: L.Map | null;
   datasetPath: string;
@@ -37,6 +38,7 @@ export function PrecipitationOverlay({
   boundingBox: BoundingBox;
   timestampUtc: string | null;
   availability: AvailabilityIndicator | null;
+  palette: PrecipitationPalette;
 }) {
   const [state, setState] = useState<LoadState>('loading');
   const [grid, setGrid] = useState<SpatialGrid | null>(null);
@@ -86,7 +88,7 @@ export function PrecipitationOverlay({
     const layer = layerRef.current;
     if (!layer) return;
     if (!grid) {
-      cellsRef.current?.forEach((cell) => cell.setStyle(cellStyle(null, false)));
+      cellsRef.current?.forEach((cell) => cell.setStyle(cellStyle(null, false, palette)));
       return;
     }
 
@@ -95,7 +97,7 @@ export function PrecipitationOverlay({
       layer.clearLayers();
       const bounds = spatialGridCellBounds(grid);
       cellsRef.current = bounds.map((cellBoundsValue) => {
-        return L.rectangle(cellBoundsValue, cellStyle(null, false)).addTo(layer);
+        return L.rectangle(cellBoundsValue, cellStyle(null, false, palette)).addTo(layer);
       });
       geometryKeyRef.current = key;
     }
@@ -103,9 +105,9 @@ export function PrecipitationOverlay({
     cellsRef.current?.forEach((cell, index) => {
       const value = grid.values[Math.floor(index / grid.manifest.longitude_centers.length)]
         [index % grid.manifest.longitude_centers.length];
-      cell.setStyle(cellStyle(value, true));
+      cell.setStyle(cellStyle(value, true, palette));
     });
-  }, [grid, regionId]);
+  }, [grid, regionId, palette]);
 
   const statusText = state === 'loading' ? 'Carregando grade de precipitação…'
     : state === 'available' ? `Grade de precipitação disponível para ${timestampUtc ? formatTimestamp(timestampUtc) : "o período selecionado"}.`
@@ -119,13 +121,13 @@ export function PrecipitationOverlay({
       <div className="precipitation-legend" role="group" aria-labelledby="precipitation-legend-title">
         <strong id="precipitation-legend-title">Taxa de precipitação (mm/h)</strong>
         <ul>
-          <li><span className="precipitation-swatch swatch-zero" aria-hidden="true" /> Zero</li>
-          <li><span className="precipitation-swatch" style={{ backgroundColor: precipitationColor(0.1) }} aria-hidden="true" /> &gt;0–&lt;0,5</li>
-          <li><span className="precipitation-swatch" style={{ backgroundColor: precipitationColor(0.5) }} aria-hidden="true" /> 0,5–&lt;1</li>
-          <li><span className="precipitation-swatch" style={{ backgroundColor: precipitationColor(1) }} aria-hidden="true" /> 1–&lt;2,5</li>
-          <li><span className="precipitation-swatch" style={{ backgroundColor: precipitationColor(2.5) }} aria-hidden="true" /> 2,5–&lt;5</li>
-          <li><span className="precipitation-swatch" style={{ backgroundColor: precipitationColor(5) }} aria-hidden="true" /> ≥5</li>
-          <li><span className="precipitation-swatch swatch-missing" aria-hidden="true" /> Sem dado</li>
+          <li><span className="precipitation-swatch swatch-zero" style={{ backgroundColor: palette.dry }} aria-hidden="true" /> Zero</li>
+          <li><span className="precipitation-swatch" style={{ backgroundColor: precipitationColor(0.1, palette) }} aria-hidden="true" /> &gt;0–&lt;0,5</li>
+          <li><span className="precipitation-swatch" style={{ backgroundColor: precipitationColor(0.5, palette) }} aria-hidden="true" /> 0,5–&lt;1</li>
+          <li><span className="precipitation-swatch" style={{ backgroundColor: precipitationColor(1, palette) }} aria-hidden="true" /> 1–&lt;2,5</li>
+          <li><span className="precipitation-swatch" style={{ backgroundColor: precipitationColor(2.5, palette) }} aria-hidden="true" /> 2,5–&lt;5</li>
+          <li><span className="precipitation-swatch" style={{ backgroundColor: precipitationColor(5, palette) }} aria-hidden="true" /> ≥5</li>
+          <li><span className="precipitation-swatch swatch-missing" style={{ background: `repeating-linear-gradient(135deg, ${palette.missing} 0 3px, ${palette.dry} 3px 5px)` }} aria-hidden="true" /> Sem dado</li>
         </ul>
         <p>Faixas apenas visuais. Taxas positivas abaixo de 0,1 mm/h continuam sendo positivas; sem dado não significa zero.</p>
       </div>
