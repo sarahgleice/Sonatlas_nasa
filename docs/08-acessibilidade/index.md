@@ -101,5 +101,5 @@ Uma única parada de `Tab` (`role="slider"`, `aria-valuemin/max/now`, `aria-valu
 `Espaço` reproduz/pausa (nunca sobre botões, links, `summary` ou campos, para não impedir a ativação nativa), `←/→` passo, `Home/End` primeiro/último, `M` mudo, `L` repetir, `?` abre a janela de atalhos (`<dialog>` nativo, `Esc` fecha e o foco volta ao acionador). Combinações com Ctrl/Alt/Meta são ignoradas, exceto `?` via AltGr (teclado ABNT2). Usuários de NVDA/JAWS devem ativar o modo de foco (NVDA + Espaço) para os atalhos de reprodução.
 
 ### 4.4. Velocidade, repetição e volume
-A velocidade (0,5x a 2x) altera só o intervalo entre passos; frequência e pulsos permanecem os mesmos. Sem repetição, a série para no último passo. **Pendência:** o controle de volume (spec §4.4) depende de `setVolume` no `AudioEngine` (ganho mestre fixo em 0,3); não foi exposto um controle sem efeito.
+A velocidade (0,5x a 2x) altera só o intervalo entre passos; frequência e pulsos permanecem os mesmos. Sem repetição, a série para no último passo. O volume controla o ganho mestre do motor, sem alterar frequência, pulsos ou cadência da sonificação. O slider de meteoro funciona por teclado e anuncia o nível selecionado; com o áudio silenciado, ajustar para um nível positivo também reativa o som.
 

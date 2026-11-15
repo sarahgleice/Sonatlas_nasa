@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { TemporalObservation } from '../types/dataset';
 import { PlaybackSpeed, StepChangeSource } from '../types/player';
-import { globalAudioEngine } from '../audio/AudioEngine';
+import { globalAudioEngine, MAX_GAIN } from '../audio/AudioEngine';
 import { createObservationSonificationParams } from '../audio/sonificationMapping';
 
 export interface StepTransition {
@@ -82,6 +82,7 @@ export function useAudioPlayer({
   const [isPreviewing, setIsPreviewing] = useState<boolean>(false);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isMuted, setIsMuted] = useState<boolean>(() => globalAudioEngine.getIsMuted());
+  const [volume, setVolumeState] = useState<number>(() => globalAudioEngine.getVolume() / MAX_GAIN);
   const [speed, setSpeedState] = useState<PlaybackSpeed>(1);
   const [isLooping, setIsLooping] = useState<boolean>(false);
   const [audioError, setAudioError] = useState<string | null>(null);
@@ -351,6 +352,17 @@ export function useAudioPlayer({
     setIsMuted(isMutedRef.current);
   }, []);
 
+  const setVolume = useCallback((nextVolume: number) => {
+    const next = Number.isFinite(nextVolume) ? Math.min(1, Math.max(0, nextVolume)) : 0;
+    globalAudioEngine.setVolume(next * MAX_GAIN);
+    setVolumeState(next);
+    if (isMutedRef.current && next > 0) {
+      isMutedRef.current = false;
+      globalAudioEngine.setMuted(false);
+      setIsMuted(false);
+    }
+  }, []);
+
   useEffect(() => globalAudioEngine.subscribeError((error) => {
     setAudioError(error);
     if (error) {
@@ -389,6 +401,7 @@ export function useAudioPlayer({
     currentIndex,
     totalSteps,
     isMuted,
+    volume,
     speed,
     isLooping,
     audioError,
@@ -409,6 +422,7 @@ export function useAudioPlayer({
     setSpeed,
     toggleLoop,
     toggleMute,
+    setVolume,
     previewStep
   };
 }

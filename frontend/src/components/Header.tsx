@@ -1,14 +1,16 @@
 import React from 'react';
-import { HelpCircle, Keyboard } from 'lucide-react';
+import { HelpCircle, Keyboard, Volume2 } from 'lucide-react';
 
 interface HeaderProps {
   onOpenEducational: () => void;
   onOpenShortcuts: () => void;
   onOpenAccessibility?: () => void;
+  onListenObjective: () => void;
+  objectiveAudioDisabled: boolean;
   voiceEnabled?: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenEducational, onOpenShortcuts, onOpenAccessibility = () => undefined, voiceEnabled = false }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenEducational, onOpenShortcuts, onOpenAccessibility = () => undefined, onListenObjective, objectiveAudioDisabled, voiceEnabled = false }) => {
   return (
     <header className="app-header" role="banner">
       <div className="header-container">
@@ -28,6 +30,17 @@ export const Header: React.FC<HeaderProps> = ({ onOpenEducational, onOpenShortcu
           >
             <span>Acessibilidade</span>
             {voiceEnabled && <span className="accessibility-voice-active">Voz ativa</span>}
+          </button>
+          <button
+            type="button"
+            onClick={onListenObjective}
+            className="btn btn-secondary btn-sm"
+            disabled={objectiveAudioDisabled}
+            aria-label="Ouvir o objetivo do Sonatlas"
+            title={objectiveAudioDisabled ? 'Voz indisponível ou sonificação em reprodução' : 'Ouvir o objetivo do Sonatlas'}
+          >
+            <Volume2 size={16} aria-hidden="true" />
+            <span>Ouvir objetivo</span>
           </button>
           <button
             type="button"

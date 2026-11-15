@@ -221,8 +221,6 @@ a { color: inherit; }
 .sonification-pulse-scale { justify-content: space-between; color: var(--color-sound); }
 .sonification-pulse-dots { display: inline-flex; align-items: center; gap: 3px; }
 .sonification-pulse-dots i { width: 5px; height: 5px; display: block; border-radius: 50%; background: var(--color-sound); }
-.sonatlas-objective-audio { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .6rem; margin-top: .45rem; }
-.sonatlas-objective-audio .form-helper { margin: 0; }
 .player-card .card-header { align-items: flex-start; justify-content: space-between; gap: .4rem; margin-bottom: .4rem; }
 .player-card .card-title { max-width: 170px; font-size: .72rem; }
 .player-badges { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .25rem; }
