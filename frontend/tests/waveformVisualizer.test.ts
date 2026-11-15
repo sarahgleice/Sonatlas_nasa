@@ -123,7 +123,9 @@ describe('integração do AudioEngine com o visualizador', () => {
     vi.stubGlobal('window', { AudioContext: vi.fn(() => { throw new Error('sem suporte'); }) });
     const engine = new AudioEngine();
     const onError = vi.fn();
+    
     engine.subscribeError(onError);
+    onError.mockClear(); // Limpa a chamada inicial de estado
 
     expect(() => engine.playParams({ frequency: 440, pulseCount: 1, durationMs: 1000, isMissing: false })).toThrow('sem suporte');
     engine.reportError(new Error('sem suporte'));
@@ -145,7 +147,9 @@ describe('integração do AudioEngine com o visualizador', () => {
     vi.stubGlobal('window', { AudioContext: vi.fn(() => context) });
     const engine = new AudioEngine();
     const onError = vi.fn();
+    
     engine.subscribeError(onError);
+    onError.mockClear(); // Limpa a chamada inicial de estado
 
     engine.playParams({ frequency: 440, pulseCount: 1, durationMs: 1000, isMissing: false });
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -168,13 +172,15 @@ describe('integração do AudioEngine com o visualizador', () => {
     vi.stubGlobal('window', { AudioContext: vi.fn(() => context) });
     const engine = new AudioEngine();
     const onError = vi.fn();
+    
     engine.subscribeError(onError);
+    onError.mockClear(); // Limpa a chamada inicial de estado
 
     await engine.playSequence([{ value: 10, date: '2026-01-01', isMissing: false } as any]);
     expect(onError).toHaveBeenCalledTimes(1);
     expect(onError).toHaveBeenLastCalledWith('sequência bloqueada');
 
-    vi.clearAllMocks();
+    vi.clearAllMocks(); // Limpa chamadas antes de forçar o segundo erro
     await engine.resume();
     expect(onError).toHaveBeenCalledTimes(1);
     expect(onError).toHaveBeenLastCalledWith('sequência bloqueada');
