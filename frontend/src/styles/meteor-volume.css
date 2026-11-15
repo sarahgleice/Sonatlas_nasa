@@ -1,0 +1,204 @@
+.meteor-volume {
+  --thumb: 22px;
+  --rail-h: 44px;
+  --meteor-hot: #fff7d6;
+  --meteor-core: #fde047;
+  --meteor-mid: #fb923c;
+  --meteor-outer: #ef4444;
+  --meteor-focus: #22d3ee;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: 340px;
+}
+
+.meteor-volume__label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.meteor-volume__value {
+  font-variant-numeric: tabular-nums;
+  color: var(--meteor-mid);
+}
+
+.meteor-volume[data-muted='true'] .meteor-volume__value {
+  color: #94a3b8;
+}
+
+/* Trilho do "céu" */
+.meteor-volume__track {
+  position: relative;
+  height: var(--rail-h);
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(8, 14, 28, 0.95), rgba(30, 41, 59, 0.65));
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.25);
+}
+
+.meteor-volume__sky {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1px 1px at 18% 28%, rgba(255, 255, 255, 0.55) 50%, transparent 51%),
+    radial-gradient(1px 1px at 47% 72%, rgba(255, 255, 255, 0.4) 50%, transparent 51%),
+    radial-gradient(1px 1px at 73% 34%, rgba(255, 255, 255, 0.5) 50%, transparent 51%),
+    radial-gradient(1px 1px at 91% 66%, rgba(255, 255, 255, 0.35) 50%, transparent 51%);
+}
+
+/* Cauda: do início do trilho até o centro da cabeça do meteoro */
+.meteor-volume__tail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: calc(var(--thumb) / 2 + var(--level) * (100% - var(--thumb)));
+  transition: opacity 0.25s ease;
+}
+
+.meteor-volume[data-muted='true'] .meteor-volume__tail {
+  opacity: 0;
+}
+
+.meteor-volume__flame {
+  position: absolute;
+  right: 0;
+  inset-block: 0;
+  margin-block: auto;
+  clip-path: polygon(0 50%, 100% 0, 100% 100%);
+  transform-origin: right center;
+  /* quanto mais volume, mais rápido o fogo tremula */
+  animation: meteor-flicker calc(1.1s - var(--level) * 0.7s) ease-in-out infinite alternate;
+}
+
+.meteor-volume__flame--outer {
+  width: 100%;
+  height: calc(8px + var(--level) * 24px);
+  background: linear-gradient(to left, rgba(239, 68, 68, 0.8), rgba(239, 68, 68, 0));
+  filter: blur(1.5px);
+}
+
+.meteor-volume__flame--mid {
+  width: 85%;
+  height: calc(5px + var(--level) * 15px);
+  background: linear-gradient(to left, rgba(251, 146, 60, 0.95), rgba(251, 146, 60, 0));
+  animation-delay: -0.3s;
+}
+
+.meteor-volume__flame--core {
+  width: 60%;
+  height: calc(3px + var(--level) * 8px);
+  background: linear-gradient(to left, #fff7d6, rgba(253, 224, 71, 0));
+  animation-delay: -0.6s;
+}
+
+@keyframes meteor-flicker {
+  0% {
+    transform: scaleY(0.88) scaleX(0.97);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scaleY(1.08) scaleX(1.03);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meteor-volume__flame {
+    animation: none;
+  }
+}
+
+/* O controle real: input range transparente por cima do desenho */
+.meteor-volume__input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.meteor-volume__input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.meteor-volume__input::-webkit-slider-runnable-track {
+  height: var(--rail-h);
+  background: transparent;
+}
+
+.meteor-volume__input::-moz-range-track {
+  height: var(--rail-h);
+  background: transparent;
+}
+
+/* Cabeça do meteoro (o brilho cresce com o volume) */
+.meteor-volume__input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  width: var(--thumb);
+  height: var(--thumb);
+  margin-top: calc((var(--rail-h) - var(--thumb)) / 2);
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  background: radial-gradient(
+    circle at 35% 35%,
+    var(--meteor-hot) 0 25%,
+    var(--meteor-core) 55%,
+    var(--meteor-mid) 100%
+  );
+  box-shadow: 0 0 calc(4px + var(--level) * 14px) calc(var(--level) * 3px) rgba(251, 146, 60, 0.85);
+}
+
+.meteor-volume__input::-moz-range-thumb {
+  box-sizing: border-box;
+  width: var(--thumb);
+  height: var(--thumb);
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  background: radial-gradient(
+    circle at 35% 35%,
+    var(--meteor-hot) 0 25%,
+    var(--meteor-core) 55%,
+    var(--meteor-mid) 100%
+  );
+  box-shadow: 0 0 calc(4px + var(--level) * 14px) calc(var(--level) * 3px) rgba(251, 146, 60, 0.85);
+}
+
+/* Sem som: meteoro "apagado" */
+.meteor-volume[data-muted='true'] .meteor-volume__input::-webkit-slider-thumb {
+  filter: grayscale(1) brightness(0.6);
+  box-shadow: none;
+}
+
+.meteor-volume[data-muted='true'] .meteor-volume__input::-moz-range-thumb {
+  filter: grayscale(1) brightness(0.6);
+  box-shadow: none;
+}
+
+/* Foco visível para quem usa teclado */
+.meteor-volume__input:focus-visible {
+  outline: none;
+}
+
+.meteor-volume__input:focus-visible::-webkit-slider-thumb {
+  outline: 3px solid var(--meteor-focus);
+  outline-offset: 3px;
+}
+
+.meteor-volume__input:focus-visible::-moz-range-thumb {
+  outline: 3px solid var(--meteor-focus);
+  outline-offset: 3px;
+}
