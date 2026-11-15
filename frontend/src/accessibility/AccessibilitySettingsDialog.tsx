@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { useModalDialog } from './useModalDialog';
+import { VisualPreferencesControls } from './VisualPreferencesControls';
 
 interface AccessibilitySettingsDialogProps {
   isOpen: boolean;
@@ -42,7 +43,7 @@ export const AccessibilitySettingsDialog: React.FC<AccessibilitySettingsDialogPr
         </div>
 
         <p id="accessibility-dialog-description">
-          O Sonatlas funciona com teclado e leitores de tela. Você também pode ativar a narração falada dos dados selecionados.
+          O Sonatlas funciona com teclado e leitores de tela. Você também pode ativar a narração falada dos dados selecionados e ajustar as cores e o contraste da interface.
         </p>
 
         <label className="accessibility-voice-option" htmlFor="voice-narration-enabled">
@@ -65,6 +66,8 @@ export const AccessibilitySettingsDialog: React.FC<AccessibilitySettingsDialogPr
             A síntese de fala não está disponível neste navegador. Os controles de teclado e leitores de tela continuam disponíveis.
           </p>
         )}
+
+        <VisualPreferencesControls />
 
         <div className="modal-footer accessibility-dialog-actions">
           <button type="button" onClick={requestClose} className="btn btn-secondary">Agora não</button>

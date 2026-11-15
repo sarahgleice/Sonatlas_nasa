@@ -7,6 +7,7 @@ import { findRegionAtPoint, limitsToBounds, STUDY_REGIONS } from './regions';
 import { amazonCentralGeoJson } from './amazonGeometry';
 import { congoBasinKisanganiGeoJson } from './congoGeometry';
 import { PrecipitationOverlay } from './PrecipitationOverlay';
+import type { MapTokens } from '../accessibility/visualThemes';
 
 function geometryMatchesDataset(layer: L.GeoJSON, boundingBox: BoundingBox): boolean {
   const bounds = layer.getBounds();
@@ -30,6 +31,7 @@ interface MapViewProps {
   spatialDatasetPath?: string;
   selectedTimestamp?: string | null;
   selectedAvailability?: AvailabilityIndicator | null;
+  mapTokens: MapTokens;
   onRegionSelect?: (regionId: string) => void;
   onMapPoint?: (lat: number, lon: number) => void;
   isVisible?: boolean;
@@ -45,6 +47,7 @@ export const MapView: React.FC<MapViewProps> = ({
   spatialDatasetPath = '',
   selectedTimestamp = null,
   selectedAvailability = null,
+  mapTokens,
   onRegionSelect,
   onMapPoint,
   isVisible = true
@@ -98,10 +101,11 @@ export const MapView: React.FC<MapViewProps> = ({
         try {
           const geoJsonLayer = L.geoJSON(geoJson, {
             style: {
-              color: '#0284c7',
-              fillColor: '#38bdf8',
+              color: mapTokens.regionA.stroke,
+              fillColor: mapTokens.regionA.fill,
               fillOpacity: 0.25,
-              weight: 3
+              weight: mapTokens.strokeWeight,
+              dashArray: mapTokens.regionA.dashArray
             }
           });
           if (geometryMatchesDataset(geoJsonLayer, boundingBox)) {
@@ -116,12 +120,14 @@ export const MapView: React.FC<MapViewProps> = ({
     } else if (regionId === 'congo_basin_kisangani' || regionId === 'international_candidate') {
       if (congoBasinKisanganiGeoJson) {
         try {
+          const style = regionId === 'international_candidate' ? mapTokens.candidate : mapTokens.regionB;
           const geoJsonLayer = L.geoJSON(congoBasinKisanganiGeoJson, {
             style: {
-              color: '#059669',
-              fillColor: '#34d399',
+              color: style.stroke,
+              fillColor: style.fill,
               fillOpacity: 0.25,
-              weight: 3
+              weight: mapTokens.strokeWeight,
+              dashArray: style.dashArray
             }
           });
           if (geometryMatchesDataset(geoJsonLayer, boundingBox)) {
@@ -135,11 +141,14 @@ export const MapView: React.FC<MapViewProps> = ({
     }
 
     if (!regionLayer) {
+      const fallbackStyle = regionId === 'amazon_central' ? mapTokens.regionA
+        : regionId === 'international_candidate' ? mapTokens.candidate : mapTokens.regionB;
       const fallbackPolygon = L.polygon(bboxToLeafletPolygon(boundingBox), {
-        color: '#0284c7',
-        fillColor: '#38bdf8',
+        color: fallbackStyle.stroke,
+        fillColor: fallbackStyle.fill,
         fillOpacity: 0.25,
-        weight: 3
+        weight: mapTokens.strokeWeight,
+        dashArray: fallbackStyle.dashArray
       }).addTo(map);
       fallbackPolygon.bindPopup(`<strong>${regionName}</strong><br/>Bounding box do dataset`);
       regionLayer = fallbackPolygon;
@@ -150,7 +159,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
     // Ajustar visão para os limites da bounding box
     map.fitBounds(limitsToBounds(boundingBox), { padding: [20, 20] });
-  }, [apiGeometry, boundingBox, regionId, regionName, isPlaceholder]);
+  }, [apiGeometry, boundingBox, mapTokens, regionId, regionName, isPlaceholder]);
 
   useEffect(() => {
     const map = mapInstanceRef.current;
@@ -269,6 +278,7 @@ export const MapView: React.FC<MapViewProps> = ({
               boundingBox={boundingBox}
               timestampUtc={selectedTimestamp}
               availability={selectedAvailability}
+              palette={mapTokens.precipitation}
             />
           )}
         </>
