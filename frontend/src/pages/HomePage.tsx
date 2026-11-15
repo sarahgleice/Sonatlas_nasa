@@ -24,6 +24,7 @@ import { VariableSelector } from '../components/VariableSelector';
 import { AudioPlayer } from '../components/AudioPlayer';
 import { Timeline } from '../components/Timeline';
 import { ScientificSummary } from '../components/ScientificSummary';
+import { VisualFrameViewer } from '../components/VisualFrameViewer';
 import { PrecipitationChart } from '../components/PrecipitationChart';
 import { SoundLegend, SonificationGuide } from '../components/SoundLegend';
 import { MapView } from '../maps/MapView';
@@ -66,9 +67,8 @@ export const HomePage: React.FC = () => {
   const [mapViewMode, setMapViewMode] = useState<'2d' | '3d'>('2d');
   const [voiceEnabled, setVoiceEnabled] = useState(() => readStoredBoolean(VOICE_NARRATION_KEY, false));
   const [isAccessibilitySettingsOpen, setIsAccessibilitySettingsOpen] = useState(() => !readStoredBoolean(ACCESSIBILITY_PROMPT_KEY, false));
-  const [isObjectiveAudioPromptOpen, setIsObjectiveAudioPromptOpen] = useState(() =>
-    readStoredBoolean(ACCESSIBILITY_PROMPT_KEY, false) && !readStoredBoolean(OBJECTIVE_AUDIO_PROMPT_KEY, false)
-  );
+  // O guia em áudio do objetivo é opcional (botão "Ouvir objetivo"); não abre sozinho para não empilhar diálogos.
+  const [isObjectiveAudioPromptOpen, setIsObjectiveAudioPromptOpen] = useState(false);
   const [dataset, setDataset] = useState<RegionDataset | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -88,7 +88,6 @@ export const HomePage: React.FC = () => {
   const closeAccessibilitySettings = useCallback(() => {
     writeStoredBoolean(ACCESSIBILITY_PROMPT_KEY, true);
     setIsAccessibilitySettingsOpen(false);
-    if (!readStoredBoolean(OBJECTIVE_AUDIO_PROMPT_KEY, false)) setIsObjectiveAudioPromptOpen(true);
   }, []);
 
   const saveAccessibilitySettings = useCallback((enabled: boolean) => {
@@ -97,6 +96,8 @@ export const HomePage: React.FC = () => {
     setVoiceEnabled(enabled);
     setIsAccessibilitySettingsOpen(false);
     if (!enabled) stopNarration();
+    // Só quem ativou a narração recebe o convite do guia em áudio, evitando empilhar diálogos para os demais.
+    else if (!readStoredBoolean(OBJECTIVE_AUDIO_PROMPT_KEY, false)) setIsObjectiveAudioPromptOpen(true);
   }, []);
 
   const closeObjectiveAudioPrompt = useCallback(() => {
@@ -409,6 +410,7 @@ export const HomePage: React.FC = () => {
                         ? 'Dados ausentes neste período'
                         : `${currentObservation.availability.status === 'partial' ? 'Disponibilidade parcial' : 'Dados disponíveis'} · ${Math.round(currentObservation.availability.valid_cells_ratio * 100)}% de células válidas`}
                     </p>
+                    <VisualFrameViewer observation={currentObservation} />
                     <ScientificSummary observation={currentObservation} regionName={dataset.region_name} previousObservation={comparisonObservation} index={currentIndex} total={observations.length} />
                     {voiceNarrationActive && (
                       <button

@@ -103,3 +103,8 @@ Uma única parada de `Tab` (`role="slider"`, `aria-valuemin/max/now`, `aria-valu
 ### 4.4. Velocidade, repetição e volume
 A velocidade (0,5x a 2x) altera só o intervalo entre passos; frequência e pulsos permanecem os mesmos. Sem repetição, a série para no último passo. O volume controla o ganho mestre do motor, sem alterar frequência, pulsos ou cadência da sonificação. O slider de meteoro funciona por teclado e anuncia o nível selecionado; com o áudio silenciado, ajustar para um nível positivo também reativa o som.
 
+### 4.5. Gráfico, status da camada e onboarding
+- **Gráfico de precipitação:** uma única parada de `Tab` (tabindex móvel no ponto ativo); setas, `Home` e `End` movem o foco entre os pontos e selecionam o passo. Os rótulos usam o instante legível em UTC, não o ISO cru.
+- **Status da camada de precipitação:** não é região `aria-live` (não fala a cada passo durante a reprodução); só erros usam `role="alert"`.
+- **Onboarding:** apenas um diálogo no primeiro acesso. O convite do guia em áudio só aparece para quem ativou a narração; o botão "Ouvir objetivo" continua disponível.
+- **Quadro visual:** a observação atual exibe o quadro (`visual_frame_reference`) com texto alternativo, fonte e situação de sincronização. Enquanto o quadro oficial não existe, o estado vazio informa isso sem simular uma imagem da NASA.

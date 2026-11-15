@@ -5,6 +5,7 @@ import type { SpatialGrid } from '../types/spatialGrid';
 import { SpatialDataService } from '../services/spatialDataService';
 import { precipitationColor, spatialGridCellBounds } from './precipitationScale';
 import { SpatialGridTable } from './SpatialGridTable';
+import { formatTimestamp } from '../utils/formatters';
 
 type LoadState = 'loading' | 'available' | 'unavailable' | 'error';
 const PANE_NAME = 'sonatlas-precipitation';
@@ -107,13 +108,13 @@ export function PrecipitationOverlay({
   }, [grid, regionId]);
 
   const statusText = state === 'loading' ? 'Carregando grade de precipitação…'
-    : state === 'available' ? `Grade de precipitação disponível para ${timestampUtc} UTC.`
+    : state === 'available' ? `Grade de precipitação disponível para ${timestampUtc ? formatTimestamp(timestampUtc) : "o período selecionado"}.`
       : state === 'error' ? 'A grade de precipitação contém erro ou não corresponde à observação selecionada.'
         : 'Camada de precipitação indisponível para este período; a geometria do mapa continua disponível.';
 
   return (
     <div className="precipitation-layer-info">
-      <p className="precipitation-layer-status" role={state === 'error' ? 'alert' : 'status'} aria-live="polite">{statusText}</p>
+      <p className="precipitation-layer-status" role={state === 'error' ? 'alert' : undefined}>{statusText}</p>
       {grid && <p className="precipitation-layer-source">{grid.manifest.data_source} · {grid.manifest.product_name} {grid.manifest.product_version} · {grid.manifest.validation_status === 'preliminary_verified' ? 'validação preliminar' : 'candidata em revisão'} · grade {grid.manifest.spatial_resolution_degrees}°</p>}
       <div className="precipitation-legend" role="group" aria-labelledby="precipitation-legend-title">
         <strong id="precipitation-legend-title">Taxa de precipitação (mm/h)</strong>
