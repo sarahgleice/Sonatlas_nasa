@@ -192,6 +192,19 @@ a { color: inherit; }
 .sound-heading, .sound-heading > svg { color: var(--color-sound); }
 .sound-heading h3 { color: var(--color-text); }
 .player-card { padding: .75rem; background: var(--color-background); }
+.sonification-guide { margin-top: .55rem; padding-top: .55rem; border-top: 1px solid var(--color-border); }
+.sonification-guide > h3 { margin: 0 0 .4rem; color: var(--color-text); font-family: var(--font-display); font-size: .72rem; }
+.sonification-guide-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .45rem; }
+.sonification-guide-item { min-width: 0; margin: 0; padding: .45rem; border: 1px solid var(--color-border); border-radius: 4px; background: var(--color-background); }
+.sonification-guide-item figcaption { color: var(--color-text); font-size: .62rem; }
+.sonification-guide-item p { margin: .3rem 0 0; color: var(--color-muted); font-size: .58rem; line-height: 1.4; }
+.sonification-pitch-scale, .sonification-pulse-scale { min-height: 20px; display: flex; align-items: center; gap: .35rem; margin-top: .25rem; color: var(--color-muted); font-size: .54rem; }
+.sonification-pitch-line { height: 4px; flex: 1; border-radius: 4px; background: linear-gradient(90deg, var(--color-map), var(--color-sound)); }
+.sonification-pulse-scale { justify-content: space-between; color: var(--color-sound); }
+.sonification-pulse-dots { display: inline-flex; align-items: center; gap: 3px; }
+.sonification-pulse-dots i { width: 5px; height: 5px; display: block; border-radius: 50%; background: var(--color-sound); }
+.sonatlas-objective-audio { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .6rem; margin-top: .45rem; }
+.sonatlas-objective-audio .form-helper { margin: 0; }
 .player-card .card-header { align-items: flex-start; justify-content: space-between; gap: .4rem; margin-bottom: .4rem; }
 .player-card .card-title { max-width: 170px; font-size: .72rem; }
 .player-badges { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .25rem; }
