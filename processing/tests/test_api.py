@@ -19,10 +19,16 @@ client = TestClient(_carregar_app())
 MANAUS = {"lat": -3.119, "lon": -60.0217}
 KISANGANI = {"lat": 0.5153, "lon": 25.191}
 ORIGEM = {"lat": 0, "lon": 0}
+ATIVAS = {"amazon_central", "congo_basin_kisangani"}
 
 
 def ids(resposta):
     return {r["region_id"] for r in resposta.json()}
+
+
+def bbox_de(region_id):
+    regiao = next(r for r in client.get("/regions").json() if r["region_id"] == region_id)
+    return regiao["bbox"]
 
 
 def test_health():
@@ -30,36 +36,37 @@ def test_health():
     assert r.status_code == 200
     corpo = r.json()
     assert corpo["status"] == "ok"
-    assert corpo["regioes_carregadas"] >= 2
-    assert corpo["regioes_ativas"] >= 1
+    assert corpo["regioes_carregadas"] >= 3
+    assert corpo["regioes_ativas"] >= 2
 
 
 def test_regions_padrao_so_ativas():
     r = client.get("/regions")
     assert r.status_code == 200
-    assert ids(r) == {"amazon_central"}
+    assert ATIVAS <= ids(r)
     assert all(item["is_active"] for item in r.json())
 
 
 def test_regions_candidatas():
     r = client.get("/regions", params={"scope": "candidate"})
     assert r.status_code == 200
-    assert "congo_basin_kisangani" in ids(r)
-    assert "amazon_central" not in ids(r)
+    assert "international_candidate" in ids(r)
+    assert not (ATIVAS & ids(r))
     assert not any(item["is_active"] for item in r.json())
 
 
 def test_regions_all_inclui_ativas_e_candidatas():
     r = client.get("/regions", params={"scope": "all"})
-    assert {"amazon_central", "congo_basin_kisangani"} <= ids(r)
+    assert ATIVAS | {"international_candidate"} <= ids(r)
 
 
 def test_regions_scope_invalido():
     assert client.get("/regions", params={"scope": "qualquer"}).status_code == 422
 
 
-def test_regiao_ativa_por_id():
-    r = client.get("/regions/amazon_central")
+@pytest.mark.parametrize("region_id", sorted(ATIVAS))
+def test_regiao_ativa_por_id(region_id):
+    r = client.get(f"/regions/{region_id}")
     assert r.status_code == 200
     corpo = r.json()
     assert corpo["type"] == "Feature"
@@ -67,11 +74,9 @@ def test_regiao_ativa_por_id():
     assert corpo["properties"]["availability"] == "active"
 
 
-def test_regiao_candidata_exige_flag():
-    assert client.get("/regions/congo_basin_kisangani").status_code == 404
-    r = client.get("/regions/congo_basin_kisangani", params={"include_candidates": True})
-    assert r.status_code == 200
-    assert r.json()["properties"]["availability"] == "candidate"
+def test_candidata_exige_flag():
+    # international_candidate é o placeholder: candidata e sem geometria
+    assert client.get("/regions/international_candidate").status_code == 404
 
 
 def test_placeholder_sem_geometria():
@@ -89,9 +94,9 @@ def test_locate_manaus():
     assert r.json()["regioes"] == ["amazon_central"]
 
 
-def test_locate_kisangani_so_com_candidatas():
-    assert client.post("/locate", json=KISANGANI).json()["regioes"] == []
-    r = client.post("/locate", params={"include_candidates": True}, json=KISANGANI)
+def test_locate_kisangani():
+    r = client.post("/locate", json=KISANGANI)
+    assert r.status_code == 200
     assert r.json()["regioes"] == ["congo_basin_kisangani"]
 
 
@@ -107,8 +112,16 @@ def test_locate_coordenada_invalida():
 
 
 def test_bbox_da_amazonia_igual_ao_do_pipeline():
-    bbox = client.get("/regions").json()[0]["bbox"]
+    bbox = bbox_de("amazon_central")
     assert bbox["south"] == pytest.approx(-4.0)
     assert bbox["north"] == pytest.approx(-1.5)
     assert bbox["west"] == pytest.approx(-61.5)
     assert bbox["east"] == pytest.approx(-58.5)
+
+
+def test_bbox_do_congo_igual_ao_dataset():
+    bbox = bbox_de("congo_basin_kisangani")
+    assert bbox["south"] == pytest.approx(-0.8)
+    assert bbox["north"] == pytest.approx(1.7)
+    assert bbox["west"] == pytest.approx(23.7)
+    assert bbox["east"] == pytest.approx(26.7)

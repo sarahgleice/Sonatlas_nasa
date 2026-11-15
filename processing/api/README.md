@@ -37,8 +37,7 @@ Os GeoJSON são lidos **ao iniciar**: se alterar um arquivo de `processing/geome
 
 Uma região é **ativa** quando o `status` do GeoJSON é `verified` ou `preliminary_verified`
 e ela não é placeholder. As demais são **candidatas** (em validação científica).
-Hoje só a Amazônia Central (`amazon_central`) é ativa. Para ativar outra região,
-atualize o `status` no GeoJSON dela e reinicie a API.
+Hoje são ativas a Amazônia Central (amazon_central) e o recorte de Kisangani (congo_basin_kisangani).
 
 ## Convenções
 

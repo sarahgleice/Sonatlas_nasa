@@ -14,8 +14,8 @@
         "region_id": "congo_basin_kisangani",
         "region_name": "Bacia do Congo",
         "country": "República Democrática do Congo",
-        "status": "proposed_pending_validation",
-        "description": "Bounding box proposto no entorno de Kisangani, com o mesmo tamanho da Amazônia Central (3.0 x 2.5 graus). Recorte específico, não representa toda a bacia. Aguarda validação científica."
+        "status": "preliminary_verified",
+        "description": "Bounding box de amostragem no entorno de Kisangani, com o mesmo tamanho da Amazônia Central (3.0 x 2.5 graus). Recorte específico, não representa toda a bacia. Validação científica preliminar."
       },
       "geometry": {
         "type": "Polygon",
