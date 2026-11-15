@@ -366,7 +366,7 @@ A separação entre processamento e interface favorece a organização do projet
 
 ### UNICEPLAC - Software Developers
 
-O Sonatlas é desenvolvido por uma equipe de **cinco estudantes da UNICEPLAC**, representando a instituição na modalidade presencial do NASA Space Apps Challenge 2026, em Brasília.
+O Sonatlas é desenvolvido por uma equipe de **cinco estudantes de Engenharia de Software**, representando a instituição na modalidade presencial do NASA Space Apps Challenge 2026, em Brasília.
 
 O desenvolvimento envolve as áreas de:
 
