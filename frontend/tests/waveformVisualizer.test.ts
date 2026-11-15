@@ -40,6 +40,50 @@ describe('readWaveform', () => {
   });
 });
 
+describe('Controle de Volume do AudioEngine', () => {
+  it('limita o volume entre 0 e 1 e ignora valores não finitos', () => {
+    const engine = new AudioEngine();
+    engine.setVolume(1.5);
+    expect(engine.getVolume()).toBe(1.0);
+    
+    engine.setVolume(-0.5);
+    expect(engine.getVolume()).toBe(0.0);
+    
+    engine.setVolume(NaN);
+    expect(engine.getVolume()).toBe(0.0);
+    
+    engine.setVolume(0.5);
+    expect(engine.getVolume()).toBe(0.5);
+    
+    engine.setVolume(Infinity);
+    expect(engine.getVolume()).toBe(0.5);
+  });
+
+  it('aplica o volume ao masterGain respeitando o mudo', () => {
+    const parameter = () => ({ setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() });
+    const gain = { gain: parameter(), connect: vi.fn(), disconnect: vi.fn() };
+    const analyser = { connect: vi.fn(), disconnect: vi.fn(), fftSize: 32 };
+    const context = {
+      state: 'running', currentTime: 1, destination: {},
+      createGain: vi.fn(() => gain), createAnalyser: vi.fn(() => analyser),
+      createOscillator: vi.fn(() => ({ type: 'sine', frequency: parameter(), connect: vi.fn(), disconnect: vi.fn(), start: vi.fn(), stop: vi.fn(), addEventListener: vi.fn() })),
+      close: vi.fn().mockResolvedValue(undefined)
+    };
+    vi.stubGlobal('window', { AudioContext: vi.fn(() => context) });
+    
+    const engine = new AudioEngine();
+    engine.setVolume(0.8);
+    engine.playParams({ frequency: 440, pulseCount: 1, durationMs: 100, isMissing: false });
+    
+    expect(gain.gain.setValueAtTime).toHaveBeenCalledWith(0.8, expect.any(Number));
+    
+    engine.setMuted(true);
+    expect(gain.gain.setValueAtTime).toHaveBeenLastCalledWith(0.0, expect.any(Number));
+    expect(engine.getVolume()).toBe(0.8);
+    engine.dispose();
+  });
+});
+
 describe('integração do AudioEngine com o visualizador', () => {
   it('expõe o AnalyserNode real, interrompe fontes e libera os nós ao encerrar', () => {
     const parameter = () => ({
@@ -105,11 +149,13 @@ describe('integração do AudioEngine com o visualizador', () => {
 
     engine.playParams({ frequency: 440, pulseCount: 1, durationMs: 1000, isMissing: false });
     await new Promise((resolve) => setTimeout(resolve, 0));
+    
+    expect(onError).toHaveBeenCalledTimes(1);
     expect(onError).toHaveBeenLastCalledWith('retomada bloqueada');
     engine.dispose();
   });
 
-  it('reports asynchronous AudioContext resume failures for sequence controls', async () => {
+  it('reports asynchronous AudioContext resume failures for sequence controls using public API', async () => {
     const parameter = () => ({ setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() });
     const gain = { gain: parameter(), connect: vi.fn(), disconnect: vi.fn() };
     const analyser = { connect: vi.fn(), disconnect: vi.fn(), fftSize: 32 };
@@ -124,16 +170,13 @@ describe('integração do AudioEngine com o visualizador', () => {
     const onError = vi.fn();
     engine.subscribeError(onError);
 
-    // Injeta sequência E o contexto falso para passar no bloqueio inicial da função
-    engine['currentSequence'] = [{}] as any; 
-    engine['ctx'] = context as unknown as AudioContext;
-    
-    // Testa falha no resume()
-    await engine.resume();
+    await engine.playSequence([{ value: 10, date: '2026-01-01', isMissing: false } as any]);
+    expect(onError).toHaveBeenCalledTimes(1);
     expect(onError).toHaveBeenLastCalledWith('sequência bloqueada');
 
-    // Testa falha no playSequence()
-    await engine.playSequence([{} as any]);
+    vi.clearAllMocks();
+    await engine.resume();
+    expect(onError).toHaveBeenCalledTimes(1);
     expect(onError).toHaveBeenLastCalledWith('sequência bloqueada');
     
     engine.dispose();

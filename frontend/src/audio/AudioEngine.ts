@@ -31,7 +31,7 @@ export class AudioEngine {
   private readonly LOOKAHEAD_MS = 25;
   private readonly SCHEDULE_AHEAD_SEC = 0.1;
 
-  private initContext(): AudioContext {
+  private initContext(autoResume: boolean = true): AudioContext {
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       this.ctx = new AudioCtx();
@@ -41,17 +41,20 @@ export class AudioEngine {
       this.masterGain.connect(this.analyser);
       this.analyser.connect(this.ctx.destination);
     }
-    if (this.ctx.state === 'suspended') {
+    
+    if (autoResume && this.ctx.state === 'suspended') {
       void this.ctx.resume().then(() => this.notifyError(null)).catch((error: unknown) => {
         this.notifyError(error instanceof Error ? error.message : 'Não foi possível iniciar o áudio.');
       });
     }
+    
     return this.ctx;
   }
 
   // --- CONTROLES DE VOLUME E MUDO ---
 
   public setVolume(volume: number): void {
+    if (!Number.isFinite(volume)) return;
     this.currentVolume = Math.max(0.0, Math.min(1.0, volume));
     if (this.masterGain && this.ctx && !this.isMuted) {
       this.masterGain.gain.setValueAtTime(this.currentVolume, this.ctx.currentTime);
@@ -72,8 +75,6 @@ export class AudioEngine {
   public getIsMuted(): boolean {
     return this.isMuted;
   }
-
-  // --- MÉTODOS DO ANALISADOR E ERROS (MAIN) ---
 
   public getAnalyser(): AnalyserNode | null {
     return this.analyser;
@@ -113,13 +114,18 @@ export class AudioEngine {
 
   public async resume(): Promise<void> {
     if (!this.ctx || this.currentSequence.length === 0) return;
-    this.isPlaying = true;
+    
     try {
       await this.ctx.resume();
     } catch (error: unknown) {
       this.notifyError(error instanceof Error ? error.message : 'Erro ao retomar áudio.');
       return;
     }
+    
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    
+    this.notifyError(null);
+    this.isPlaying = true;
     this.nextSegmentTime = this.ctx.currentTime + 0.1;
     this.scheduler();
   }
@@ -129,16 +135,21 @@ export class AudioEngine {
     this.currentIndex = 0;
 
     if (this.isMuted) return;
-    const ctx = this.initContext();
-    this.isPlaying = true;
-
+    
+    const ctx = this.initContext(false);
     this.stopPlayback();
+    
     try {
       await ctx.resume();
     } catch (error: unknown) {
       this.notifyError(error instanceof Error ? error.message : 'Erro ao iniciar áudio.');
       return;
     }
+
+    if (!this.ctx || this.ctx.state !== 'running') return;
+
+    this.notifyError(null);
+    this.isPlaying = true;
     this.nextSegmentTime = ctx.currentTime + 0.1;
     this.scheduler();
   }
@@ -149,14 +160,7 @@ export class AudioEngine {
    */
   public playParams(params: SonificationParams): void {
     if (this.isMuted) return;
-    const ctx = this.initContext();
-
-    if (ctx.state === 'suspended') {
-      void ctx.resume().catch((error: unknown) => {
-        this.notifyError(error instanceof Error ? error.message : 'Não foi possível iniciar o áudio.');
-      });
-    }
-
+    const ctx = this.initContext(true);
     this.scheduleParams(params, ctx.currentTime);
   }
 
@@ -167,10 +171,10 @@ export class AudioEngine {
     for (const osc of this.activeOscillators) {
       try {
         osc.stop(this.ctx.currentTime);
-        osc.disconnect();
       } catch {
         // Ignora erros caso o nó já tenha sido finalizado pelo tempo
       }
+      osc.disconnect();
     }
     this.activeOscillators.clear();
   }
