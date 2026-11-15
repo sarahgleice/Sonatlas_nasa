@@ -29,6 +29,7 @@ import { SoundLegend, SonificationGuide } from '../components/SoundLegend';
 import { MapView } from '../maps/MapView';
 import { AriaLiveAnnouncer } from '../accessibility/AriaLiveAnnouncer';
 import { AccessibilitySettingsDialog } from '../accessibility/AccessibilitySettingsDialog';
+import { ObjectiveAudioDialog } from '../accessibility/ObjectiveAudioDialog';
 import { isSpeechNarrationSupported, speakNarration, stopNarration } from '../accessibility/speechNarration';
 import { geoApiService } from '../services/geoApiService';
 import { parseAmazonCentralApiFeature } from '../maps/amazonGeometry';
@@ -38,7 +39,9 @@ type GeoApiState = 'unconfigured' | 'loading' | 'connected' | 'fallback';
 const EMPTY_OBSERVATIONS: TemporalObservation[] = [];
 const GlobeView = lazy(() => import('../maps/GlobeView').then(({ GlobeView: Component }) => ({ default: Component })));
 const ACCESSIBILITY_PROMPT_KEY = 'sonatlas.accessibility-prompt-seen';
+const OBJECTIVE_AUDIO_PROMPT_KEY = 'sonatlas.objective-audio-prompt-seen';
 const VOICE_NARRATION_KEY = 'sonatlas.voice-narration-enabled';
+const OBJECTIVE_AUDIO_TEXT = 'O Sonatlas ajuda você a explorar dados científicos da Terra por mapas, indicadores, texto e som. Na sonificação da chuva, a taxa média define a altura da nota e a fração da área com chuva define a quantidade de pulsos. Assim, o áudio complementa os dados visuais e textuais para revelar padrões ambientais.';
 
 function readStoredBoolean(key: string, fallback: boolean): boolean {
   try {
@@ -63,6 +66,9 @@ export const HomePage: React.FC = () => {
   const [mapViewMode, setMapViewMode] = useState<'2d' | '3d'>('2d');
   const [voiceEnabled, setVoiceEnabled] = useState(() => readStoredBoolean(VOICE_NARRATION_KEY, false));
   const [isAccessibilitySettingsOpen, setIsAccessibilitySettingsOpen] = useState(() => !readStoredBoolean(ACCESSIBILITY_PROMPT_KEY, false));
+  const [isObjectiveAudioPromptOpen, setIsObjectiveAudioPromptOpen] = useState(() =>
+    readStoredBoolean(ACCESSIBILITY_PROMPT_KEY, false) && !readStoredBoolean(OBJECTIVE_AUDIO_PROMPT_KEY, false)
+  );
   const [dataset, setDataset] = useState<RegionDataset | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -72,8 +78,8 @@ export const HomePage: React.FC = () => {
   const announce = useCallback((text: string, politeness: LiveAnnouncement['politeness'] = 'polite') => {
     announcementIdRef.current += 1;
     setLiveAnnouncement({ id: announcementIdRef.current, text, politeness });
-    if (voiceNarrationActive) speakNarration(text);
-  }, [voiceNarrationActive]);
+    if (voiceNarrationActive && !isAccessibilitySettingsOpen && !isObjectiveAudioPromptOpen) speakNarration(text);
+  }, [voiceNarrationActive, isAccessibilitySettingsOpen, isObjectiveAudioPromptOpen]);
   const [isEducationalOpen, setIsEducationalOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [geoApiState, setGeoApiState] = useState<GeoApiState>('unconfigured');
@@ -82,6 +88,7 @@ export const HomePage: React.FC = () => {
   const closeAccessibilitySettings = useCallback(() => {
     writeStoredBoolean(ACCESSIBILITY_PROMPT_KEY, true);
     setIsAccessibilitySettingsOpen(false);
+    if (!readStoredBoolean(OBJECTIVE_AUDIO_PROMPT_KEY, false)) setIsObjectiveAudioPromptOpen(true);
   }, []);
 
   const saveAccessibilitySettings = useCallback((enabled: boolean) => {
@@ -89,12 +96,13 @@ export const HomePage: React.FC = () => {
     writeStoredBoolean(VOICE_NARRATION_KEY, enabled);
     setVoiceEnabled(enabled);
     setIsAccessibilitySettingsOpen(false);
-    if (enabled && !voiceNarrationActive) {
-      speakNarration('Narração por voz ativada. Use os controles para selecionar e ouvir os dados de cada período.');
-    } else if (!enabled) {
-      stopNarration();
-    }
-  }, [voiceNarrationActive]);
+    if (!enabled) stopNarration();
+  }, []);
+
+  const closeObjectiveAudioPrompt = useCallback(() => {
+    writeStoredBoolean(OBJECTIVE_AUDIO_PROMPT_KEY, true);
+    setIsObjectiveAudioPromptOpen(false);
+  }, []);
 
   useEffect(() => () => stopNarration(), []);
   useEffect(() => {
@@ -236,6 +244,7 @@ export const HomePage: React.FC = () => {
     isPlaying,
     currentIndex,
     isMuted,
+    volume,
     audioError,
     analyser,
     currentObservation,
@@ -254,7 +263,8 @@ export const HomePage: React.FC = () => {
     firstStep,
     lastStep,
     toggleLoop,
-    toggleMute
+    toggleMute,
+    setVolume
   } = useAudioPlayer({
     observations,
     stepDurationMs: 1500,
@@ -279,16 +289,18 @@ export const HomePage: React.FC = () => {
     onLastStep: lastStep,
     onToggleLoop: toggleLoop,
     onOpenShortcuts: openShortcuts,
-    enabled: !isEducationalOpen && !isShortcutsOpen && !isAccessibilitySettingsOpen
+    enabled: !isEducationalOpen && !isShortcutsOpen && !isAccessibilitySettingsOpen && !isObjectiveAudioPromptOpen
   });
 
   return (
     <div className="app-layout">
-      <AriaLiveAnnouncer announcement={liveAnnouncement} disabled={voiceNarrationActive || isAccessibilitySettingsOpen} />
+      <AriaLiveAnnouncer announcement={liveAnnouncement} disabled={voiceNarrationActive || isAccessibilitySettingsOpen || isObjectiveAudioPromptOpen} />
       <Header
         onOpenEducational={() => setIsEducationalOpen(true)}
         onOpenShortcuts={openShortcuts}
         onOpenAccessibility={openAccessibilitySettings}
+        onListenObjective={() => speakNarration(OBJECTIVE_AUDIO_TEXT)}
+        objectiveAudioDisabled={!isSpeechNarrationSupported() || isPlaying}
         voiceEnabled={voiceNarrationActive}
       />
 
@@ -358,6 +370,7 @@ export const HomePage: React.FC = () => {
           <section id="playback" className="sonification-section" aria-label="Controles de sonificação">
             <AudioPlayer
               isPlaying={isPlaying} isMuted={isMuted} isLooping={isLooping} speed={speed}
+              volume={volume} onVolumeChange={setVolume}
               currentIndex={currentIndex} totalSteps={observations.length} currentObservation={currentObservation}
               canGoPrevious={canGoPrevious} canGoNext={canGoNext} onToggleLoop={toggleLoop} onRestart={restart}
               onSpeedChange={setSpeed} onTogglePlay={togglePlay} onPreview={() => previewStep(currentIndex)}
@@ -365,21 +378,6 @@ export const HomePage: React.FC = () => {
               audioError={audioError} disabled={observations.length === 0}
             />
             <SonificationGuide />
-            <div className="sonatlas-objective-audio">
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => speakNarration('O Sonatlas ajuda você a explorar dados científicos da Terra por mapas, indicadores, texto e som. Na sonificação da chuva, a taxa média define a altura da nota e a fração da área com chuva define a quantidade de pulsos. Assim, o áudio complementa os dados visuais e textuais para revelar padrões ambientais.')}
-                disabled={!isSpeechNarrationSupported() || isPlaying}
-                aria-describedby="sonatlas-objective-audio-help"
-              >
-                <Volume2 size={16} aria-hidden="true" />
-                <span>Ouvir objetivo do Sonatlas</span>
-              </button>
-              <span id="sonatlas-objective-audio-help" className="form-helper">
-                {isPlaying ? 'Pause a reprodução para ouvir a explicação.' : !isSpeechNarrationSupported() ? 'Voz indisponível neste navegador.' : 'Explicação curta falada em português.'}
-              </span>
-            </div>
           </section>
 
           <section className="side-panel right-panel" aria-labelledby="signal-title">
@@ -470,6 +468,12 @@ export const HomePage: React.FC = () => {
         voiceSupported={isSpeechNarrationSupported()}
         onSave={saveAccessibilitySettings}
         onClose={closeAccessibilitySettings}
+      />
+      <ObjectiveAudioDialog
+        isOpen={isObjectiveAudioPromptOpen}
+        voiceSupported={isSpeechNarrationSupported()}
+        onListen={() => speakNarration(OBJECTIVE_AUDIO_TEXT)}
+        onClose={closeObjectiveAudioPrompt}
       />
       <EducationalPanel isOpen={isEducationalOpen} dataset={dataset} loading={loading} error={errorMessage} onClose={() => setIsEducationalOpen(false)} />
     </div>

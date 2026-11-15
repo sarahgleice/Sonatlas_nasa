@@ -1,6 +1,9 @@
 import { TemporalObservation, SonificationParams } from '../types/dataset';
 import { createObservationSonificationParams, FREQ_ALERT } from './sonificationMapping';
 
+export const MAX_GAIN = 0.6;
+const DEFAULT_GAIN = 0.3;
+
 /**
  * Motor nativo de áudio para síntese em tempo real via Web Audio API.
  * Implementa agendamento preciso (Lookahead) para sequências temporais
@@ -11,6 +14,7 @@ export class AudioEngine {
   private masterGain: GainNode | null = null;
   private analyser: AnalyserNode | null = null;
   private isMuted: boolean = false;
+  private volume = DEFAULT_GAIN;
 
   // Estado de controle da sequência (Hazel)
   private isPlaying: boolean = false;
@@ -34,7 +38,7 @@ export class AudioEngine {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       this.ctx = new AudioCtx();
       this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+      this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : this.volume, this.ctx.currentTime);
       this.analyser = this.ctx.createAnalyser();
       this.masterGain.connect(this.analyser);
       this.analyser.connect(this.ctx.destination);
@@ -50,8 +54,19 @@ export class AudioEngine {
   public setMuted(muted: boolean): void {
     this.isMuted = muted;
     if (this.masterGain && this.ctx) {
-      this.masterGain.gain.setValueAtTime(muted ? 0.0 : 0.3, this.ctx.currentTime);
+      this.masterGain.gain.setTargetAtTime(muted ? 0 : this.volume, this.ctx.currentTime, 0.015);
     }
+  }
+
+  public setVolume(volume: number): void {
+    this.volume = Number.isFinite(volume) ? Math.min(MAX_GAIN, Math.max(0, volume)) : 0;
+    if (this.masterGain && this.ctx && !this.isMuted) {
+      this.masterGain.gain.setTargetAtTime(this.volume, this.ctx.currentTime, 0.015);
+    }
+  }
+
+  public getVolume(): number {
+    return this.volume;
   }
 
   public getIsMuted(): boolean {
