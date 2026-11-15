@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   CalendarClock,
@@ -36,6 +36,7 @@ import { parseAmazonCentralApiFeature } from '../maps/amazonGeometry';
 type GeoApiState = 'unconfigured' | 'loading' | 'connected' | 'fallback';
 
 const EMPTY_OBSERVATIONS: TemporalObservation[] = [];
+const GlobeView = lazy(() => import('../maps/GlobeView').then(({ GlobeView: Component }) => ({ default: Component })));
 const ACCESSIBILITY_PROMPT_KEY = 'sonatlas.accessibility-prompt-seen';
 const VOICE_NARRATION_KEY = 'sonatlas.voice-narration-enabled';
 
@@ -59,6 +60,7 @@ function writeStoredBoolean(key: string, value: boolean): void {
 export const HomePage: React.FC = () => {
   const [selectedRegionId, setSelectedRegionId] = useState('amazon_central');
   const [selectedSeriesId, setSelectedSeriesId] = useState('day_windows');
+  const [mapViewMode, setMapViewMode] = useState<'2d' | '3d'>('2d');
   const [voiceEnabled, setVoiceEnabled] = useState(() => readStoredBoolean(VOICE_NARRATION_KEY, false));
   const [isAccessibilitySettingsOpen, setIsAccessibilitySettingsOpen] = useState(() => !readStoredBoolean(ACCESSIBILITY_PROMPT_KEY, false));
   const [dataset, setDataset] = useState<RegionDataset | null>(null);
@@ -136,6 +138,7 @@ export const HomePage: React.FC = () => {
   useEffect(() => {
     if (!dataset || dataset.region_id !== 'amazon_central') {
       setApiGeometry(null);
+      setGeoApiState('unconfigured');
       return;
     }
 
@@ -207,16 +210,20 @@ export const HomePage: React.FC = () => {
   }, [announce]);
 
   const selectRegion = (regionId: string) => {
-    if (regionId !== 'amazon_central') return;
-    setSelectedRegionId(regionId);
-    announce('Amazônia Central selecionada.');
+    const region = findRegionOption(regionId);
+    if (!region) return;
+    setSelectedRegionId(region.id);
+    announce(region.status === 'candidate'
+      ? `${region.name}, ${region.country}, selecionada. Janela amostral candidata sob validação; não representa toda a bacia.`
+      : `${region.name}, ${region.country}, selecionada.`);
   };
 
   const handleMapPoint = async (lat: number, lon: number) => {
     try {
       const result = await geoApiService.locate(lat, lon);
       if (result.available) {
-        if (result.data.regioes.includes('amazon_central')) selectRegion('amazon_central');
+        const regionId = result.data.regioes.find((id) => findRegionOption(id));
+        if (regionId) selectRegion(regionId);
         return;
       }
     } catch {
@@ -303,21 +310,39 @@ export const HomePage: React.FC = () => {
           </section>
 
           <section id="map" className="map-panel" aria-label="Área do mapa">
-            <h2 className="map-heading"><Map size={17} aria-hidden="true" /> Mapa da região</h2>
+            <div className="map-view-header">
+              <h2 className="map-heading"><Map size={17} aria-hidden="true" />Explorar a Terra</h2>
+              <div className="map-view-toggle" role="group" aria-label="Modo de visualização geográfica">
+                <button type="button" className="btn btn-secondary btn-sm" aria-pressed={mapViewMode === '2d'} onClick={() => setMapViewMode('2d')}>Mapa 2D</button>
+                <button type="button" className="btn btn-secondary btn-sm" aria-pressed={mapViewMode === '3d'} onClick={() => setMapViewMode('3d')}>Globo 3D</button>
+              </div>
+            </div>
             {dataset ? (
-              <MapView
-                boundingBox={dataset.bounding_box}
-                regionName={dataset.region_name}
-                isPlaceholder={dataset.is_placeholder}
-                regionId={selectedRegionId}
-                apiGeometry={apiGeometry}
-                geoApiStatus={geoApiState}
-                spatialDatasetPath={findRegionOption(selectedRegionId)?.series.find((series) => series.id === selectedSeriesId)?.filePath ?? ''}
-                selectedTimestamp={currentObservation?.timestamp_utc ?? null}
-                selectedAvailability={currentObservation?.availability ?? null}
-                onMapPoint={handleMapPoint}
-                onRegionSelect={selectRegion}
-              />
+              <>
+                <MapView
+                  boundingBox={dataset.bounding_box}
+                  regionName={dataset.region_name}
+                  isPlaceholder={dataset.is_placeholder}
+                  regionId={selectedRegionId}
+                  apiGeometry={apiGeometry}
+                  geoApiStatus={geoApiState}
+                  spatialDatasetPath={findRegionOption(selectedRegionId)?.series.find((series) => series.id === selectedSeriesId)?.filePath ?? ''}
+                  selectedTimestamp={currentObservation?.timestamp_utc ?? null}
+                  selectedAvailability={currentObservation?.availability ?? null}
+                  onMapPoint={handleMapPoint}
+                  onRegionSelect={selectRegion}
+                  isVisible={mapViewMode === '2d'}
+                />
+                {mapViewMode === '3d' && (
+                  <Suspense fallback={<div className="globe-fallback" role="status">Carregando o globo 3D…</div>}>
+                    <GlobeView
+                      selectedRegionId={selectedRegionId}
+                      onRegionSelect={selectRegion}
+                      onReturnToMap={() => setMapViewMode('2d')}
+                    />
+                  </Suspense>
+                )}
+              </>
             ) : (
               <div className="map-loading-state" role={errorMessage ? 'alert' : 'status'}>
                 {errorMessage ? <AlertTriangle aria-hidden="true" /> : <Map aria-hidden="true" />}

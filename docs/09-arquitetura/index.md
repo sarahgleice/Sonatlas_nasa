@@ -24,7 +24,7 @@ flowchart TD
         
         STATE --> AUDIO["frontend/src/audio/<br/>AudioEngine.ts & sonificationMapping.ts<br/>(Síntese Web Audio API)"]
         STATE --> ACC["frontend/src/accessibility/<br/>AriaLiveAnnouncer.tsx"]
-        STATE --> MAP["frontend/src/maps/<br/>MapView.tsx (Leaflet 2D)"]
+        STATE --> MAP["frontend/src/maps/<br/>MapView.tsx (Leaflet 2D) ou GlobeView.tsx (3D opcional)"]
         STATE --> UI["frontend/src/components/<br/>(AudioPlayer, Timeline, Summary, Legend)"]
     end
 ```
@@ -39,6 +39,7 @@ flowchart TD
 | **Framework Web** | React 18+ com Vite | Criação de componentes modulares de alta performance com *Hot Module Replacement* (HMR) instantâneo. |
 | **Motor de Áudio** | Web Audio API (Nativo) | Síntese de áudio paramétrica em tempo real no cliente, sem latência de streaming e sem bibliotecas pesadas. |
 | **Visualização 2D** | Leaflet 1.9+ & GeoJSON | Biblioteca cartográfica leve, eficiente e compatível com camadas vetoriais de contorno territorial. |
+| **Visualização 3D opcional** | react-globe.gl & GeoJSON local | Renderização WebGL sob demanda; preserva Leaflet como alternativa e usa os mesmos IDs de região mantidos pela `HomePage`. |
 | **Linguagem Científica** | Python 3.10+ | Ecossistema maduro para manipulação de matrizes geoespaciais e grânulos de satélite. |
 | **Tratamento de Matrizes** | NumPy & Pandas | Vetorização de operações de ponderação cosseno e filtros booleanos de células com chuva. |
 | **Validação e Contrato** | Pydantic / Schema Custom | Garantia de que nenhum dado fora dos limites físicos seja exportado para o frontend. |
@@ -59,7 +60,7 @@ sonatlas/
 │   │   ├── accessibility/        # Provedores de leitor de tela (AriaLive) e modais de atalhos
 │   │   ├── components/           # Componentes atômicos (Player, Legenda, Seletor, Timeline, Sumário)
 │   │   ├── hooks/                # Hooks customizados de ciclo de vida e atalhos de teclado
-│   │   ├── maps/                 # Visualizador cartográfico 2D Leaflet
+│   │   ├── maps/                 # Leaflet 2D, globo 3D opcional e GeoJSON regional
 │   │   ├── pages/                # Páginas principais (HomePage)
 │   │   ├── services/             # Clientes de dados HTTP e validação
 │   │   ├── styles/               # CSS global e variáveis do tema escuro de alto contraste
@@ -113,7 +114,7 @@ sonatlas/
 `frontend/src/types/dataset.ts` é o contrato compartilhado para a integração:
 
 - **Ciência / dados:** publica `RegionDataset` em JSON em `frontend/public/data/`. `region_id`, `observations`, `timestamp_utc`, `availability` e `scientific_indicators` mantêm o formato definido pelas interfaces existentes. Marque `is_sample: true` para amostras; a interface as identifica como demonstrativas.
-- **Mapa:** recebe `boundingBox`, `regionName` e `isPlaceholder` em `MapView`; a página apenas encaminha a região e seus limites.
+- **Mapa/globo:** Leaflet recebe `boundingBox`, `regionName` e `isPlaceholder`; `GlobeView` consome os GeoJSON das áreas de estudo existentes. A `HomePage` mantém a seleção regional compartilhada, e trocar a visualização não muda o período nem recarrega dados.
 - **Sonificação e player:** `TemporalObservation` é a unidade temporal compartilhada. O player recebe os passos e o índice selecionado; o motor de áudio permanece no módulo `audio/`.
 - **Composição:** `HomePage` seleciona uma região, carrega seu dataset e encaminha a mesma observação ativa ao resumo e aos controles temporais.
 

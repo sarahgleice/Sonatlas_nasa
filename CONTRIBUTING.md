@@ -59,7 +59,7 @@ Utilizamos a convenção **Conventional Commits**:
 1. **Integridade de Dados:** É expressamente proibido inventar valores científicos ou usar geradores randômicos não identificados. Dados de teste devem estar rotulados como `is_sample: true` ou `status: "sample_placeholder"`.
 2. **Tratamento de Dados Ausentes:** Células sem medição ou com flags de erro NÃO podem ser convertidas em zero mm/h. Elas devem ser computadas no indicador de disponibilidade e tratadas como `null`/`NaN`.
 3. **Diferenciação de Unidades:** Não misture taxa de precipitação (`mm/h`) com precipitação acumulada (`mm`). Toda visualização e áudio devem declarar explicitamente a unidade.
-4. **Limites de Escopo do MVP:** Não incluir autenticação, bancos de dados SQL/NoSQL, IA generativa, globos 3D ou sonificação polifônica orquestral excessiva.
+4. **Limites de Escopo do MVP:** Não incluir autenticação, bancos de dados SQL/NoSQL, IA generativa ou sonificação polifônica orquestral excessiva. O globo 3D é uma visualização opcional, sem substituir o mapa Leaflet nem a alternativa 2D.
 
 ---
 

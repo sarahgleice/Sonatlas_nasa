@@ -15,13 +15,12 @@ export const RegionSelector: React.FC<RegionSelectorProps> = ({
   selectedSeriesId = 'morning',
   onSelectSeries
 }) => {
-  const selectableRegions = AVAILABLE_REGIONS.filter((region) => region.id === 'amazon_central');
+  const selectableRegions = AVAILABLE_REGIONS;
   const currentRegion = selectableRegions.find((region) => region.id === selectedRegionId) ?? selectableRegions[0];
   const availableSeries = currentRegion.series;
   const currentSeries = availableSeries.find((s) => s.id === selectedSeriesId) ?? availableSeries[0];
 
   const handleRegionChange = (newRegionId: string) => {
-    if (newRegionId !== 'amazon_central') return;
     onSelectRegion(newRegionId);
     if (onSelectSeries) {
       const nextRegion = findRegionOption(newRegionId);
@@ -57,13 +56,18 @@ export const RegionSelector: React.FC<RegionSelectorProps> = ({
         >
           {selectableRegions.map((region) => (
             <option key={region.id} value={region.id}>
-              {region.name} ({region.country})
+              {region.name} ({region.country}){region.status === 'candidate' ? ' — candidata' : ''}
             </option>
           ))}
         </select>
         <p id="region-helper-text" className="form-helper">
           {currentRegion.description ?? 'Recorte espacial homologado com 750 células regulares (0,1°).'}
         </p>
+        {currentRegion.status === 'candidate' && (
+          <p className="region-candidate-note" role="note">
+            Região candidata sob validação. Os dados cobrem uma janela de Kisangani, não toda a bacia.
+          </p>
+        )}
       </div>
 
       <div className="form-group" style={{ marginTop: '0.75rem' }}>
