@@ -15,6 +15,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple, Union
+from urllib.parse import urlparse
 import h5py
 import numpy as np
 import requests
@@ -26,6 +27,11 @@ import requests
 
 class NASADataIngestionError(Exception):
     """Exceção base para falhas de ingestão ou validação de dados NASA."""
+    pass
+
+
+class NASASecurityError(NASADataIngestionError, ValueError):
+    """Violação de segurança na URL, host, redirecionamento ou nome de grânulo da NASA."""
     pass
 
 
@@ -52,6 +58,122 @@ class NASAServerError(NASADataIngestionError):
 class HDF5IntegrityError(NASADataIngestionError, ValueError):
     """Arquivo HDF5 corrompido, truncado ou cientificamente inconsistente."""
     pass
+
+
+# ==============================================================================
+# SEGURANÇA: VALIDAÇÃO DE URLS, HOSTS E NOMES DE ARQUIVO (HARDENING)
+# ==============================================================================
+
+# Domínios e subdomínios oficiais da NASA autorizados para GES DISC e Earthdata Login (URS)
+ALLOWED_NASA_HOST_PATTERN = re.compile(
+    r"^(?:[a-zA-Z0-9-]+\.)*(?:gesdisc\.eosdis\.nasa\.gov|earthdata\.nasa\.gov)$",
+    re.IGNORECASE
+)
+
+# Nomenclatura oficial de grânulos NASA GPM IMERG (Early / Late / Final)
+# Exemplo: 3B-HHR-E.MS.MRG.3IMERG.20240101-S000000-E002959.0000.V07B.HDF5
+IMERG_FILENAME_PATTERN = re.compile(
+    r"^3B-HHR(?:-[A-Z]+)?\.MS\.MRG\.3IMERG\.\d{8}-S\d{6}-E\d{6}\.\d{4}\.V\d{2}[A-Z]\.(?:HDF5|hdf5)$"
+)
+
+
+def validate_nasa_url(url: str) -> None:
+    """
+    Valida rigorosamente uma URL de download ou autenticação NASA:
+    - Exige protocolo HTTPS.
+    - Rejeita credenciais de usuário/senha embutidas na URL.
+    - Restringe portas exclusivamente a 443 (padrão HTTPS) ou omitida.
+    - Restringe hostnames estritamente a *.gesdisc.eosdis.nasa.gov ou *.earthdata.nasa.gov.
+    """
+    if not isinstance(url, str) or not url.strip():
+        raise NASASecurityError("URL de download inválida: valor vazio ou não textual.")
+
+    clean_url = url.strip()
+    parsed = urlparse(clean_url)
+
+    if parsed.scheme.lower() != "https":
+        raise NASASecurityError(
+            f"Protocolo inseguro '{parsed.scheme}://'. Apenas 'https://' é permitido para dados NASA."
+        )
+
+    if parsed.username is not None or parsed.password is not None:
+        raise NASASecurityError(
+            "URL rejeitada por conter credenciais de autenticação embutidas no endereço."
+        )
+
+    if parsed.port not in (None, 443):
+        raise NASASecurityError(
+            f"Porta não padrão '{parsed.port}' rejeitada. Apenas a porta HTTPS padrão (443) é permitida."
+        )
+
+    hostname = parsed.hostname
+    if not hostname or not ALLOWED_NASA_HOST_PATTERN.match(hostname):
+        raise NASASecurityError(
+            f"Host '{hostname}' não autorizado. O download e autenticação são restritos a domínios oficiais da NASA: "
+            f"*.gesdisc.eosdis.nasa.gov e *.earthdata.nasa.gov."
+        )
+
+
+def validate_granule_filename(filename: str, base_dir: Path) -> Path:
+    """
+    Valida o nome de arquivo do grânulo contra path traversal e padrão oficial IMERG:
+    - Rejeita bytes nulos (NUL), caminhos absolutos e separadores de diretório ('/' ou '\\').
+    - Valida contra a regex oficial de nomenclatura da missão NASA GPM IMERG V07B.
+    - Garante matematicamente que o caminho resolvido permanece confinado dentro de base_dir.
+    """
+    if not isinstance(filename, str) or not filename.strip():
+        raise NASASecurityError("Nome de grânulo inválido: valor vazio ou não textual.")
+
+    clean_name = filename.strip()
+
+    if "\0" in clean_name:
+        raise NASASecurityError("Tentativa de injeção de byte NUL detectada no nome do arquivo.")
+
+    if "/" in clean_name or "\\" in clean_name:
+        raise NASASecurityError(
+            f"Tentativa de path traversal detectada: o nome do arquivo contém separadores de diretório: '{clean_name}'"
+        )
+
+    path_obj = Path(clean_name)
+    if path_obj.is_absolute() or path_obj.name != clean_name or clean_name in (".", ".."):
+        raise NASASecurityError(
+            f"Tentativa de path traversal detectada: nome de arquivo não é relativo puro: '{clean_name}'"
+        )
+
+    if not IMERG_FILENAME_PATTERN.match(clean_name):
+        raise NASASecurityError(
+            f"Nome de arquivo '{clean_name}' não atende ao padrão oficial de grânulos NASA GPM IMERG "
+            f"(esperado: '3B-HHR-E.MS.MRG.3IMERG.YYYYMMDD-SHHMMSS-EHHMMSS.MMMM.V07B.HDF5')."
+        )
+
+    resolved_base = base_dir.resolve()
+    target_path = (base_dir / clean_name).resolve()
+
+    try:
+        target_path.relative_to(resolved_base)
+    except ValueError:
+        raise NASASecurityError(
+            f"Tentativa de path traversal detectada: caminho resolvido '{target_path}' "
+            f"escapa do diretório base '{resolved_base}'."
+        )
+
+    return base_dir / clean_name
+
+
+class SafeNASASession(requests.Session):
+    """
+    Sessão HTTP com validação rigorosa de hosts autorizados da NASA e proteção
+    contra redirecionamento indevido e vazamento de credenciais Earthdata.
+    """
+
+    def send(self, request, **kwargs):
+        validate_nasa_url(request.url)
+        return super().send(request, **kwargs)
+
+    def rebuild_auth(self, prepared_request, response):
+        # Valida URL de redirecionamento antes de enviar credenciais de autenticação
+        validate_nasa_url(prepared_request.url)
+        super().rebuild_auth(prepared_request, response)
 
 
 # ==============================================================================
@@ -362,10 +484,14 @@ class NASAGranuleDownloader:
     def get_cached_file(self, filename: str) -> Optional[Path]:
         """
         Retorna o caminho do arquivo no cache se ele existir e for íntegro.
+        Valida contra path traversal antes de inspecionar.
         """
-        target = self.raw_data_dir / filename
+        try:
+            target = validate_granule_filename(filename, self.raw_data_dir)
+        except NASASecurityError:
+            return None
         if target.exists():
-            is_valid, _ = HDF5IntegrityChecker.verify(target, expected_filename=filename)
+            is_valid, _ = HDF5IntegrityChecker.verify(target, expected_filename=target.name)
             if is_valid:
                 return target
         return None
@@ -378,19 +504,25 @@ class NASAGranuleDownloader:
     ) -> Path:
         """
         Baixa o grânulo se não estiver no cache ou se force_download=True.
-        Garante atomicidade através de arquivo temporário .part e limpeza estrita em falha.
+        Garante segurança contra path traversal, validação de URL/redirects NASA,
+        e atomicidade estrita através de arquivo temporário .part e os.replace().
         """
-        filename = granule_meta["filename"]
-        url = granule_meta["download_url"]
-        target_path = self.raw_data_dir / filename
+        raw_filename = granule_meta.get("filename", "")
+        raw_url = granule_meta.get("download_url", "")
 
-        # 1. Checagem de cache prévio
+        # 1. Validações estritas de segurança (URL NASA autorizada e Path Traversal)
+        validate_nasa_url(raw_url)
+        target_path = validate_granule_filename(raw_filename, self.raw_data_dir)
+        filename = target_path.name
+        url = raw_url.strip()
+
+        # 2. Checagem de cache prévio
         if not force_download:
             cached = self.get_cached_file(filename)
             if cached:
                 return cached
 
-        # 2. Checagem de autenticação
+        # 3. Checagem de autenticação
         auth = self.get_auth_credentials()
         if not auth:
             raise NASAAuthenticationError(
@@ -398,8 +530,8 @@ class NASAGranuleDownloader:
                 f"(configure variáveis de ambiente EARTHDATA_USERNAME/EARTHDATA_PASSWORD ou arquivo ~/_netrc)."
             )
 
-        # 3. Download com sessão e streaming
-        session = requests.Session()
+        # 4. Download com SafeNASASession (com validação estrita de redirects) e streaming
+        session = SafeNASASession()
         session.auth = auth
 
         temp_part = self.raw_data_dir / f"{filename}.part"
@@ -468,14 +600,12 @@ class NASAGranuleDownloader:
                         temp_part.unlink()
                     raise HDF5IntegrityError(f"Arquivo baixado falhou na validação de integridade HDF5: {error_msg}")
 
-                # Renomeia atomicamente para o arquivo definitivo
-                if target_path.exists():
-                    target_path.unlink()
-                temp_part.rename(target_path)
+                # Substituição atômica no mesmo sistema de arquivos via os.replace
+                os.replace(temp_part, target_path)
                 return target_path
 
-            except (NASAAuthenticationError, NASAGranuleNotFoundError):
-                # Erros fatais não devem sofrer retentativa inútil
+            except (NASAAuthenticationError, NASAGranuleNotFoundError, NASASecurityError):
+                # Erros fatais e violações de segurança não sofrem retentativa inútil
                 if temp_part.exists():
                     temp_part.unlink()
                 raise

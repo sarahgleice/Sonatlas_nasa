@@ -8,11 +8,15 @@ from .nasa_data_ingestion import (
     HDF5IntegrityChecker,
     NASAGranuleDownloader,
     NASADataIngestionError,
+    NASASecurityError,
     NASAAuthenticationError,
     NASAGranuleNotFoundError,
     NASAConnectionError,
     NASAServerError,
-    HDF5IntegrityError
+    HDF5IntegrityError,
+    validate_nasa_url,
+    validate_granule_filename,
+    SafeNASASession
 )
 
 __all__ = [
@@ -21,9 +25,13 @@ __all__ = [
     "HDF5IntegrityChecker",
     "NASAGranuleDownloader",
     "NASADataIngestionError",
+    "NASASecurityError",
     "NASAAuthenticationError",
     "NASAGranuleNotFoundError",
     "NASAConnectionError",
     "NASAServerError",
-    "HDF5IntegrityError"
+    "HDF5IntegrityError",
+    "validate_nasa_url",
+    "validate_granule_filename",
+    "SafeNASASession"
 ]

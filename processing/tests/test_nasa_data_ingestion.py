@@ -14,14 +14,20 @@ Testa:
 
 from datetime import datetime, timedelta
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 import pytest
+import requests
 import numpy as np
 from shapely.geometry import box
 
 from extraction.nasa_data_ingestion import (
     IMERGTimeResolver,
     HDF5IntegrityChecker,
-    NASAGranuleDownloader
+    NASAGranuleDownloader,
+    NASASecurityError,
+    validate_nasa_url,
+    validate_granule_filename,
+    SafeNASASession
 )
 from pipeline.universal_pipeline import UniversalProcessingPipeline
 from validation.data_validator import DataValidator
@@ -193,3 +199,201 @@ def test_universal_pipeline_automatic_interval_execution():
     # Verifica primeiro e último timestamp
     assert dataset["observations"][0]["timestamp_utc"] == "2024-01-01T17:00:00Z"
     assert dataset["observations"][5]["timestamp_utc"] == "2024-01-01T19:30:00Z"
+
+
+# ==============================================================================
+# TESTES DE SEGURANÇA E HARDENING (FASE 4.2)
+# ==============================================================================
+
+def test_security_authorized_https_url():
+    """1. URL HTTPS NASA autorizada deve passar na validação."""
+    valid_urls = [
+        "https://gpm1.gesdisc.eosdis.nasa.gov/data/GPM_L3/GPM_3IMERGHHE.07/2024/001/3B-HHR-E.MS.MRG.3IMERG.20240101-S000000-E002959.0000.V07B.HDF5",
+        "https://gpm2.gesdisc.eosdis.nasa.gov/data/GPM_L3/file.HDF5",
+        "https://disc.gsfc.nasa.gov/data/file.HDF5",
+        "https://urs.earthdata.nasa.gov/oauth/authorize?client_id=xyz",
+        "https://data.gesdisc.earthdata.nasa.gov/archive/file.HDF5"
+    ]
+    for u in valid_urls:
+        validate_nasa_url(u)  # Não deve levantar exceção
+
+
+def test_security_http_url_rejected():
+    """2. URL HTTP não criptografada deve ser estritamente rejeitada."""
+    insecure_url = "http://gpm1.gesdisc.eosdis.nasa.gov/data/file.HDF5"
+    with pytest.raises(NASASecurityError, match="Protocolo inseguro"):
+        validate_nasa_url(insecure_url)
+
+
+def test_security_external_host_rejected():
+    """3. Host externo deve ser estritamente rejeitado."""
+    external_urls = [
+        "https://attacker.com/fake.HDF5",
+        "https://evil-server.org/data",
+        "https://192.168.1.100/data.HDF5"
+    ]
+    for u in external_urls:
+        with pytest.raises(NASASecurityError, match="não autorizado"):
+            validate_nasa_url(u)
+
+
+def test_security_spoofed_nasa_host_rejected():
+    """4. Host parecido com NASA mas não autorizado deve ser rejeitado."""
+    spoofed_urls = [
+        "https://evil-gesdisc.eosdis.nasa.gov/data",
+        "https://gesdisc.eosdis.nasa.gov.evil.com/data",
+        "https://earthdata.nasa.gov.attacker.com/data",
+        "https://fake-earthdata.nasa.gov/oauth"
+    ]
+    for u in spoofed_urls:
+        with pytest.raises(NASASecurityError, match="não autorizado"):
+            validate_nasa_url(u)
+
+
+def test_security_embedded_credentials_rejected():
+    """5. URL com usuário e senha embutidos deve ser rejeitada."""
+    embedded_creds = "https://user:secret@gpm1.gesdisc.eosdis.nasa.gov/data.HDF5"
+    with pytest.raises(NASASecurityError, match="credenciais de autenticação embutidas"):
+        validate_nasa_url(embedded_creds)
+
+
+def test_security_unauthorized_redirect_blocked():
+    """6. Redirecionamento HTTP para host não autorizado deve ser bloqueado."""
+    session = SafeNASASession()
+    fake_req = requests.Request("GET", "https://attacker.com/steal").prepare()
+    fake_resp = requests.Response()
+    fake_resp.status_code = 302
+    fake_resp.headers["Location"] = "https://attacker.com/steal"
+
+    with pytest.raises(NASASecurityError, match="não autorizado"):
+        session.rebuild_auth(fake_req, fake_resp)
+
+
+def test_security_legitimate_earthdata_redirect_allowed():
+    """7. Redirecionamento legítimo necessário ao Earthdata deve funcionar."""
+    session = SafeNASASession()
+    fake_req = requests.Request("GET", "https://urs.earthdata.nasa.gov/oauth/authorize?app=gesdisc").prepare()
+    fake_resp = requests.Response()
+    fake_resp.status_code = 302
+    fake_resp.headers["Location"] = "https://urs.earthdata.nasa.gov/oauth/authorize?app=gesdisc"
+
+    # Não deve levantar NASASecurityError
+    session.rebuild_auth(fake_req, fake_resp)
+
+
+def test_security_path_traversal_blocked(tmp_path):
+    """8. Tentativa de path traversal em filename deve ser bloqueada."""
+    traversal_names = [
+        "../../etc/passwd",
+        "..\\..\\Windows\\System32\\calc.exe",
+        "/absolute/path/3B-HHR-E.MS.MRG.3IMERG.20240101-S000000-E002959.0000.V07B.HDF5",
+        "subfolder/3B-HHR-E.MS.MRG.3IMERG.20240101-S000000-E002959.0000.V07B.HDF5",
+        "3B-HHR-E.MS.MRG.3IMERG.20240101-S000000-E002959.0000.V07B.HDF5\0nullbyte"
+    ]
+    for name in traversal_names:
+        with pytest.raises(NASASecurityError, match="path traversal|byte NUL"):
+            validate_granule_filename(name, tmp_path)
+
+
+def test_security_valid_imerg_filename_accepted(tmp_path):
+    """9. Nome de grânulo IMERG oficial válido deve ser aceito."""
+    valid_name = "3B-HHR-E.MS.MRG.3IMERG.20240101-S000000-E002959.0000.V07B.HDF5"
+    resolved = validate_granule_filename(valid_name, tmp_path)
+    assert resolved == tmp_path / valid_name
+    assert resolved.name == valid_name
+
+
+def test_security_invalid_filename_format_rejected(tmp_path):
+    """10. Extensão ou formato inválido deve ser rejeitado."""
+    invalid_names = [
+        "malicious_script.sh",
+        "not_an_imerg_granule.HDF5",
+        "3B-HHR-E.MS.MRG.3IMERG.invalid_format.txt"
+    ]
+    for name in invalid_names:
+        with pytest.raises(NASASecurityError, match="não atende ao padrão oficial"):
+            validate_granule_filename(name, tmp_path)
+
+
+def test_security_atomic_replace_success(tmp_path):
+    """11. Substituição do arquivo existente realizada corretamente e atomicamente."""
+    from tests.test_nasa_ingestion_stress import create_synthetic_imerg_hdf5
+
+    fname = "3B-HHR-E.MS.MRG.3IMERG.20240101-S000000-E002959.0000.V07B.HDF5"
+    downloader = NASAGranuleDownloader(raw_data_dir=tmp_path, username="user", password="pwd")
+    target_file = tmp_path / fname
+
+    # Cria arquivo pré-existente
+    create_synthetic_imerg_hdf5(target_file, fill_value=-9999.0)
+
+    meta = {
+        "filename": fname,
+        "download_url": f"https://gpm1.gesdisc.eosdis.nasa.gov/data/{fname}"
+    }
+
+    # Mock de download gerando novo arquivo sintético íntegro no .part
+    def mock_stream(*args, **kwargs):
+        part_path = tmp_path / f"{fname}.part"
+        create_synthetic_imerg_hdf5(part_path, fill_value=-9999.9)
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.iter_content = MagicMock(return_value=[b""])
+        resp.__enter__ = MagicMock(return_value=resp)
+        resp.__exit__ = MagicMock(return_value=None)
+        return resp
+
+    head_mock = MagicMock()
+    head_mock.status_code = 200
+
+    with patch.object(SafeNASASession, "head", return_value=head_mock), \
+         patch.object(SafeNASASession, "get", side_effect=mock_stream):
+        result_path = downloader.download_granule(meta, force_download=True)
+
+    assert result_path.exists()
+    assert not (tmp_path / f"{fname}.part").exists()
+    is_valid, _ = HDF5IntegrityChecker.verify(result_path)
+    assert is_valid is True
+
+
+def test_security_download_failure_preserves_original(tmp_path):
+    """12. Falha durante o download preserva integralmente o arquivo original e descarta .part."""
+    from tests.test_nasa_ingestion_stress import create_synthetic_imerg_hdf5
+    from extraction.nasa_data_ingestion import HDF5IntegrityError
+
+    fname = "3B-HHR-E.MS.MRG.3IMERG.20240101-S000000-E002959.0000.V07B.HDF5"
+    downloader = NASAGranuleDownloader(raw_data_dir=tmp_path, username="user", password="pwd")
+    target_file = tmp_path / fname
+
+    # Cria arquivo original saudável
+    create_synthetic_imerg_hdf5(target_file, fill_value=-9999.0)
+    original_size = target_file.stat().st_size
+
+    meta = {
+        "filename": fname,
+        "download_url": f"https://gpm1.gesdisc.eosdis.nasa.gov/data/{fname}"
+    }
+
+    # Simula download que corrompe o arquivo temporário
+    def mock_stream_corrupt(*args, **kwargs):
+        part_path = tmp_path / f"{fname}.part"
+        part_path.write_bytes(b"CORRUPTED_STREAM_DATA")
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.iter_content = MagicMock(return_value=[b""])
+        resp.__enter__ = MagicMock(return_value=resp)
+        resp.__exit__ = MagicMock(return_value=None)
+        return resp
+
+    head_mock = MagicMock()
+    head_mock.status_code = 200
+
+    with patch.object(SafeNASASession, "head", return_value=head_mock), \
+         patch.object(SafeNASASession, "get", side_effect=mock_stream_corrupt):
+        with pytest.raises(HDF5IntegrityError):
+            downloader.download_granule(meta, force_download=True, max_retries=1)
+
+    # O arquivo original DEVE permanecer intacto com o mesmo tamanho
+    assert target_file.exists()
+    assert target_file.stat().st_size == original_size
+    # O arquivo temporário .part DEVE ter sido removido
+    assert not (tmp_path / f"{fname}.part").exists()
