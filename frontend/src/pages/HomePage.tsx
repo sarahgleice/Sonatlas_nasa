@@ -24,6 +24,7 @@ import { VariableSelector } from '../components/VariableSelector';
 import { AudioPlayer } from '../components/AudioPlayer';
 import { Timeline } from '../components/Timeline';
 import { ScientificSummary } from '../components/ScientificSummary';
+import { VisualFrameViewer } from '../components/VisualFrameViewer';
 import { PrecipitationChart } from '../components/PrecipitationChart';
 import { SoundLegend, SonificationGuide } from '../components/SoundLegend';
 import { MapView } from '../maps/MapView';
@@ -409,6 +410,7 @@ export const HomePage: React.FC = () => {
                         ? 'Dados ausentes neste período'
                         : `${currentObservation.availability.status === 'partial' ? 'Disponibilidade parcial' : 'Dados disponíveis'} · ${Math.round(currentObservation.availability.valid_cells_ratio * 100)}% de células válidas`}
                     </p>
+                    <VisualFrameViewer observation={currentObservation} />
                     <ScientificSummary observation={currentObservation} regionName={dataset.region_name} previousObservation={comparisonObservation} index={currentIndex} total={observations.length} />
                     {voiceNarrationActive && (
                       <button
