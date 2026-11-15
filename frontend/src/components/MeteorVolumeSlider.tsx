@@ -12,8 +12,7 @@ export interface MeteorVolumeSliderProps {
 }
 
 const STEP_PERCENT = 5;
-const ARROW_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
-
+const ARROW_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'];
 export const MeteorVolumeSlider: React.FC<MeteorVolumeSliderProps> = ({
   value,
   onChange,

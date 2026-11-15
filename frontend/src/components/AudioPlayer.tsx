@@ -17,6 +17,7 @@ import { TemporalObservation } from '../types/dataset';
 import { PLAYBACK_SPEEDS, PlaybackSpeed } from '../types/player';
 import { formatPrecipitationRate, getObservationDataState } from '../utils/formatters';
 import { WaveformVisualizer } from './WaveformVisualizer';
+import { MeteorVolumeSlider } from './MeteorVolumeSlider';
 
 interface AudioPlayerProps {
   isPlaying: boolean;
@@ -36,6 +37,8 @@ interface AudioPlayerProps {
   onToggleLoop?: () => void;
   onRestart?: () => void;
   onSpeedChange?: (speed: PlaybackSpeed) => void;
+  volume?: number;
+  onVolumeChange?: (volume: number) => void;
   disabled?: boolean;
   analyser: AnalyserNode | null;
   audioError: string | null;
@@ -72,6 +75,8 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   onToggleLoop,
   onRestart,
   onSpeedChange,
+  volume = 0.5,
+  onVolumeChange,
   disabled = false,
   analyser,
   audioError
@@ -155,6 +160,17 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
           {isMuted ? <VolumeX size={22} aria-hidden="true" /> : <Volume2 size={22} aria-hidden="true" />}
         </button>
       </div>
+
+            {onVolumeChange && (
+        <div className="player-volume">
+          <MeteorVolumeSlider
+            value={volume}
+            onChange={onVolumeChange}
+            muted={isMuted}
+            disabled={disabled}
+          />
+        </div>
+      )}
 
       <div className="player-options">
         {onRestart && (

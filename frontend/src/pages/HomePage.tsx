@@ -247,7 +247,10 @@ export const HomePage: React.FC = () => {
     firstStep,
     lastStep,
     toggleLoop,
-    toggleMute
+    toggleMute,
+    volume,
+    isVolumeSupported,
+    setVolume
   } = useAudioPlayer({
     observations,
     stepDurationMs: 1500,
@@ -338,7 +341,7 @@ export const HomePage: React.FC = () => {
               onSpeedChange={setSpeed} onTogglePlay={togglePlay} onPreview={() => previewStep(currentIndex)}
               onNextStep={nextStep} onPrevStep={prevStep} onToggleMute={toggleMute} analyser={analyser}
               audioError={audioError} disabled={observations.length === 0}
-            />
+              volume={volume} onVolumeChange={isVolumeSupported ? setVolume : undefined}            />
             <SonificationGuide />
             <div className="sonatlas-objective-audio">
               <button

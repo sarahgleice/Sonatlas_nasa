@@ -202,3 +202,9 @@
   outline: 3px solid var(--meteor-focus);
   outline-offset: 3px;
 }
+
+.player-volume {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0;
+}

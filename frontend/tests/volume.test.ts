@@ -3,6 +3,7 @@ import {
   DEFAULT_VOLUME_LEVEL,
   MAX_GAIN,
   clampLevel,
+  gainToLevel,
   levelToGain,
   levelToPercent,
 } from '../src/utils/volume';
@@ -30,5 +31,11 @@ describe('volume', () => {
   it('converte nível em porcentagem inteira', () => {
     expect(levelToPercent(0.5)).toBe(50);
     expect(levelToPercent(0.333)).toBe(33);
+  });
+
+  it('gainToLevel é o inverso de levelToGain', () => {
+    expect(gainToLevel(0.3)).toBeCloseTo(0.5);
+    expect(gainToLevel(levelToGain(0.8))).toBeCloseTo(0.8);
+    expect(gainToLevel(5)).toBe(1);
   });
 });

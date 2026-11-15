@@ -18,6 +18,11 @@ export function levelToGain(level: number): number {
   return clampLevel(level) * MAX_GAIN;
 }
 
+/** Inverso de levelToGain: converte o ganho atual do motor em nível do slider. */
+export function gainToLevel(gain: number): number {
+  return clampLevel(gain / MAX_GAIN);
+}
+
 export function levelToPercent(level: number): number {
   return Math.round(clampLevel(level) * 100);
 }

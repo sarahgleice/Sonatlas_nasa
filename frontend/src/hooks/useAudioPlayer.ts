@@ -3,6 +3,8 @@ import { TemporalObservation } from '../types/dataset';
 import { PlaybackSpeed, StepChangeSource } from '../types/player';
 import { globalAudioEngine } from '../audio/AudioEngine';
 import { createObservationSonificationParams } from '../audio/sonificationMapping';
+import { applyVolumeLevel, isVolumeCapable, readVolumeLevel } from '../audio/volumeControl';
+import { clampLevel } from '../utils/volume';
 
 export interface StepTransition {
   index: number;
@@ -82,6 +84,8 @@ export function useAudioPlayer({
   const [isPreviewing, setIsPreviewing] = useState<boolean>(false);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isMuted, setIsMuted] = useState<boolean>(() => globalAudioEngine.getIsMuted());
+    const isVolumeSupported = isVolumeCapable(globalAudioEngine);
+  const [volume, setVolumeState] = useState<number>(() => readVolumeLevel(globalAudioEngine));
   const [speed, setSpeedState] = useState<PlaybackSpeed>(1);
   const [isLooping, setIsLooping] = useState<boolean>(false);
   const [audioError, setAudioError] = useState<string | null>(null);
@@ -351,6 +355,18 @@ export function useAudioPlayer({
     setIsMuted(isMutedRef.current);
   }, []);
 
+    const setVolume = useCallback((level: number) => {
+    const next = clampLevel(level);
+    if (!applyVolumeLevel(globalAudioEngine, next)) return;
+    setVolumeState(next);
+    // Com o som mudo o motor só guarda o valor; desfazer o mudo aplica o volume escolhido.
+    if (isMutedRef.current && next > 0) {
+      isMutedRef.current = false;
+      globalAudioEngine.setMuted(false);
+      setIsMuted(false);
+    }
+  }, []);
+
   useEffect(() => globalAudioEngine.subscribeError((error) => {
     setAudioError(error);
     if (error) {
@@ -389,6 +405,8 @@ export function useAudioPlayer({
     currentIndex,
     totalSteps,
     isMuted,
+    volume,
+    isVolumeSupported,
     speed,
     isLooping,
     audioError,
@@ -409,6 +427,7 @@ export function useAudioPlayer({
     setSpeed,
     toggleLoop,
     toggleMute,
+    setVolume,
     previewStep
   };
 }
