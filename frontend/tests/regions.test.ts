@@ -18,6 +18,13 @@ describe('regiões de estudo', () => {
     expect(findRegionAtPoint(0.5153, 25.191)?.id).toBe('congo_basin_kisangani');
   });
 
+  it('mantém a janela de Kisangani como candidata sob validação científica', () => {
+    const congo = getRegionById('congo_basin_kisangani');
+    expect(congo?.status).toBe('proposed_pending_validation');
+    expect(congo?.description).toContain('sob validação científica');
+    expect(congo?.description).toContain('não representa toda a bacia');
+  });
+
   it('ponto fora das regiões não retorna nada', () => {
     expect(findRegionAtPoint(0, 0)).toBeUndefined();
   });

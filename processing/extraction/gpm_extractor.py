@@ -69,7 +69,9 @@ class GPMExtractor:
             return {
                 "variable_name": f"/Grid/{var_name}",
                 "units": units,
+                "units_attribute_present": "units" in ds.attrs,
                 "fill_value": fill_val,
+                "fill_value_attribute_present": "_FillValue" in ds.attrs,
                 "latitudes": lats,
                 "longitudes": lons,
                 "precipitation_matrix": spatial_matrix

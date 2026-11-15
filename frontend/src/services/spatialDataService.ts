@@ -111,10 +111,10 @@ export class SpatialDataService {
     }
 
     const entry = manifest.timestamps.find((item) => item.timestamp_utc === timestampUtc);
-    if (!entry) throw new Error('A grade espacial não contém o timestamp selecionado.');
+    if (!entry) return null;
     const matrixPath = `${directory}/spatial/${entry.matrix_path}`;
     const matrix = await cached(matrixCache, matrixPath, () => fetchJson(matrixPath));
-    if (matrix === null) return null;
+    if (matrix === null) throw new Error('A matriz espacial referenciada no manifesto não está disponível.');
     if (!isRecord(matrix) || matrix.timestamp_utc !== timestampUtc || !Array.isArray(matrix.values) ||
         matrix.values.length !== manifest.latitude_centers.length ||
         !matrix.values.every((row) => Array.isArray(row) && row.length === manifest.longitude_centers.length &&

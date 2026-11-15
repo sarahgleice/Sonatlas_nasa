@@ -54,6 +54,24 @@ O Congo usa o mesmo formato em `/data/congo/spatial/`. Cada entrada do manifesto
 - Os centros definem o interior das células; as bordas externas são limitadas pela bounding box, e as bordas internas ficam no ponto médio entre centros adjacentes.
 - Não incluir células agregadas nem preencher ausências com zero.
 
+## Geração e validação
+
+Use `processing/scripts/generate_spatial_export.py`. O comando sem argumentos valida as séries e os granules locais sem escrever JSON; `--publish` publica somente depois de validar as duas regiões. Ele combina os timestamps únicos de `amazon/observations.json`, `amazon/observations_afternoon.json` e `amazon/observations_day_windows.json`. A janela vazia entre 02:30 e 17:00 UTC permanece sem grade. O Congo é exportado separadamente em `data/congo/spatial/` com status `candidate_under_review`.
+
+```powershell
+python -m pip install -r processing/requirements.txt
+python processing/scripts/download_sequence.py
+python processing/scripts/download_afternoon_granules.py
+python processing/scripts/generate_spatial_export.py
+python processing/scripts/generate_spatial_export.py --publish
+```
+
+Os scripts de download usam autenticação NASA Earthdata configurada localmente em `_netrc`/`.netrc`; não coloque credenciais no repositório. Os granules IMERG são globais, portanto os seis arquivos da janela vespertina atendem tanto à Amazônia quanto à janela de Kisangani. O exportador confere os timestamps contra os JSONs publicados e interrompe sem publicar se houver arquivo faltante, adicional ou inconsistente. Nenhum desses comandos substitui observações ausentes.
+
+O exportador valida a variável HDF5, atributos `units` e `_FillValue`, dimensões, 750 células, limites derivados dos GeoJSONs, orientação e resolução dos eixos, valores finitos e contagens. Os centros de latitude/longitude são armazenados pelo IMERG em float32; o exportador confere o erro de representação e normaliza somente as coordenadas à grade nominal de 0,01°, sem alterar os valores de precipitação. Recalcula disponibilidade, média com pesos `cos(latitude)` e fração de chuva com o limiar publicado, registrando a divergência sem editar indicadores. Mantém a precisão original da precipitação; zero continua zero e valores inválidos viram `null`. Matrizes novas são gravadas atomicamente antes do manifesto; nomes incluem timestamp e hash do conteúdo. Matrizes antigas não referenciadas podem permanecer como arquivos órfãos e não são carregadas pelo frontend.
+
+Não use `processing/scripts/generate_heatmap.py` para alimentar `SpatialDataService`: esse script exporta o GeoJSON legado com `precip_timeline`. O protótipo local `generate_spatial_grid.py` foi preservado; o gerador documentado para reprodução é `generate_spatial_export.py`.
+
 ## Legenda
 
 A unidade visual é taxa instantânea (`mm/h`). Zero usa cinza claro, valores positivos usam faixas visuais fixas `>0–<0.5`, `0.5–<1`, `1–<2.5`, `2.5–<5` e `≥5 mm/h`, e `null` usa hachura. Essas faixas são apenas quantização da escala cartográfica, não classes científicas. O limiar sonoro de `0.1 mm/h` não é um limite de detecção nem uma fronteira de cor; valores positivos abaixo dele permanecem positivos.
