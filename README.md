@@ -34,6 +34,7 @@ O SONATLAS resolve isso através de **sonificação orientada por dados com rigo
 
 - **Fonte Oficial Primária:** Missão **NASA GPM (Global Precipitation Measurement)** / produto **IMERG Early Run V07B (`GPM_3IMERGHHE`)**, obtido do repositório oficial NASA GES DISC.
 - **Série Temporal da Amazônia Central:** Sequência de 6 observações reais de 30 minutos em 01/01/2024 (00:00 a 02:59 UTC), recortadas para a bounding box $[-4.0^\circ, -1.5^\circ] \times [-61.5^\circ, -58.5^\circ]$ (750 células espaciais de $0.1^\circ \times 0.1^\circ$).
+- **Linha temporal por janelas:** Também reúne os blocos reais de 00:00–02:30 e 17:00–19:30 UTC do mesmo dia, com uma lacuna de 14h30 sem observações; esse intervalo não representa chuva zero nem é interpolado.
 - **Grandezas Físicas Tratadas:**
   - **Taxa média de precipitação (`mm/h`)**: calculada com ponderação pelo cosseno da latitude sobre células válidas, diferenciada de precipitação acumulada (`mm`).
   - **Fração de área com chuva (`fraction` entre 0 e 1)**: proporção da área com taxa $\ge 0.1\text{ mm/h}$ (limiar instrumental do sensor GMI).

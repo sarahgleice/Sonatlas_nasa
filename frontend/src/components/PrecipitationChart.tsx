@@ -42,9 +42,13 @@ export function buildPrecipitationChart(observations: TemporalObservation[]): Ch
 
 export function segmentPrecipitationChart(points: ChartPoint[]): ChartPoint[][] {
   const segments: ChartPoint[][] = [];
+  const intervals = points.slice(1).map((point, index) => Date.parse(point.timestamp) - Date.parse(points[index].timestamp)).filter((interval) => interval > 0);
+  const expectedInterval = intervals.length ? Math.min(...intervals) : 0;
   for (const [index, point] of points.entries()) {
     if (point.value === null) continue;
-    if (!segments.length || points[index - 1]?.value === null) segments.push([]);
+    const previous = points[index - 1];
+    const hasTimeGap = previous && expectedInterval > 0 && Date.parse(point.timestamp) - Date.parse(previous.timestamp) > expectedInterval * 1.5;
+    if (!segments.length || previous?.value === null || hasTimeGap) segments.push([]);
     segments[segments.length - 1].push(point);
   }
   return segments;
@@ -87,6 +91,6 @@ export const PrecipitationChart: React.FC<PrecipitationChartProps> = ({
     </svg>
     <div className="chart-time-range"><time dateTime={plotted[0].timestamp}>{formatChartTick(plotted[0].timestamp)}</time><span aria-hidden="true">·</span><time dateTime={plotted[plotted.length - 1].timestamp}>{formatChartTick(plotted[plotted.length - 1].timestamp)}</time></div>
     <p className="chart-missing-key">× Ausente · fora da escala numérica</p>
-    <p className="sr-only">Cada ponto é focável e anuncia o timestamp UTC ISO completo e o valor em mm/h. Os marcadores de ausência ficam fora da escala e períodos ausentes não são ligados. Início: {plotted[0].timestamp}. Fim: {plotted[plotted.length - 1].timestamp}.</p>
+    <p className="sr-only">Cada ponto é focável e anuncia o timestamp UTC ISO completo e o valor em mm/h. Os marcadores de ausência ficam fora da escala e trechos sem observações não são conectados. Início: {plotted[0].timestamp}. Fim: {plotted[plotted.length - 1].timestamp}.</p>
   </section>;
 };

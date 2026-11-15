@@ -27,9 +27,10 @@ export function useModalDialog(isOpen: boolean, onClose: () => void) {
     onClose();
     const trigger = triggerRef.current;
     triggerRef.current = null;
-    if (trigger && trigger.isConnected) {
-      trigger.focus();
-    }
+    const focusTarget = trigger && trigger !== document.body && trigger.isConnected
+      ? trigger
+      : document.getElementById('main-content');
+    if (focusTarget instanceof HTMLElement) focusTarget.focus();
   }, [onClose]);
 
   const handleBackdropClick = useCallback((event: MouseEvent<HTMLDialogElement>) => {

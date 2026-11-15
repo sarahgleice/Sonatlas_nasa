@@ -11,7 +11,7 @@ export const AVAILABLE_REGIONS: RegionOption[] = [
     series: [
       {
         id: 'morning',
-        name: 'Madrugada (00:00 – 02:30 UTC)',
+        name: 'Madrugada · 00:00–02:30 UTC',
         periodLabel: '01/01/2024 · 00:00 a 02:30 UTC',
         timeRangeUtc: '00:00 – 02:30 UTC',
         localTimeRange: '20:00 – 22:30 (Horário de Manaus, UTC-4)',
@@ -21,13 +21,23 @@ export const AVAILABLE_REGIONS: RegionOption[] = [
       },
       {
         id: 'afternoon',
-        name: 'Tarde (17:00 – 19:30 UTC)',
+        name: 'Tarde · 17:00–19:30 UTC',
         periodLabel: '01/01/2024 · 17:00 a 19:30 UTC',
         timeRangeUtc: '17:00 – 19:30 UTC',
         localTimeRange: '13:00 – 15:30 (Horário de Manaus, UTC-4)',
         filePath: '/data/amazon/observations_afternoon.json',
         description: 'Convecção vespertina tropical ativa: desenvolvimento de chuva cobrindo até 15,1% da área.',
         granulesCount: 6
+      },
+      {
+        id: 'day_windows',
+        name: 'Janelas do dia · 00:00–19:30 UTC',
+        periodLabel: '01/01/2024 · 00:00–02:30 e 17:00–19:30 UTC',
+        timeRangeUtc: '00:00–02:30 + 17:00–19:30 UTC',
+        localTimeRange: '20:00–22:30 + 13:00–15:30 (Manaus, UTC−4)',
+        filePath: '/data/amazon/observations_day_windows.json',
+        description: '12 observações em duas janelas reais, com lacuna sem dados de 14h30 entre 02:30 e 17:00 UTC.',
+        granulesCount: 12
       }
     ]
   },

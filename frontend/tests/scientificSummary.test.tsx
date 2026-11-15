@@ -68,7 +68,7 @@ describe('ScientificSummary', () => {
 
   it('diferença temporal nula após o primeiro passo é "Indisponível", e no primeiro passo é linha de base', () => {
     const afterGap = render({ observation: makeObs(4, 1.2), regionName: 'Amazônia', index: 4, total: 6 });
-    expect(afterGap).toContain('Indisponível (passo anterior ausente)');
+    expect(afterGap).toContain('Indisponível (sem comparação temporal válida)');
 
     const first = render({ observation: makeObs(0, 1.2), regionName: 'Amazônia', index: 0, total: 6 });
     expect(first).toContain('Linha base (primeiro passo)');

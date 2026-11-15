@@ -3,6 +3,7 @@ import { LiveAnnouncement } from '../types/player';
 
 interface AriaLiveAnnouncerProps {
   announcement: LiveAnnouncement | null;
+  disabled?: boolean;
 }
 
 interface ChannelTexts {
@@ -19,11 +20,11 @@ const EMPTY_CHANNELS: ChannelTexts = { polite: '', assertive: '' };
  * Os dois nós permanecem montados; mensagens idênticas consecutivas são reaplicadas
  * (limpa e reescreve) para que o leitor de tela as leia de novo.
  */
-export const AriaLiveAnnouncer: React.FC<AriaLiveAnnouncerProps> = ({ announcement }) => {
+export const AriaLiveAnnouncer: React.FC<AriaLiveAnnouncerProps> = ({ announcement, disabled = false }) => {
   const [texts, setTexts] = useState<ChannelTexts>(EMPTY_CHANNELS);
 
   useEffect(() => {
-    if (!announcement) {
+    if (disabled || !announcement) {
       setTexts(EMPTY_CHANNELS);
       return;
     }
@@ -46,7 +47,7 @@ export const AriaLiveAnnouncer: React.FC<AriaLiveAnnouncerProps> = ({ announceme
 
     const timeout = setTimeout(apply, 0);
     return () => clearTimeout(timeout);
-  }, [announcement]);
+  }, [announcement, disabled]);
 
   return (
     <>
