@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="planet" cx="30%" cy="25%" r="75%">
+      <stop offset="0" stop-color="#75F2FF" />
+      <stop offset="0.62" stop-color="#12B8D4" />
+      <stop offset="1" stop-color="#5945C7" />
+    </radialGradient>
+    <linearGradient id="panel" x2="1" y2="1">
+      <stop stop-color="#B9AEFF" />
+      <stop offset="1" stop-color="#7449DA" />
+    </linearGradient>
+    <clipPath id="globe">
+      <circle cx="27" cy="37" r="19" />
+    </clipPath>
+  </defs>
+
+  <ellipse cx="29" cy="36" rx="27" ry="10" transform="rotate(-28 29 36)" fill="none" stroke="#69E9FF" stroke-width="1.5" opacity=".85" />
+  <circle cx="27" cy="37" r="19" fill="url(#planet)" />
+  <g clip-path="url(#globe)" fill="none" stroke="#C5FAFF" stroke-linecap="round" opacity=".55">
+    <path d="M7 31c10 5 27 5 40-1" />
+    <path d="M7 40c12-4 27-4 40 2" />
+    <path d="M22 18c-5 11-5 26 1 38" />
+    <path d="M34 18c6 12 6 26 0 38" />
+  </g>
+  <path d="M42 24 47 19" fill="none" stroke="#D9F8FF" stroke-width="1.5" />
+  <rect x="39" y="9" width="8" height="6" rx="1" transform="rotate(-20 43 12)" fill="url(#panel)" stroke="#E5DEFF" stroke-width=".7" />
+  <path d="m47 15 3 3-3 4-3-3z" fill="#F3F0FF" stroke="#7449DA" stroke-width="1" />
+  <rect x="52" y="9" width="8" height="6" rx="1" transform="rotate(12 56 12)" fill="url(#panel)" stroke="#E5DEFF" stroke-width=".7" />
+  <path d="M50 18 54 12" fill="none" stroke="#E5DEFF" stroke-width="1" />
+  <circle cx="47" cy="19" r="1.2" fill="#75F2FF" />
+</svg>
