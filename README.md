@@ -20,11 +20,6 @@ O projeto foi desenvolvido para o desafio **The Earth Information Jukebox**, com
 
 Nossa solução utiliza dados reais da missão GPM da NASA, permitindo explorar a precipitação atmosférica na Amazônia Central e na região de Kisangani, na Bacia do Congo.
 
-**Challenge:** The Earth Information Jukebox  
-**Team:** UNICEPLAC Developers  
-**Location:** Brasília, Brazil  
-**Award:** 🥇 1st Place — Brasília Local Event, NASA Space Apps Challenge 2026
-
 ---
 
 ---
