@@ -48,20 +48,106 @@ describe('SpatialDataService', () => {
     expect(grid?.availability).toEqual(availability);
   });
 
-  it('returns unavailable when the spatial manifest or selected matrix is absent', async () => {
+  it('returns unavailable when the manifest or selected timestamp is absent', async () => {
     stubFiles({});
     await expect(SpatialDataService.loadGrid('/data/spatial-service-no-manifest/observations.json', 'test-region', box, '2024-01-01T00:00:00Z')).resolves.toBeNull();
 
-    const missingMatrixPath = '/data/spatial-service-missing-matrix/observations.json';
-    stubFiles({ '/data/spatial-service-missing-matrix/spatial/manifest.json': manifest });
-    await expect(SpatialDataService.loadGrid(missingMatrixPath, 'test-region', box, '2024-01-01T00:00:00Z')).resolves.toBeNull();
+    const missingTimestampPath = '/data/spatial-service-missing-timestamp/observations.json';
+    const fetchMock = stubFiles({ '/data/spatial-service-missing-timestamp/spatial/manifest.json': manifest });
+    await expect(SpatialDataService.loadGrid(missingTimestampPath, 'test-region', box, '2024-01-01T01:00:00Z')).resolves.toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('rejects a timestamp not present in the manifest without requesting another period', async () => {
+  it('reports a missing matrix referenced by the manifest as an error', async () => {
+    const missingMatrixPath = '/data/spatial-service-missing-matrix/observations.json';
+    stubFiles({ '/data/spatial-service-missing-matrix/spatial/manifest.json': manifest });
+    await expect(SpatialDataService.loadGrid(missingMatrixPath, 'test-region', box, '2024-01-01T00:00:00Z'))
+      .rejects.toThrow('matriz espacial referenciada no manifesto não está disponível');
+  });
+
+  it('returns unavailable for a timestamp outside the exported spatial window', async () => {
     const fetchMock = stubFiles({ '/data/spatial-service-time-mismatch/spatial/manifest.json': manifest });
     await expect(SpatialDataService.loadGrid('/data/spatial-service-time-mismatch/observations.json', 'test-region', box, '2024-01-01T01:00:00Z'))
-      .rejects.toThrow('não contém o timestamp');
+      .resolves.toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the two region grids separate for the same UTC timestamp', async () => {
+    const congoBox = { min_latitude: -2, max_latitude: 0, min_longitude: 20, max_longitude: 22 };
+    const amazonManifest: SpatialGridManifest = { ...manifest, region_id: 'amazon_central' };
+    const congoManifest: SpatialGridManifest = {
+      ...manifest,
+      region_id: 'congo_basin_kisangani',
+      validation_status: 'candidate_under_review',
+      bounding_box: congoBox,
+      longitude_centers: [20.5, 21.5]
+    };
+    stubFiles({
+      '/data/amazon/spatial/manifest.json': amazonManifest,
+      '/data/amazon/spatial/matrices/00.json': {
+        timestamp_utc: '2024-01-01T00:00:00Z', values: [[0, 0.1], [null, 5.2]]
+      },
+      '/data/congo/spatial/manifest.json': congoManifest,
+      '/data/congo/spatial/matrices/00.json': {
+        timestamp_utc: '2024-01-01T00:00:00Z', values: [[2, 3], [4, 5]]
+      }
+    });
+
+    const [amazon, congo] = await Promise.all([
+      SpatialDataService.loadGrid('/data/amazon/observations_afternoon.json', 'amazon_central', box, '2024-01-01T00:00:00Z'),
+      SpatialDataService.loadGrid('/data/congo/observations.json', 'congo_basin_kisangani', congoBox, '2024-01-01T00:00:00Z')
+    ]);
+
+    expect(amazon?.values).toEqual([[0, 0.1], [null, 5.2]]);
+    expect(congo?.values).toEqual([[2, 3], [4, 5]]);
+    expect(congo?.manifest.validation_status).toBe('candidate_under_review');
+  });
+
+  it('supports a combined regional manifest without filling the gap between time windows', async () => {
+    const dayManifest: SpatialGridManifest = {
+      ...manifest,
+      timestamps: [
+        { timestamp_utc: '2024-01-01T00:00:00Z', matrix_path: 'matrices/morning.json' },
+        { timestamp_utc: '2024-01-01T02:30:00Z', matrix_path: 'matrices/morning-last.json' },
+        { timestamp_utc: '2024-01-01T17:00:00Z', matrix_path: 'matrices/afternoon.json' },
+        { timestamp_utc: '2024-01-01T19:30:00Z', matrix_path: 'matrices/afternoon-last.json' }
+      ]
+    };
+    stubFiles({ '/data/amazon-day/spatial/manifest.json': dayManifest });
+
+    await expect(SpatialDataService.loadGrid(
+      '/data/amazon-day/observations_day_windows.json', 'test-region', box, '2024-01-01T14:30:00Z'
+    )).resolves.toBeNull();
+  });
+
+  it('loads each selected timestamp from the shared morning and afternoon series manifest', async () => {
+    const dayManifest: SpatialGridManifest = {
+      ...manifest,
+      timestamps: [
+        { timestamp_utc: '2024-01-01T00:00:00Z', matrix_path: 'matrices/morning.json' },
+        { timestamp_utc: '2024-01-01T02:30:00Z', matrix_path: 'matrices/morning-last.json' },
+        { timestamp_utc: '2024-01-01T17:00:00Z', matrix_path: 'matrices/afternoon.json' },
+        { timestamp_utc: '2024-01-01T19:30:00Z', matrix_path: 'matrices/afternoon-last.json' }
+      ]
+    };
+    stubFiles({
+      '/data/amazon-series/spatial/manifest.json': dayManifest,
+      '/data/amazon-series/spatial/matrices/morning.json': {
+        timestamp_utc: '2024-01-01T00:00:00Z', values: [[0, 0], [0, 0]]
+      },
+      '/data/amazon-series/spatial/matrices/afternoon.json': {
+        timestamp_utc: '2024-01-01T17:00:00Z', values: [[0, 0.25], [1, 3]]
+      }
+    });
+
+    const [morning, afternoon] = await Promise.all([
+      SpatialDataService.loadGrid('/data/amazon-series/observations.json', 'test-region', box, '2024-01-01T00:00:00Z'),
+      SpatialDataService.loadGrid('/data/amazon-series/observations_afternoon.json', 'test-region', box, '2024-01-01T17:00:00Z')
+    ]);
+
+    expect(morning?.values).toEqual([[0, 0], [0, 0]]);
+    expect(afternoon?.values).toEqual([[0, 0.25], [1, 3]]);
+    expect(morning?.timestamp_utc).not.toBe(afternoon?.timestamp_utc);
   });
 
   it('rejects a matrix whose missing-cell count disagrees with the selected observation', async () => {

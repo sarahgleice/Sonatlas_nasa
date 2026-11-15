@@ -40,9 +40,9 @@ export const STUDY_REGIONS: StudyRegion[] = [
     country: 'República Democrática do Congo',
     referenceCity: 'Kisangani',
     referencePoint: { lat: 0.5153, lon: 25.191 },
-    status: 'preliminary_verified',
+    status: 'proposed_pending_validation',
     description:
-      'Janela amostral de controle no entorno de Kisangani (750 células). Não representa toda a bacia. Homologada com dados reais NASA IMERG.',
+      'Janela amostral candidata no entorno de Kisangani (750 células), sob validação científica; não representa toda a bacia.',
     limits: {
       min_latitude: -0.8,
       max_latitude: 1.7,

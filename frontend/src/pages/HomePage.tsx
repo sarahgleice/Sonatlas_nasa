@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   CalendarClock,
@@ -29,6 +29,7 @@ import { SoundLegend, SonificationGuide } from '../components/SoundLegend';
 import { MapView } from '../maps/MapView';
 import { AriaLiveAnnouncer } from '../accessibility/AriaLiveAnnouncer';
 import { AccessibilitySettingsDialog } from '../accessibility/AccessibilitySettingsDialog';
+import { ObjectiveAudioDialog } from '../accessibility/ObjectiveAudioDialog';
 import { isSpeechNarrationSupported, speakNarration, stopNarration } from '../accessibility/speechNarration';
 import { geoApiService } from '../services/geoApiService';
 import { parseAmazonCentralApiFeature } from '../maps/amazonGeometry';
@@ -36,8 +37,11 @@ import { parseAmazonCentralApiFeature } from '../maps/amazonGeometry';
 type GeoApiState = 'unconfigured' | 'loading' | 'connected' | 'fallback';
 
 const EMPTY_OBSERVATIONS: TemporalObservation[] = [];
+const GlobeView = lazy(() => import('../maps/GlobeView').then(({ GlobeView: Component }) => ({ default: Component })));
 const ACCESSIBILITY_PROMPT_KEY = 'sonatlas.accessibility-prompt-seen';
+const OBJECTIVE_AUDIO_PROMPT_KEY = 'sonatlas.objective-audio-prompt-seen';
 const VOICE_NARRATION_KEY = 'sonatlas.voice-narration-enabled';
+const OBJECTIVE_AUDIO_TEXT = 'O Sonatlas ajuda você a explorar dados científicos da Terra por mapas, indicadores, texto e som. Na sonificação da chuva, a taxa média define a altura da nota e a fração da área com chuva define a quantidade de pulsos. Assim, o áudio complementa os dados visuais e textuais para revelar padrões ambientais.';
 
 function readStoredBoolean(key: string, fallback: boolean): boolean {
   try {
@@ -59,8 +63,12 @@ function writeStoredBoolean(key: string, value: boolean): void {
 export const HomePage: React.FC = () => {
   const [selectedRegionId, setSelectedRegionId] = useState('amazon_central');
   const [selectedSeriesId, setSelectedSeriesId] = useState('day_windows');
+  const [mapViewMode, setMapViewMode] = useState<'2d' | '3d'>('2d');
   const [voiceEnabled, setVoiceEnabled] = useState(() => readStoredBoolean(VOICE_NARRATION_KEY, false));
   const [isAccessibilitySettingsOpen, setIsAccessibilitySettingsOpen] = useState(() => !readStoredBoolean(ACCESSIBILITY_PROMPT_KEY, false));
+  const [isObjectiveAudioPromptOpen, setIsObjectiveAudioPromptOpen] = useState(() =>
+    readStoredBoolean(ACCESSIBILITY_PROMPT_KEY, false) && !readStoredBoolean(OBJECTIVE_AUDIO_PROMPT_KEY, false)
+  );
   const [dataset, setDataset] = useState<RegionDataset | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -70,8 +78,8 @@ export const HomePage: React.FC = () => {
   const announce = useCallback((text: string, politeness: LiveAnnouncement['politeness'] = 'polite') => {
     announcementIdRef.current += 1;
     setLiveAnnouncement({ id: announcementIdRef.current, text, politeness });
-    if (voiceNarrationActive) speakNarration(text);
-  }, [voiceNarrationActive]);
+    if (voiceNarrationActive && !isAccessibilitySettingsOpen && !isObjectiveAudioPromptOpen) speakNarration(text);
+  }, [voiceNarrationActive, isAccessibilitySettingsOpen, isObjectiveAudioPromptOpen]);
   const [isEducationalOpen, setIsEducationalOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [geoApiState, setGeoApiState] = useState<GeoApiState>('unconfigured');
@@ -80,6 +88,7 @@ export const HomePage: React.FC = () => {
   const closeAccessibilitySettings = useCallback(() => {
     writeStoredBoolean(ACCESSIBILITY_PROMPT_KEY, true);
     setIsAccessibilitySettingsOpen(false);
+    if (!readStoredBoolean(OBJECTIVE_AUDIO_PROMPT_KEY, false)) setIsObjectiveAudioPromptOpen(true);
   }, []);
 
   const saveAccessibilitySettings = useCallback((enabled: boolean) => {
@@ -87,12 +96,13 @@ export const HomePage: React.FC = () => {
     writeStoredBoolean(VOICE_NARRATION_KEY, enabled);
     setVoiceEnabled(enabled);
     setIsAccessibilitySettingsOpen(false);
-    if (enabled && !voiceNarrationActive) {
-      speakNarration('Narração por voz ativada. Use os controles para selecionar e ouvir os dados de cada período.');
-    } else if (!enabled) {
-      stopNarration();
-    }
-  }, [voiceNarrationActive]);
+    if (!enabled) stopNarration();
+  }, []);
+
+  const closeObjectiveAudioPrompt = useCallback(() => {
+    writeStoredBoolean(OBJECTIVE_AUDIO_PROMPT_KEY, true);
+    setIsObjectiveAudioPromptOpen(false);
+  }, []);
 
   useEffect(() => () => stopNarration(), []);
   useEffect(() => {
@@ -136,6 +146,7 @@ export const HomePage: React.FC = () => {
   useEffect(() => {
     if (!dataset || dataset.region_id !== 'amazon_central') {
       setApiGeometry(null);
+      setGeoApiState('unconfigured');
       return;
     }
 
@@ -207,16 +218,20 @@ export const HomePage: React.FC = () => {
   }, [announce]);
 
   const selectRegion = (regionId: string) => {
-    if (regionId !== 'amazon_central') return;
-    setSelectedRegionId(regionId);
-    announce('Amazônia Central selecionada.');
+    const region = findRegionOption(regionId);
+    if (!region) return;
+    setSelectedRegionId(region.id);
+    announce(region.status === 'candidate'
+      ? `${region.name}, ${region.country}, selecionada. Janela amostral candidata sob validação; não representa toda a bacia.`
+      : `${region.name}, ${region.country}, selecionada.`);
   };
 
   const handleMapPoint = async (lat: number, lon: number) => {
     try {
       const result = await geoApiService.locate(lat, lon);
       if (result.available) {
-        if (result.data.regioes.includes('amazon_central')) selectRegion('amazon_central');
+        const regionId = result.data.regioes.find((id) => findRegionOption(id));
+        if (regionId) selectRegion(regionId);
         return;
       }
     } catch {
@@ -229,6 +244,7 @@ export const HomePage: React.FC = () => {
     isPlaying,
     currentIndex,
     isMuted,
+    volume,
     audioError,
     analyser,
     currentObservation,
@@ -247,7 +263,8 @@ export const HomePage: React.FC = () => {
     firstStep,
     lastStep,
     toggleLoop,
-    toggleMute
+    toggleMute,
+    setVolume
   } = useAudioPlayer({
     observations,
     stepDurationMs: 1500,
@@ -272,16 +289,18 @@ export const HomePage: React.FC = () => {
     onLastStep: lastStep,
     onToggleLoop: toggleLoop,
     onOpenShortcuts: openShortcuts,
-    enabled: !isEducationalOpen && !isShortcutsOpen && !isAccessibilitySettingsOpen
+    enabled: !isEducationalOpen && !isShortcutsOpen && !isAccessibilitySettingsOpen && !isObjectiveAudioPromptOpen
   });
 
   return (
     <div className="app-layout">
-      <AriaLiveAnnouncer announcement={liveAnnouncement} disabled={voiceNarrationActive || isAccessibilitySettingsOpen} />
+      <AriaLiveAnnouncer announcement={liveAnnouncement} disabled={voiceNarrationActive || isAccessibilitySettingsOpen || isObjectiveAudioPromptOpen} />
       <Header
         onOpenEducational={() => setIsEducationalOpen(true)}
         onOpenShortcuts={openShortcuts}
         onOpenAccessibility={openAccessibilitySettings}
+        onListenObjective={() => speakNarration(OBJECTIVE_AUDIO_TEXT)}
+        objectiveAudioDisabled={!isSpeechNarrationSupported() || isPlaying}
         voiceEnabled={voiceNarrationActive}
       />
 
@@ -303,21 +322,39 @@ export const HomePage: React.FC = () => {
           </section>
 
           <section id="map" className="map-panel" aria-label="Área do mapa">
-            <h2 className="map-heading"><Map size={17} aria-hidden="true" /> Mapa da região</h2>
+            <div className="map-view-header">
+              <h2 className="map-heading"><Map size={17} aria-hidden="true" />Explorar a Terra</h2>
+              <div className="map-view-toggle" role="group" aria-label="Modo de visualização geográfica">
+                <button type="button" className="btn btn-secondary btn-sm" aria-pressed={mapViewMode === '2d'} onClick={() => setMapViewMode('2d')}>Mapa 2D</button>
+                <button type="button" className="btn btn-secondary btn-sm" aria-pressed={mapViewMode === '3d'} onClick={() => setMapViewMode('3d')}>Globo 3D</button>
+              </div>
+            </div>
             {dataset ? (
-              <MapView
-                boundingBox={dataset.bounding_box}
-                regionName={dataset.region_name}
-                isPlaceholder={dataset.is_placeholder}
-                regionId={selectedRegionId}
-                apiGeometry={apiGeometry}
-                geoApiStatus={geoApiState}
-                spatialDatasetPath={findRegionOption(selectedRegionId)?.series.find((series) => series.id === selectedSeriesId)?.filePath ?? ''}
-                selectedTimestamp={currentObservation?.timestamp_utc ?? null}
-                selectedAvailability={currentObservation?.availability ?? null}
-                onMapPoint={handleMapPoint}
-                onRegionSelect={selectRegion}
-              />
+              <>
+                <MapView
+                  boundingBox={dataset.bounding_box}
+                  regionName={dataset.region_name}
+                  isPlaceholder={dataset.is_placeholder}
+                  regionId={selectedRegionId}
+                  apiGeometry={apiGeometry}
+                  geoApiStatus={geoApiState}
+                  spatialDatasetPath={findRegionOption(selectedRegionId)?.series.find((series) => series.id === selectedSeriesId)?.filePath ?? ''}
+                  selectedTimestamp={currentObservation?.timestamp_utc ?? null}
+                  selectedAvailability={currentObservation?.availability ?? null}
+                  onMapPoint={handleMapPoint}
+                  onRegionSelect={selectRegion}
+                  isVisible={mapViewMode === '2d'}
+                />
+                {mapViewMode === '3d' && (
+                  <Suspense fallback={<div className="globe-fallback" role="status">Carregando o globo 3D…</div>}>
+                    <GlobeView
+                      selectedRegionId={selectedRegionId}
+                      onRegionSelect={selectRegion}
+                      onReturnToMap={() => setMapViewMode('2d')}
+                    />
+                  </Suspense>
+                )}
+              </>
             ) : (
               <div className="map-loading-state" role={errorMessage ? 'alert' : 'status'}>
                 {errorMessage ? <AlertTriangle aria-hidden="true" /> : <Map aria-hidden="true" />}
@@ -333,6 +370,7 @@ export const HomePage: React.FC = () => {
           <section id="playback" className="sonification-section" aria-label="Controles de sonificação">
             <AudioPlayer
               isPlaying={isPlaying} isMuted={isMuted} isLooping={isLooping} speed={speed}
+              volume={volume} onVolumeChange={setVolume}
               currentIndex={currentIndex} totalSteps={observations.length} currentObservation={currentObservation}
               canGoPrevious={canGoPrevious} canGoNext={canGoNext} onToggleLoop={toggleLoop} onRestart={restart}
               onSpeedChange={setSpeed} onTogglePlay={togglePlay} onPreview={() => previewStep(currentIndex)}
@@ -340,21 +378,6 @@ export const HomePage: React.FC = () => {
               audioError={audioError} disabled={observations.length === 0}
             />
             <SonificationGuide />
-            <div className="sonatlas-objective-audio">
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => speakNarration('O Sonatlas ajuda você a explorar dados científicos da Terra por mapas, indicadores, texto e som. Na sonificação da chuva, a taxa média define a altura da nota e a fração da área com chuva define a quantidade de pulsos. Assim, o áudio complementa os dados visuais e textuais para revelar padrões ambientais.')}
-                disabled={!isSpeechNarrationSupported() || isPlaying}
-                aria-describedby="sonatlas-objective-audio-help"
-              >
-                <Volume2 size={16} aria-hidden="true" />
-                <span>Ouvir objetivo do Sonatlas</span>
-              </button>
-              <span id="sonatlas-objective-audio-help" className="form-helper">
-                {isPlaying ? 'Pause a reprodução para ouvir a explicação.' : !isSpeechNarrationSupported() ? 'Voz indisponível neste navegador.' : 'Explicação curta falada em português.'}
-              </span>
-            </div>
           </section>
 
           <section className="side-panel right-panel" aria-labelledby="signal-title">
@@ -445,6 +468,12 @@ export const HomePage: React.FC = () => {
         voiceSupported={isSpeechNarrationSupported()}
         onSave={saveAccessibilitySettings}
         onClose={closeAccessibilitySettings}
+      />
+      <ObjectiveAudioDialog
+        isOpen={isObjectiveAudioPromptOpen}
+        voiceSupported={isSpeechNarrationSupported()}
+        onListen={() => speakNarration(OBJECTIVE_AUDIO_TEXT)}
+        onClose={closeObjectiveAudioPrompt}
       />
       <EducationalPanel isOpen={isEducationalOpen} dataset={dataset} loading={loading} error={errorMessage} onClose={() => setIsEducationalOpen(false)} />
     </div>

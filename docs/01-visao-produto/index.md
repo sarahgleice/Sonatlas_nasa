@@ -102,6 +102,5 @@ Desenvolver uma plataforma web acessível que converta dados de observação da 
 - Autenticação de usuários, perfis ou cadastro.
 - Banco de dados relacional ou NoSQL em servidor.
 - Módulos de inteligência artificial generativa para geração de trilhas musicais.
-- Visualizações em globo 3D ou renderizações WebGL complexas.
 - Inclusão simultânea de outros fenômenos climáticos (ex: temperatura, vento, ozônio).
 - Composição musical orquestral ou polifonia artística complexa (a meta é sonificação científica clara e informativa).

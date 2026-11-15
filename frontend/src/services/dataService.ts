@@ -44,10 +44,10 @@ export const AVAILABLE_REGIONS: RegionOption[] = [
   {
     id: 'congo_basin_kisangani',
     aliases: ['international_candidate'],
-    name: 'Janela de Kisangani (Bacia do Congo)',
+    name: 'Bacia do Congo — janela de Kisangani',
     country: 'República Democrática do Congo',
-    status: 'active',
-    description: 'Janela amostral de controle (750 células). Não representa a totalidade da Bacia do Congo.',
+    status: 'candidate',
+    description: 'Área candidata sob validação científica. Janela amostral de 750 células em torno de Kisangani; não representa toda a Bacia do Congo.',
     filePath: '/data/congo/observations.json',
     series: [
       {

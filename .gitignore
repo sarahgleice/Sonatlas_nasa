@@ -50,6 +50,8 @@ processing/data/raw/*.nc
 processing/data/raw/*.nc4
 processing/data/raw/*.h5
 processing/data/raw/*.hdf5
+processing/data/raw/*.HDF5
+processing/data/raw/*.part
 !processing/data/raw/.gitkeep
 !processing/data/processed/.gitkeep
 !processing/data/samples/*.json

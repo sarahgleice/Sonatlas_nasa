@@ -15,6 +15,16 @@ export interface SpatialGridManifest {
   latitude_centers: number[];
   longitude_centers: number[];
   timestamps: Array<{ timestamp_utc: string; matrix_path: string }>;
+  processing_provenance?: {
+    generator: string;
+    generated_at_utc: string;
+    method: string;
+    source_granules: Array<{
+      timestamp_utc: string;
+      filename: string;
+      variable_name: string;
+    }>;
+  };
 }
 
 export interface SpatialGrid {

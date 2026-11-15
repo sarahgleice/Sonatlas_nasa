@@ -17,10 +17,13 @@ import { TemporalObservation } from '../types/dataset';
 import { PLAYBACK_SPEEDS, PlaybackSpeed } from '../types/player';
 import { formatPrecipitationRate, getObservationDataState } from '../utils/formatters';
 import { WaveformVisualizer } from './WaveformVisualizer';
+import { MeteorVolumeSlider } from './MeteorVolumeSlider';
 
 interface AudioPlayerProps {
   isPlaying: boolean;
   isMuted: boolean;
+  volume?: number;
+  onVolumeChange?: (volume: number) => void;
   isLooping?: boolean;
   speed?: PlaybackSpeed;
   currentIndex: number;
@@ -57,6 +60,8 @@ export function describeDataState(observation: TemporalObservation | null | unde
 export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   isPlaying,
   isMuted,
+  volume = 0.5,
+  onVolumeChange,
   isLooping = false,
   speed = 1,
   currentIndex,
@@ -183,6 +188,12 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             <Repeat size={16} aria-hidden="true" />
             <span>Repetir sequência</span>
           </button>
+        )}
+
+        {onVolumeChange && (
+          <div className="player-volume">
+            <MeteorVolumeSlider value={volume} onChange={onVolumeChange} muted={isMuted} disabled={disabled} />
+          </div>
         )}
 
         {onSpeedChange && (
