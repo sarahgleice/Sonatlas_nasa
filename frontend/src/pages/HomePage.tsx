@@ -25,7 +25,7 @@ import { AudioPlayer } from '../components/AudioPlayer';
 import { Timeline } from '../components/Timeline';
 import { ScientificSummary } from '../components/ScientificSummary';
 import { PrecipitationChart } from '../components/PrecipitationChart';
-import { SoundLegend } from '../components/SoundLegend';
+import { SoundLegend, SonificationGuide } from '../components/SoundLegend';
 import { MapView } from '../maps/MapView';
 import { AriaLiveAnnouncer } from '../accessibility/AriaLiveAnnouncer';
 import { AccessibilitySettingsDialog } from '../accessibility/AccessibilitySettingsDialog';
@@ -339,6 +339,22 @@ export const HomePage: React.FC = () => {
               onNextStep={nextStep} onPrevStep={prevStep} onToggleMute={toggleMute} analyser={analyser}
               audioError={audioError} disabled={observations.length === 0}
             />
+            <SonificationGuide />
+            <div className="sonatlas-objective-audio">
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => speakNarration('O Sonatlas ajuda você a explorar dados científicos da Terra por mapas, indicadores, texto e som. Na sonificação da chuva, a taxa média define a altura da nota e a fração da área com chuva define a quantidade de pulsos. Assim, o áudio complementa os dados visuais e textuais para revelar padrões ambientais.')}
+                disabled={!isSpeechNarrationSupported() || isPlaying}
+                aria-describedby="sonatlas-objective-audio-help"
+              >
+                <Volume2 size={16} aria-hidden="true" />
+                <span>Ouvir objetivo do Sonatlas</span>
+              </button>
+              <span id="sonatlas-objective-audio-help" className="form-helper">
+                {isPlaying ? 'Pause a reprodução para ouvir a explicação.' : !isSpeechNarrationSupported() ? 'Voz indisponível neste navegador.' : 'Explicação curta falada em português.'}
+              </span>
+            </div>
           </section>
 
           <section className="side-panel right-panel" aria-labelledby="signal-title">

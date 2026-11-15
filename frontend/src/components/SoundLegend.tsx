@@ -68,6 +68,29 @@ export function buildLegendSamples(): LegendSample[] {
 
 const LEGEND_SAMPLES = buildLegendSamples();
 
+export const SonificationGuide: React.FC = () => (
+  <section className="sonification-guide" aria-labelledby="sonification-guide-title">
+    <h3 id="sonification-guide-title">Como a chuva vira som</h3>
+    <div className="sonification-guide-grid">
+      <figure className="sonification-guide-item">
+        <figcaption><strong>Taxa de precipitação (mm/h)</strong></figcaption>
+        <div className="sonification-pitch-scale" aria-hidden="true">
+          <span>grave</span><span className="sonification-pitch-line" /><span>agudo</span>
+        </div>
+        <p>Taxas maiores elevam a nota; abaixo de {RAIN_DETECTION_THRESHOLD_MM_H} mm/h, usa-se o tom de repouso.</p>
+      </figure>
+      <figure className="sonification-guide-item">
+        <figcaption><strong>Fração da área com chuva</strong></figcaption>
+        <div className="sonification-pulse-scale" aria-hidden="true">
+          <span className="sonification-pulse-dots"><i /></span><span>→</span>
+          <span className="sonification-pulse-dots">{Array.from({ length: 7 }, (_, index) => <i key={index} />)}</span>
+        </div>
+        <p>Quanto maior a área com chuva, mais pulsos compõem cada observação.</p>
+      </figure>
+    </div>
+  </section>
+);
+
 export const SoundLegend: React.FC = () => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string>('');
