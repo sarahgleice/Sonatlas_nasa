@@ -173,7 +173,8 @@ class SafeNASASession(requests.Session):
     def rebuild_auth(self, prepared_request, response):
         # Valida URL de redirecionamento antes de enviar credenciais de autenticação
         validate_nasa_url(prepared_request.url)
-        super().rebuild_auth(prepared_request, response)
+        if getattr(response, "request", None) is not None:
+            super().rebuild_auth(prepared_request, response)
 
 
 # ==============================================================================

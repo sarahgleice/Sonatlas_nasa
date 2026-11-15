@@ -210,12 +210,18 @@ def test_security_authorized_https_url():
     valid_urls = [
         "https://gpm1.gesdisc.eosdis.nasa.gov/data/GPM_L3/GPM_3IMERGHHE.07/2024/001/3B-HHR-E.MS.MRG.3IMERG.20240101-S000000-E002959.0000.V07B.HDF5",
         "https://gpm2.gesdisc.eosdis.nasa.gov/data/GPM_L3/file.HDF5",
-        "https://disc.gsfc.nasa.gov/data/file.HDF5",
         "https://urs.earthdata.nasa.gov/oauth/authorize?client_id=xyz",
         "https://data.gesdisc.earthdata.nasa.gov/archive/file.HDF5"
     ]
     for u in valid_urls:
         validate_nasa_url(u)  # Não deve levantar exceção
+
+
+def test_security_portal_url_rejected_as_download_endpoint():
+    """Portal institucional disc.gsfc.nasa.gov não é endpoint de dados/credenciais e deve ser rejeitado."""
+    portal_url = "https://disc.gsfc.nasa.gov/data/file.HDF5"
+    with pytest.raises(NASASecurityError, match="não autorizado"):
+        validate_nasa_url(portal_url)
 
 
 def test_security_http_url_rejected():
@@ -258,27 +264,44 @@ def test_security_embedded_credentials_rejected():
 
 
 def test_security_unauthorized_redirect_blocked():
-    """6. Redirecionamento HTTP para host não autorizado deve ser bloqueado."""
+    """6. Redirecionamento HTTP para host não autorizado ou spoofing deve ser bloqueado."""
     session = SafeNASASession()
-    fake_req = requests.Request("GET", "https://attacker.com/steal").prepare()
-    fake_resp = requests.Response()
-    fake_resp.status_code = 302
-    fake_resp.headers["Location"] = "https://attacker.com/steal"
+    orig_req = requests.Request("GET", "https://gpm1.gesdisc.eosdis.nasa.gov/data/file.HDF5").prepare()
+
+    # Redirecionamento para atacante externo
+    fake_req_attacker = requests.Request("GET", "https://attacker.com/steal").prepare()
+    fake_resp_attacker = requests.Response()
+    fake_resp_attacker.status_code = 302
+    fake_resp_attacker.headers["Location"] = "https://attacker.com/steal"
+    fake_resp_attacker.request = orig_req
 
     with pytest.raises(NASASecurityError, match="não autorizado"):
-        session.rebuild_auth(fake_req, fake_resp)
+        session.rebuild_auth(fake_req_attacker, fake_resp_attacker)
+
+    # Redirecionamento para spoofing de domínio oficial
+    fake_req_spoof = requests.Request("GET", "https://urs.earthdata.nasa.gov.attacker.com/oauth").prepare()
+    fake_resp_spoof = requests.Response()
+    fake_resp_spoof.status_code = 302
+    fake_resp_spoof.headers["Location"] = "https://urs.earthdata.nasa.gov.attacker.com/oauth"
+    fake_resp_spoof.request = orig_req
+
+    with pytest.raises(NASASecurityError, match="não autorizado"):
+        session.rebuild_auth(fake_req_spoof, fake_resp_spoof)
 
 
 def test_security_legitimate_earthdata_redirect_allowed():
     """7. Redirecionamento legítimo necessário ao Earthdata deve funcionar."""
     session = SafeNASASession()
-    fake_req = requests.Request("GET", "https://urs.earthdata.nasa.gov/oauth/authorize?app=gesdisc").prepare()
+    orig_req = requests.Request("GET", "https://gpm1.gesdisc.eosdis.nasa.gov/data/GPM_L3/file.HDF5").prepare()
     fake_resp = requests.Response()
     fake_resp.status_code = 302
     fake_resp.headers["Location"] = "https://urs.earthdata.nasa.gov/oauth/authorize?app=gesdisc"
+    fake_resp.request = orig_req
+
+    redirect_req = requests.Request("GET", "https://urs.earthdata.nasa.gov/oauth/authorize?app=gesdisc").prepare()
 
     # Não deve levantar NASASecurityError
-    session.rebuild_auth(fake_req, fake_resp)
+    session.rebuild_auth(redirect_req, fake_resp)
 
 
 def test_security_path_traversal_blocked(tmp_path):
@@ -331,13 +354,20 @@ def test_security_atomic_replace_success(tmp_path):
         "download_url": f"https://gpm1.gesdisc.eosdis.nasa.gov/data/{fname}"
     }
 
-    # Mock de download gerando novo arquivo sintético íntegro no .part
+    # Gera grânulo sintético fonte íntegro para fornecer os bytes reais via iter_content
+    source_h5 = tmp_path / "source_valid.HDF5"
+    create_synthetic_imerg_hdf5(source_h5, fill_value=-9999.9)
+    valid_bytes = source_h5.read_bytes()
+    source_h5.unlink()
+
+    chunk_size = 64 * 1024
+    chunks = [valid_bytes[i:i + chunk_size] for i in range(0, len(valid_bytes), chunk_size)]
+
+    # Mock de download transmitindo dados HDF5 válidos em streaming
     def mock_stream(*args, **kwargs):
-        part_path = tmp_path / f"{fname}.part"
-        create_synthetic_imerg_hdf5(part_path, fill_value=-9999.9)
         resp = MagicMock()
         resp.status_code = 200
-        resp.iter_content = MagicMock(return_value=[b""])
+        resp.iter_content = MagicMock(return_value=chunks)
         resp.__enter__ = MagicMock(return_value=resp)
         resp.__exit__ = MagicMock(return_value=None)
         return resp
@@ -350,6 +380,7 @@ def test_security_atomic_replace_success(tmp_path):
         result_path = downloader.download_granule(meta, force_download=True)
 
     assert result_path.exists()
+    assert result_path == target_file
     assert not (tmp_path / f"{fname}.part").exists()
     is_valid, _ = HDF5IntegrityChecker.verify(result_path)
     assert is_valid is True
@@ -367,19 +398,20 @@ def test_security_download_failure_preserves_original(tmp_path):
     # Cria arquivo original saudável
     create_synthetic_imerg_hdf5(target_file, fill_value=-9999.0)
     original_size = target_file.stat().st_size
+    original_content = target_file.read_bytes()
 
     meta = {
         "filename": fname,
         "download_url": f"https://gpm1.gesdisc.eosdis.nasa.gov/data/{fname}"
     }
 
-    # Simula download que corrompe o arquivo temporário
+    # Simula download que corrompe o arquivo temporário via streaming de bytes corrompidos
+    corrupted_chunks = [b"CORRUPTED_STREAM_DATA_NOT_HDF5" * 100]
+
     def mock_stream_corrupt(*args, **kwargs):
-        part_path = tmp_path / f"{fname}.part"
-        part_path.write_bytes(b"CORRUPTED_STREAM_DATA")
         resp = MagicMock()
         resp.status_code = 200
-        resp.iter_content = MagicMock(return_value=[b""])
+        resp.iter_content = MagicMock(return_value=corrupted_chunks)
         resp.__enter__ = MagicMock(return_value=resp)
         resp.__exit__ = MagicMock(return_value=None)
         return resp
@@ -392,8 +424,9 @@ def test_security_download_failure_preserves_original(tmp_path):
         with pytest.raises(HDF5IntegrityError):
             downloader.download_granule(meta, force_download=True, max_retries=1)
 
-    # O arquivo original DEVE permanecer intacto com o mesmo tamanho
+    # O arquivo original DEVE permanecer intacto com o mesmo tamanho e bytes
     assert target_file.exists()
     assert target_file.stat().st_size == original_size
+    assert target_file.read_bytes() == original_content
     # O arquivo temporário .part DEVE ter sido removido
     assert not (tmp_path / f"{fname}.part").exists()
