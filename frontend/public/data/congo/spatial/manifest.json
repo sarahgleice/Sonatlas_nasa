@@ -1,0 +1,138 @@
+{
+  "schema_version": "1.0.0",
+  "region_id": "congo_basin_kisangani",
+  "units": "mm/h",
+  "data_source": "NASA Earthdata GES DISC",
+  "product_name": "GPM_3IMERGHHE",
+  "product_version": "07B",
+  "validation_status": "candidate_under_review",
+  "spatial_resolution_degrees": 0.1,
+  "bounding_box": {
+    "min_latitude": -0.8,
+    "max_latitude": 1.7,
+    "min_longitude": 23.7,
+    "max_longitude": 26.7
+  },
+  "latitude_centers": [
+    -0.75,
+    -0.65,
+    -0.55,
+    -0.45,
+    -0.35,
+    -0.25,
+    -0.15,
+    -0.05,
+    0.05,
+    0.15,
+    0.25,
+    0.35,
+    0.45,
+    0.55,
+    0.65,
+    0.75,
+    0.85,
+    0.95,
+    1.05,
+    1.15,
+    1.25,
+    1.35,
+    1.45,
+    1.55,
+    1.65
+  ],
+  "longitude_centers": [
+    23.75,
+    23.85,
+    23.95,
+    24.05,
+    24.15,
+    24.25,
+    24.35,
+    24.45,
+    24.55,
+    24.65,
+    24.75,
+    24.85,
+    24.95,
+    25.05,
+    25.15,
+    25.25,
+    25.35,
+    25.45,
+    25.55,
+    25.65,
+    25.75,
+    25.85,
+    25.95,
+    26.05,
+    26.15,
+    26.25,
+    26.35,
+    26.45,
+    26.55,
+    26.65
+  ],
+  "timestamps": [
+    {
+      "timestamp_utc": "2024-01-01T17:00:00Z",
+      "matrix_path": "matrices/2024-01-01T17-00-00Z-b556249b3c1c.json"
+    },
+    {
+      "timestamp_utc": "2024-01-01T17:30:00Z",
+      "matrix_path": "matrices/2024-01-01T17-30-00Z-1255816a34ff.json"
+    },
+    {
+      "timestamp_utc": "2024-01-01T18:00:00Z",
+      "matrix_path": "matrices/2024-01-01T18-00-00Z-1450c8c77067.json"
+    },
+    {
+      "timestamp_utc": "2024-01-01T18:30:00Z",
+      "matrix_path": "matrices/2024-01-01T18-30-00Z-658a793bf0a1.json"
+    },
+    {
+      "timestamp_utc": "2024-01-01T19:00:00Z",
+      "matrix_path": "matrices/2024-01-01T19-00-00Z-adffd15b22fe.json"
+    },
+    {
+      "timestamp_utc": "2024-01-01T19:30:00Z",
+      "matrix_path": "matrices/2024-01-01T19-30-00Z-6c7f675be4f6.json"
+    }
+  ],
+  "processing_provenance": {
+    "generator": "SONATLAS spatial grid exporter",
+    "generated_at_utc": "2026-11-15T12:21:31Z",
+    "method": "Direct per-cell values from NASA GPM IMERG HDF5; no interpolation or rounding.",
+    "source_granules": [
+      {
+        "timestamp_utc": "2024-01-01T17:00:00Z",
+        "filename": "3B-HHR-E.MS.MRG.3IMERG.20240101-S170000-E172959.1020.V07B.HDF5",
+        "variable_name": "/Grid/precipitation"
+      },
+      {
+        "timestamp_utc": "2024-01-01T17:30:00Z",
+        "filename": "3B-HHR-E.MS.MRG.3IMERG.20240101-S173000-E175959.1050.V07B.HDF5",
+        "variable_name": "/Grid/precipitation"
+      },
+      {
+        "timestamp_utc": "2024-01-01T18:00:00Z",
+        "filename": "3B-HHR-E.MS.MRG.3IMERG.20240101-S180000-E182959.1080.V07B.HDF5",
+        "variable_name": "/Grid/precipitation"
+      },
+      {
+        "timestamp_utc": "2024-01-01T18:30:00Z",
+        "filename": "3B-HHR-E.MS.MRG.3IMERG.20240101-S183000-E185959.1110.V07B.HDF5",
+        "variable_name": "/Grid/precipitation"
+      },
+      {
+        "timestamp_utc": "2024-01-01T19:00:00Z",
+        "filename": "3B-HHR-E.MS.MRG.3IMERG.20240101-S190000-E192959.1140.V07B.HDF5",
+        "variable_name": "/Grid/precipitation"
+      },
+      {
+        "timestamp_utc": "2024-01-01T19:30:00Z",
+        "filename": "3B-HHR-E.MS.MRG.3IMERG.20240101-S193000-E195959.1170.V07B.HDF5",
+        "variable_name": "/Grid/precipitation"
+      }
+    ]
+  }
+}
