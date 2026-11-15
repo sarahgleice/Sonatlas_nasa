@@ -2,12 +2,17 @@
 
 ### Explore Earth Through Sound
 
+> 🏆 **1º Lugar — NASA Space Apps Challenge 2026 | Brasília Local**
+
+[![GitHub stars](https://img.shields.io/github/stars/sarahgleice/Sonatlas_nasa?style=for-the-badge&logo=github)](https://github.com/sarahgleice/Sonatlas_nasa/stargazers)
+[![Licença MIT](https://img.shields.io/github/license/sarahgleice/Sonatlas_nasa?style=for-the-badge)](LICENSE)
+[![Último commit](https://img.shields.io/github/last-commit/sarahgleice/Sonatlas_nasa?style=for-the-badge)](https://github.com/sarahgleice/Sonatlas_nasa/commits/main)
+
 **Transformando dados científicos da Terra em experiências visuais e sonoras.**
 
 **NASA Space Apps Challenge 2026**  
 **Challenge:** The Earth Information Jukebox  
-**Team:** UNICEPLAC - Software Developers  
-**Location:** Brasília, Brazil
+**Team:** UNICEPLAC Developers · **Location:** Brasília, Brazil
 
 ---
 
@@ -24,6 +29,14 @@ A proposta é simples:
 No Sonatlas, dados ambientais são convertidos em características sonoras, permitindo que usuários explorem variações geográficas e temporais de uma maneira diferente.
 
 O projeto combina ciência de dados, desenvolvimento web, cartografia digital, acessibilidade e processamento de áudio.
+
+## Reconhecimento e Conquistas
+
+Em **15/11/2026**, o Sonatlas conquistou o **1º lugar na etapa local de Brasília do NASA Space Apps Challenge 2026**, representando a UNICEPLAC como equipe **UNICEPLAC Developers**.
+
+O reconhecimento celebra uma proposta que combina exploração geográfica em mapa 2D e globo 3D, séries temporais e visualizações de precipitação, sonificação sincronizada e recursos de acessibilidade. O resultado foi construído coletivamente pelos **cinco integrantes**, que colaboraram entre engenharia de software, dados científicos, cartografia, áudio, acessibilidade e qualidade.
+
+Esta conquista corresponde à etapa local de Brasília; não representa uma premiação global da NASA. O Sonatlas é um projeto independente e não é um produto oficial da NASA.
 
 ## O desafio
 
@@ -63,13 +76,13 @@ A sonificação é complementar aos dados originais e não substitui suas unidad
 
 ## Demonstração
 
-O Sonatlas está em desenvolvimento.
+O MVP reúne um fluxo navegável de exploração geográfica, seleção de períodos, indicadores e visualizações científicas, sonificação e recursos de acessibilidade. As funcionalidades e a disponibilidade dos dados podem variar por região e série temporal; consulte os estados de validação descritos nesta documentação e nos dados publicados.
 
 A interface utiliza uma abordagem visual inspirada em **Mission Control + Cosmic Sound**, combinando mapas geográficos, indicadores ambientais e controles interativos.
 
 O explorador geográfico é o elemento central da experiência.
 
-*Uma captura de tela ou demonstração em vídeo será adicionada aqui.*
+*Uma captura de tela ou demonstração em vídeo poderá ser adicionada aqui.*
 
 ---
 
@@ -132,15 +145,15 @@ Os indicadores processados incluem:
 
 **Amazônia Central — Brasil**
 
-Região utilizada no processamento inicial de dados reais de precipitação.
+Região com observações e grades espaciais processadas a partir de dados reais de precipitação. O manifesto publicado identifica a validação como **preliminarmente verificada**.
 
-O repositório contém séries de observações referentes a 1º de janeiro de 2024, incluindo diferentes janelas temporais.
+O repositório contém séries referentes a 1º de janeiro de 2024, em janelas da madrugada e da tarde, além da série combinada do dia.
 
 **Bacia do Congo — África Central**
 
-Região de comparação internacional contemplada pelos módulos e dados do projeto.
+Região de comparação internacional com uma série de observações e grades espaciais candidatas para a janela de Kisangani. O manifesto mantém o estado **candidata em revisão**.
 
-A disponibilidade dos arquivos processados não substitui a necessidade de verificar a validação científica e a equivalência temporal das séries comparadas.
+A disponibilidade dos arquivos não substitui a validação científica nem garante equivalência temporal entre as séries comparadas.
 
 ### Integridade científica
 
