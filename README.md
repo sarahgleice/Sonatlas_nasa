@@ -1,216 +1,409 @@
-# SONATLAS — Explore Earth Through Sound 🌍🔊
+# 🌍 SONATLAS
 
-> **NASA Space Apps Challenge 2026**  
-> **Challenge:** *The Earth Information Jukebox*  
-> **Status do Projeto:** Fase Inicial de Arquitetura e Fundação (Sprint 0)
+### Explore Earth Through Sound
 
----
+**Transformando dados científicos da Terra em experiências visuais e sonoras.**
 
-## 📌 Visão Geral
-
-O **SONATLAS** é uma aplicação web acessível que converte observações e indicadores científicos da NASA em experiências sonoras e visuais dinâmicas. 
-
-A plataforma transforma dados geofísicos em representações auditivas calibradas perceptivamente, permitindo que usuários explorem a dinâmica do nosso planeta por meio da audição e da visão. O projeto foi projetado com prioridade máxima para **pessoas cegas ou com baixa visão**, além de atender estudantes, educadores, cientistas e entusiastas da ciência da Terra.
-
-O primeiro fenômeno abordado é a **precipitação atmosférica**, comparando duas regiões bioclimáticas fundamentais:
-1. **Região Nacional:** Amazônia Central (Brasil) — bacia florestal tropical úmida de alta relevância climática global.
-2. **Região Internacional:** Região de estudo em processo de validação pela equipe científica (candidata em avaliação: Bacia do Congo, sem dados fictícios associados).
+**NASA Space Apps Challenge 2026**  
+**Challenge:** The Earth Information Jukebox  
+**Team:** UNICEPLAC - Software Developers  
+**Location:** Brasília, Brazil
 
 ---
 
-## 🎯 O Problema que Resolvemos
+## Sobre o projeto
 
-A esmagadora maioria das ferramentas de divulgação e análise de dados de observação da Terra (como NASA Earth Information Center - EIC e Giovanni) baseia-se exclusivamente em representações visuais: mapas de calor, globos 3D colorimétricos e gráficos estáticos.
+O **Sonatlas** é uma aplicação web interativa que permite explorar fenômenos ambientais da Terra por meio de mapas, visualizações científicas e sonificação de dados.
 
-Esse modelo apresenta duas grandes limitações:
-1. **Exclusão de Acessibilidade:** Pessoas cegas ou com deficiência visual encontram barreiras intransponíveis para compreender a distribuição espacial e a variabilidade temporal dos dados da Terra.
-2. **Saturação Visual:** Mesmo para usuários videntes, a audição humana é extraordinariamente sensível a padrões temporais, ritmos, variações sutis e transições dinâmicas que passam despercebidas em telas estáticas.
+Desenvolvido para o **NASA Space Apps Challenge 2026**, o projeto busca transformar informações complexas de observação da Terra em uma experiência mais acessível, intuitiva e imersiva.
 
-O SONATLAS resolve isso através de **sonificação orientada por dados com rigor científico**, garantindo que toda representação sonora reflita proporções reais de medição física.
+A proposta é simples:
+
+**E se pudéssemos ouvir as mudanças que acontecem no nosso planeta?**
+
+No Sonatlas, dados ambientais são convertidos em características sonoras, permitindo que usuários explorem variações geográficas e temporais de uma maneira diferente.
+
+O projeto combina ciência de dados, desenvolvimento web, cartografia digital, acessibilidade e processamento de áudio.
+
+## O desafio
+
+Grande parte das informações científicas sobre a Terra é apresentada por meio de gráficos, tabelas e mapas.
+
+Essas representações são importantes, mas podem apresentar barreiras para pessoas com deficiência visual e para usuários sem familiaridade com indicadores científicos.
+
+O Sonatlas explora uma abordagem complementar: a **sonificação de dados**.
+
+Em vez de depender exclusivamente de representações visuais, a aplicação utiliza o som como mais uma ferramenta de interpretação científica.
+
+Nosso objetivo é aproximar as pessoas da ciência da Terra, tornando a exploração de dados mais interativa e inclusiva.
+
+## Como o Sonatlas funciona?
+
+A experiência é organizada em quatro etapas:
+
+**1. Explore o planeta**
+
+Navegue pelo mapa interativo e selecione uma região geográfica disponível.
+
+**2. Selecione os dados**
+
+Explore informações ambientais associadas à região, começando pela precipitação atmosférica.
+
+**3. Navegue pelo tempo**
+
+Observe como os indicadores variam ao longo dos períodos disponíveis na série temporal.
+
+**4. Ouça os dados**
+
+A aplicação transforma as medições científicas em parâmetros sonoros, permitindo explorar mudanças por meio de uma representação auditiva sincronizada com as visualizações.
+
+A sonificação é complementar aos dados originais e não substitui suas unidades ou interpretações científicas.
 
 ---
 
-## 🔬 Rigor Científico e Fontes de Dados
+## Demonstração
 
-- **Fonte Oficial Primária:** Missão **NASA GPM (Global Precipitation Measurement)** / produto **IMERG Early Run V07B (`GPM_3IMERGHHE`)**, obtido do repositório oficial NASA GES DISC.
-- **Série Temporal da Amazônia Central:** Sequência de 6 observações reais de 30 minutos em 01/01/2024 (00:00 a 02:59 UTC), recortadas para a bounding box $[-4.0^\circ, -1.5^\circ] \times [-61.5^\circ, -58.5^\circ]$ (750 células espaciais de $0.1^\circ \times 0.1^\circ$).
-- **Linha temporal por janelas:** Também reúne os blocos reais de 00:00–02:30 e 17:00–19:30 UTC do mesmo dia, com uma lacuna de 14h30 sem observações; esse intervalo não representa chuva zero nem é interpolado.
-- **Grandezas Físicas Tratadas:**
-  - **Taxa média de precipitação (`mm/h`)**: calculada com ponderação pelo cosseno da latitude sobre células válidas, diferenciada de precipitação acumulada (`mm`).
-  - **Fração de área com chuva (`fraction` entre 0 e 1)**: proporção da área com taxa $\ge 0.1\text{ mm/h}$ (limiar instrumental do sensor GMI).
-  - **Diferença temporal (`mm/h`)**: variação contínua entre passos adjacentes ($\Delta R_t = \bar{R}_t - \bar{R}_{t-1}$).
-- **Tratamento Rigoroso de Dados:** Células ausentes ou sob controle de qualidade deficiente (`_FillValue: -9999.9`) **não são tratadas como precipitação zero**. Valores zero indicam calmaria real (`0.0 mm/hr`).
-- **Diferenciação Real vs. Sintético:**
-  - `frontend/public/data/amazon/observations.json`: dados autênticos extraídos dos grânulos HDF5 reais (`is_sample: false`).
-  - `processing/scripts/run_pipeline.py --demo`: gera dados demonstrativos sintéticos para testes rápidos offline (`processing/data/samples/amazon_central_sample.json`).
-- **Limitações Científicas:** A sequência de 6 grânulos (3 horas) constitui uma prova de conceito funcional da pipeline e sonificação, e não uma caracterização climatológica de longo prazo da Amazônia. Utiliza o produto Early Run V07B (latência rápida), sem calibração tardia de pluviômetros de solo do Final Run.
+O Sonatlas está em desenvolvimento.
+
+A interface utiliza uma abordagem visual inspirada em **Mission Control + Cosmic Sound**, combinando mapas geográficos, indicadores ambientais e controles interativos.
+
+O explorador geográfico é o elemento central da experiência.
+
+*Uma captura de tela ou demonstração em vídeo será adicionada aqui.*
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## Funcionalidades
 
-| Camada | Tecnologia | Finalidade |
+### Exploração geográfica
+
+- Mapa interativo utilizando Leaflet.
+- Seleção de regiões geográficas.
+- Visualização de limites territoriais e dados espaciais.
+- Suporte a camadas GeoJSON.
+- Componentes para visualização em globo 3D.
+
+### Visualização científica
+
+- Apresentação de indicadores ambientais.
+- Exploração de séries temporais.
+- Visualização de variações de precipitação.
+- Diferenciação entre medições válidas e dados ausentes.
+- Representações geográficas associadas aos dados.
+
+### Sonificação
+
+- Motor de áudio baseado em Web Audio API.
+- Conversão de indicadores em parâmetros sonoros.
+- Mapeamento de variáveis científicas.
+- Controles de reprodução e interação.
+- Integração entre visualizações e experiências auditivas.
+
+### Acessibilidade
+
+O Sonatlas considera acessibilidade desde a concepção.
+
+Entre as prioridades estão a navegação por teclado, a legibilidade, os controles acessíveis e a apresentação de alternativas textuais às informações sonoras.
+
+A conformidade com padrões de acessibilidade depende de validação e testes específicos.
+
+---
+
+## Dados científicos
+
+A fonte principal utilizada no processamento de precipitação é a missão **NASA Global Precipitation Measurement (GPM)**.
+
+O projeto trabalha com dados do produto **IMERG Early Run V07B**, disponibilizados pelo NASA Earthdata/GES DISC.
+
+### Fenômeno inicial
+
+**Precipitação atmosférica**
+
+Os indicadores processados incluem:
+
+| Indicador | Unidade | Descrição |
 |---|---|---|
-| **Frontend Framework** | React 18+ com TypeScript & Vite | Aplicação web rápida, modular e tipada com rigor |
-| **Interface & Acessibilidade** | HTML5 semântico, CSS3, WAI-ARIA | Padrões WCAG 2.1 AA/AAA, regiões `aria-live`, foco gerenciado |
-| **Visualização Geográfica** | Leaflet 2D / React-Leaflet & GeoJSON | Delimitação territorial das áreas de estudo e visualização 2D |
-| **Sonificação Web** | Web Audio API (nativo) & Tone.js | Síntese de áudio paramétrica em tempo real no navegador |
-| **Processamento Científico** | Python 3.10+ (NumPy, Xarray, Pandas) | Extração, validação estatística e cálculo de indicadores climáticos |
-| **Armazenamento de Dados** | Arquivos estáticos JSON estruturados | Modelo desacoplado e escalável sem dependência de banco de dados no MVP |
-| **CI / Automação** | GitHub Actions | Validação contínua de tipos TypeScript, compilação e testes |
+| Taxa média de precipitação | mm/h | Intensidade média da precipitação na região |
+| Fração de área com chuva | 0–1 | Proporção da área com precipitação acima do limiar definido |
+| Variação temporal | mm/h | Diferença entre taxas de precipitação de observações consecutivas |
+| Precipitação máxima | mm/h | Maior taxa registrada no recorte espacial |
+
+### Regiões de estudo
+
+**Amazônia Central — Brasil**
+
+Região utilizada no processamento inicial de dados reais de precipitação.
+
+O repositório contém séries de observações referentes a 1º de janeiro de 2024, incluindo diferentes janelas temporais.
+
+**Bacia do Congo — África Central**
+
+Região de comparação internacional contemplada pelos módulos e dados do projeto.
+
+A disponibilidade dos arquivos processados não substitui a necessidade de verificar a validação científica e a equivalência temporal das séries comparadas.
+
+### Integridade científica
+
+O projeto segue princípios de rastreabilidade e interpretação responsável:
+
+- Dados ausentes não são automaticamente convertidos em precipitação zero.
+- Taxa de precipitação (`mm/h`) não é equivalente a precipitação acumulada (`mm`).
+- Dados demonstrativos devem ser identificados como sintéticos.
+- Séries temporais precisam preservar suas referências de data e horário.
+- Transformações sonoras devem possuir regras explícitas.
+- Os resultados representam os períodos observados, não necessariamente tendências climáticas de longo prazo.
+
+**Fontes de referência:**
+
+- [NASA GPM / IMERG](https://gpm.nasa.gov/data/imerg)
+- [NASA Earthdata](https://www.earthdata.nasa.gov/)
+- [NASA GES DISC](https://disc.gsfc.nasa.gov/)
 
 ---
 
-## 📂 Estrutura do Repositório
+## Tecnologias
+
+O Sonatlas utiliza uma arquitetura web com processamento científico separado da interface.
+
+| Categoria | Tecnologias |
+|---|---|
+| Frontend | React 18, TypeScript, Vite |
+| Interface | HTML5, CSS3, Lucide React |
+| Mapas | Leaflet, GeoJSON |
+| Áudio | Web Audio API |
+| Processamento científico | Python, NumPy e bibliotecas de leitura HDF5 |
+| Dados | JSON, GeoJSON, HDF5 |
+| Testes frontend | Vitest |
+| Versionamento | Git e GitHub |
+
+A arquitetura do MVP utiliza arquivos processados disponibilizados ao frontend, sem exigir um banco de dados para as séries científicas.
+
+---
+
+## Estrutura do projeto
 
 ```text
-sonatlas/
-├── frontend/                     # Aplicação web React + Vite + TypeScript
+Sonatlas_nasa/
+├── frontend/
 │   ├── public/
-│   │   ├── data/                 # JSONs de dados científicos consumidos pelo frontend
-│   │   └── visualizations/       # Referências visuais e quadros estáticos
+│   │   └── data/
+│   │       ├── amazon/
+│   │       └── congo/
 │   ├── src/
-│   │   ├── assets/               # Ícones e identidades visuais estáticas
-│   │   ├── components/           # Componentes modulares reutilizáveis (Player, Legenda, Seletores)
-│   │   ├── pages/                # Páginas principais da aplicação
-│   │   ├── maps/                 # Módulo de visualização cartográfica Leaflet + GeoJSON
-│   │   ├── audio/                # Motor de sonificação (Web Audio API / Tone.js)
-│   │   ├── accessibility/        # Provedores de leitor de tela, foco e navegação assistiva
-│   │   ├── services/             # Clientes de carregamento de dados e validação de schema
-│   │   ├── hooks/                # Hooks customizados para áudio, dados e acessibilidade
-│   │   ├── types/                # Definições de tipos TypeScript compartilhados
-│   │   ├── utils/                # Formatadores de unidades (mm/h, datas, escalas)
-│   │   ├── styles/               # Estilos globais e variáveis de alto contraste
-│   │   ├── App.tsx               # Componente raiz da aplicação
-│   │   └── main.tsx              # Ponto de entrada React
-│   ├── tests/                    # Testes unitários do frontend
-│   ├── package.json
-│   ├── tsconfig.json
-│   └── vite.config.ts
+│   │   ├── accessibility/
+│   │   ├── audio/
+│   │   ├── components/
+│   │   ├── hooks/
+│   │   ├── maps/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   ├── styles/
+│   │   ├── types/
+│   │   ├── utils/
+│   │   ├── App.tsx
+│   │   └── main.tsx
+│   └── package.json
 │
-├── processing/                   # Pipeline científico em Python
+├── processing/
+│   ├── api/
 │   ├── data/
-│   │   ├── raw/                  # Diretório para arquivos brutos IMERG/HDF5/NetCDF
-│   │   ├── processed/            # Séries temporais intermediárias processadas
-│   │   └── samples/              # Amostras validadas no formato do dicionário de dados
+│   ├── extraction/
 │   ├── geometry/
-│   │   ├── amazon/               # GeoJSON e metadados da Amazônia Central
-│   │   └── international/        # Orientações e placeholders da região internacional candidata
-│   ├── extraction/               # Extração de dados da NASA Earthdata (GES DISC)
-│   ├── indicators/               # Algoritmos de cálculo de indicadores (taxa média, fração de área)
-│   ├── validation/               # Validação de integridade, flags de qualidade e dados ausentes
-│   ├── scripts/                  # Scripts executáveis de automação da esteira
-│   ├── tests/                    # Testes unitários do pipeline científico
-│   └── requirements.txt          # Dependências do ecossistema científico Python
+│   ├── indicators/
+│   ├── scripts/
+│   ├── tests/
+│   ├── validation/
+│   └── requirements.txt
 │
-├── docs/                         # Documentação completa de engenharia e ciência
-│   ├── product/                  # Visão do produto, personas, user stories e fluxos
-│   ├── architecture/             # Arquitetura do sistema e dicionário de dados JSON
-│   ├── science/                  # Metodologia científica, fontes de dados e sonificação
-│   ├── accessibility/            # Requisitos WCAG e matriz de testes não-visuais
-│   └── development/              # Guias de instalação e contribuição
-│
-├── .github/                      # Automações e governança no GitHub
-│   ├── ISSUE_TEMPLATE/           # Templates padronizados para User Stories, Bugs e Tarefas
-│   ├── workflows/ci.yml          # Pipeline de integração contínua
-│   └── PULL_REQUEST_TEMPLATE.md  # Template para submissão de Pull Requests
-│
-├── .gitignore
-├── .editorconfig
-├── .gitattributes
-├── README.md
+├── docs/
+├── .github/
 ├── CONTRIBUTING.md
 ├── LICENSE
-└── .env.example
+└── README.md
 ```
 
----
+**Frontend:** responsável pela experiência do usuário, visualização geográfica, interação e reprodução sonora.
 
-## 👥 Organização da Equipe de Desenvolvimento
+**Processing:** responsável pela extração, validação e transformação dos dados científicos.
 
-| Papel | Responsabilidade Primária | Módulo Principal |
-|---|---|---|
-| **Dev 1 — UI & Frontend Core** | Estrutura da aplicação, player, páginas, layout responsivo e controles visuais. | `frontend/src/components`, `frontend/src/pages` |
-| **Dev 2 — Cartografia & Geoespacial** | Integração Leaflet, camadas GeoJSON, sincronização espacial e rendering 2D. | `frontend/src/maps`, `processing/geometry` |
-| **Dev 3 — Engenharia de Áudio** | Síntese de áudio na Web Audio API, mapeamento paramétrico perceptivo e calibração de frequências. | `frontend/src/audio` |
-| **Dev 4 — Ciência & Processamento de Dados** | Ingestão IMERG/GPM, cálculo de indicadores climáticos, tratamento de nulos e exportação JSON. | `processing/` |
-| **Dev 5 — Acessibilidade & QA** | Suporte a leitores de tela (NVDA/JAWS/Orca), navegação estrita por teclado, testes unitários e CI. | `frontend/src/accessibility`, `tests/` |
+**Docs:** reúne documentação de produto, metodologia, arquitetura, sonificação, acessibilidade e desenvolvimento.
 
 ---
 
-## 🚀 Como Executar o Projeto Localmente
+## Executando localmente
 
 ### Pré-requisitos
-- **Node.js** v18+ (recomendado v20+) e **npm** v9+
-- **Python** 3.10+ (para execução dos scripts de processamento)
-- Git instalado
 
-### 1. Clonar o Repositório
+- Git
+- Node.js compatível com o projeto
+- npm
+- Python 3.10 ou superior, para o processamento científico
+
+### 1. Clonar o repositório
+
 ```bash
-git clone https://github.com/seu-usuario/sonatlas.git
-cd sonatlas
+git clone https://github.com/sarahgleice/Sonatlas_nasa.git
+cd Sonatlas_nasa
 ```
 
-### 2. Executar o Frontend
+### 2. Executar o frontend
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-Acesse a aplicação no seu navegador em `http://localhost:5173`.
 
-Para validar a tipagem e compilação do frontend:
+O servidor Vite normalmente estará disponível em:
+
+`http://localhost:5173`
+
+Para gerar a versão de produção:
+
 ```bash
 npm run build
 ```
 
-Para rodar os testes do frontend:
+Para executar os testes:
+
 ```bash
 npm run test
 ```
 
-### 3. Executar o Módulo de Processamento (Python)
+### 3. Configurar o processamento científico
+
+Em outro terminal, a partir da raiz do repositório:
+
 ```bash
 cd processing
-# Criar ambiente virtual
-python -m venv venv
+python -m venv .venv
+```
 
-# Ativar ambiente virtual
-# No Windows (PowerShell):
-.\venv\Scripts\Activate.ps1
-# No Linux/macOS:
-source venv/bin/activate
+Ative o ambiente virtual.
 
-# Instalar dependências científicas
-pip install -r requirements.txt
+**Windows (PowerShell):**
 
-# Processar grânulos HDF5 reais da NASA para a Amazônia Central
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+**Linux/macOS:**
+
+```bash
+source .venv/bin/activate
+```
+
+Instale as dependências:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+### 4. Processar dados
+
+Os scripts estão disponíveis em `processing/scripts/`.
+
+Alguns processamentos dependem de arquivos HDF5 reais obtidos da NASA, que não necessariamente estão incluídos no repositório.
+
+Para executar o processamento existente da Amazônia:
+
+```bash
 python scripts/process_amazon_real.py
+```
 
-# Alternativa: gerar amostra demonstrativa sintética offline
+Para gerar dados demonstrativos, quando necessário:
+
+```bash
 python scripts/run_pipeline.py --demo
+```
 
-# Executar testes automatizados do processamento
-pytest tests/
+A preparação dos dados científicos deve respeitar as instruções dos scripts e a documentação de processamento.
+
+### 5. Executar testes Python
+
+Dentro de `processing/`, com o ambiente virtual ativo:
+
+```bash
+python -m pytest tests/
 ```
 
 ---
 
-## 📋 Status Atual do Desenvolvimento
+## Arquitetura
 
-- [x] Arquitetura inicial do repositório estruturada e padronizada.
-- [x] Configurações de governança, Git, CI e templates de PR/Issues criados.
-- [x] Base React + Vite + TypeScript configurada com acessibilidade nativa e Web Audio API.
-- [x] Documentação completa de produto, arquitetura, ciência, acessibilidade e setup redigida.
-- [x] Dicionário de dados JSON especificado e validado com schema formal.
-- [x] Conexão e download de grânulos brutos IMERG V07B via NASA Earthdata GES DISC.
-- [x] Ingestão científica, recorte espacial e cálculo de indicadores ponderados da Amazônia Central (`process_amazon_real.py`).
-- [x] Integração completa dos dados reais com o motor de sonificação Web Audio API da Hazel (`AudioEngine`).
-- [ ] Validação oficial e escolha da segunda região geográfica internacional (Bacia do Congo).
-- [ ] Calibração psicoacústica das frequências e timbres com usuários de leitores de tela.
+O fluxo principal do Sonatlas conecta processamento científico, visualização geográfica e geração sonora.
+
+```text
+NASA GPM / IMERG
+       |
+       v
+Extração de dados HDF5
+       |
+       v
+Validação e processamento Python
+       |
+       v
+Exportação JSON / GeoJSON
+       |
+       v
+Aplicação React
+       |
+       +--> Mapas e visualizações
+       |
+       +--> Indicadores científicos
+       |
+       +--> Motor de sonificação
+       |
+       v
+Experiência interativa
+```
+
+A separação entre processamento e interface favorece a organização do projeto e permite que os dados sejam preparados antes de sua utilização no navegador.
 
 ---
 
-## 📜 Licença
+## Equipe
 
-Distribuído sob a licença **MIT**. Veja [LICENSE](LICENSE) para mais detalhes.
+### UNICEPLAC - Software Developers
+
+O Sonatlas é desenvolvido por uma equipe de **cinco estudantes de Engenharia de Software**, representando a instituição na modalidade presencial do NASA Space Apps Challenge 2026, em Brasília.
+
+O desenvolvimento envolve as áreas de:
+
+- Engenharia de software e frontend.
+- Cartografia digital e visualização geográfica.
+- Áudio e sonificação.
+- Processamento e análise de dados científicos.
+- Acessibilidade, testes e qualidade.
+
+As responsabilidades são colaborativas e podem envolver contribuições entre diferentes módulos.
+
+A equipe é independente, e a referência à UNICEPLAC identifica sua representação acadêmica no evento.
+
+---
+
+## Contribuições
+
+Contribuições são bem-vindas.
+
+Antes de desenvolver uma alteração, consulte o [Guia de Contribuição](CONTRIBUTING.md).
+
+O projeto utiliza branches, Pull Requests e revisão de código para manter a qualidade das entregas.
+
+---
+
+## Licença
+
+Este projeto é distribuído sob a [Licença MIT](LICENSE).
+
+**Copyright © 2026 UNICEPLAC - Software Developers (SONATLAS Team)**
+
+A licença do código não substitui as condições de uso de datasets, marcas, imagens e outros recursos de terceiros.
+
+O Sonatlas é um projeto independente desenvolvido por participantes do NASA Space Apps Challenge, não sendo um produto oficial da NASA ou da UNICEPLAC.
+
+---
+
+### SONATLAS — Explore Earth Through Sound
+
+*Transformando dados do nosso planeta em novas formas de descobrir, compreender e experimentar a ciência.*

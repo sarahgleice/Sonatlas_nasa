@@ -34,7 +34,12 @@ describe('KeyboardShortcutsModal', () => {
 describe('Header', () => {
   it('expõe o botão "Atalhos" com rótulo visível e tecla de atalho declarada', () => {
     const header = renderToStaticMarkup(
-      createElement(Header, { onOpenEducational: () => undefined, onOpenShortcuts: () => undefined })
+      createElement(Header, {
+        onOpenEducational: () => undefined,
+        onOpenShortcuts: () => undefined,
+        onListenObjective: () => undefined,
+        objectiveAudioDisabled: false
+      })
     );
     expect(header).toContain('<span>Atalhos</span>');
     expect(header).toContain('aria-haspopup="dialog"');
