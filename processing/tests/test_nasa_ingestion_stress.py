@@ -70,6 +70,10 @@ def create_synthetic_imerg_hdf5(
         ds.attrs["_FillValue"] = np.float32(fill_value)
         ds.attrs["DimensionNames"] = np.bytes_(b"time,lon,lat")
 
+        # Coordenadas geográficas canônicas da grade IMERG 0.1° (3600 lon x 1800 lat)
+        grid.create_dataset("lon", data=np.linspace(-179.95, 179.95, 3600, dtype="float32"))
+        grid.create_dataset("lat", data=np.linspace(-89.95, 89.95, 1800, dtype="float32"))
+
         # Escreve fatia de teste válida
         if len(shape) == 3:
             ds[0, :5, :5] = 1.25
@@ -663,3 +667,52 @@ def test_fault_part_file_cleanup_on_unhandled_exception(tmp_path):
             downloader.download_granule(meta, max_retries=1)
 
         assert not part_file.exists(), "O arquivo temporário .part deveria ter sido removido!"
+
+
+def test_stress_universal_pipeline_automatic_interval_hermetic(tmp_path):
+    """
+    Executa o UniversalProcessingPipeline completo com start_time e end_time
+    em um cache sintético isolado (tmp_path), garantindo que o fluxo de ponta a ponta
+    é testado inclusive em ambientes CI onde dados reais brutos não estão em disco.
+    """
+    from pipeline.universal_pipeline import UniversalProcessingPipeline
+    from validation.data_validator import DataValidator
+
+    cache_dir = tmp_path / "synthetic_raw"
+    cache_dir.mkdir()
+
+    metas = IMERGTimeResolver.resolve_interval(
+        start_time="2024-01-01T17:00:00Z",
+        end_time="2024-01-01T19:30:00Z"
+    )
+    for meta in metas:
+        target_f = cache_dir / meta["filename"]
+        create_synthetic_imerg_hdf5(target_f)
+
+    pipeline = UniversalProcessingPipeline(raw_data_dir=cache_dir)
+
+    geojson_source = {
+        "type": "Polygon",
+        "coordinates": [[
+            [-60.5, -3.5],
+            [-59.5, -3.5],
+            [-59.5, -2.5],
+            [-60.5, -2.5],
+            [-60.5, -3.5]
+        ]]
+    }
+
+    dataset = pipeline.process(
+        geojson_source=geojson_source,
+        region_id="hermetic_test_region",
+        start_time="2024-01-01T17:00:00Z",
+        end_time="2024-01-01T19:30:00Z",
+        auto_download=False,
+        region_name="Região Hermética de Teste"
+    )
+
+    is_valid, errors = DataValidator.validate_dataset(dataset)
+    assert is_valid is True, f"Erros de validação: {errors}"
+    assert len(dataset["observations"]) == 6
+    assert dataset["processing_provenance"]["acquisition_mode"] == "interval_auto"
+    assert dataset["processing_provenance"]["acquisition_report"]["total_cached"] == 6

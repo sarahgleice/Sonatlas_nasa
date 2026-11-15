@@ -142,6 +142,10 @@ def test_hdf5_integrity_checker_corrupted_structure(tmp_path):
 
 def test_downloader_cache_identification():
     """Comprova que arquivos já presentes no cache são identificados e validados sem download."""
+    real_files = sorted(list(RAW_DATA_DIR.glob("3B-HHR-E.*-S1[7-9]*.V07B.HDF5")))
+    if len(real_files) < 6:
+        pytest.skip(f"Esperado 6 grânulos reais no cache local, encontrados {len(real_files)}.")
+
     downloader = NASAGranuleDownloader(raw_data_dir=RAW_DATA_DIR)
 
     report = downloader.acquire_granules_for_interval(
@@ -162,6 +166,10 @@ def test_universal_pipeline_automatic_interval_execution():
     Executa o pipeline universal completo fornecendo APENAS start_time e end_time,
     sem fornecer lista manual de arquivos.
     """
+    real_files = sorted(list(RAW_DATA_DIR.glob("3B-HHR-E.*-S1[7-9]*.V07B.HDF5")))
+    if len(real_files) < 6:
+        pytest.skip(f"Esperado 6 grânulos reais no cache local, encontrados {len(real_files)}.")
+
     pipeline = UniversalProcessingPipeline(raw_data_dir=RAW_DATA_DIR)
 
     dataset = pipeline.process(

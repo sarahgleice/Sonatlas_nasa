@@ -5,12 +5,19 @@ interface HeaderProps {
   onOpenEducational: () => void;
   onOpenShortcuts: () => void;
   onOpenAccessibility?: () => void;
-  onListenObjective: () => void;
-  objectiveAudioDisabled: boolean;
+  onListenObjective?: () => void;
+  objectiveAudioDisabled?: boolean;
   voiceEnabled?: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenEducational, onOpenShortcuts, onOpenAccessibility = () => undefined, onListenObjective, objectiveAudioDisabled, voiceEnabled = false }) => {
+export const Header: React.FC<HeaderProps> = ({
+  onOpenEducational,
+  onOpenShortcuts,
+  onOpenAccessibility = () => undefined,
+  onListenObjective = () => undefined,
+  objectiveAudioDisabled = false,
+  voiceEnabled = false
+}) => {
   return (
     <header className="app-header" role="banner">
       <div className="header-container">
