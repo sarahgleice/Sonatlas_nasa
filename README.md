@@ -14,6 +14,19 @@
 **Challenge:** The Earth Information Jukebox  
 **Team:** UNICEPLAC Developers · **Location:** Brasília, Brazil
 
+O **Sonatlas** é o projeto vencedor do **1º lugar na edição local de Brasília do NASA Space Apps Challenge 2026**, desenvolvido pela equipe **UNICEPLAC Developers**, formada por cinco estudantes de Engenharia de Software da UNICEPLAC.
+
+O projeto foi desenvolvido para o desafio **The Earth Information Jukebox**, com a proposta de transformar dados científicos de observação da Terra em experiências interativas de visualização e sonificação.
+
+Nossa solução utiliza dados reais da missão GPM da NASA, permitindo explorar a precipitação atmosférica na Amazônia Central e na região de Kisangani, na Bacia do Congo.
+
+**Challenge:** The Earth Information Jukebox  
+**Team:** UNICEPLAC Developers  
+**Location:** Brasília, Brazil  
+**Award:** 🥇 1st Place — Brasília Local Event, NASA Space Apps Challenge 2026
+
+---
+
 ---
 
 ## Sobre o projeto
