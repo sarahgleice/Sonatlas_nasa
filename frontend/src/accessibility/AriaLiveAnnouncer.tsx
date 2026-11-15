@@ -40,12 +40,9 @@ export const AriaLiveAnnouncer: React.FC<AriaLiveAnnouncerProps> = ({ announceme
       );
     };
 
-    if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
-      const frame = window.requestAnimationFrame(apply);
-      return () => window.cancelAnimationFrame(frame);
-    }
-
-    const timeout = setTimeout(apply, 0);
+    // setTimeout (e não requestAnimationFrame): o quadro de animação é pausado em abas em segundo plano
+    // e atrasaria o anúncio. O pequeno intervalo garante que o leitor perceba o texto limpo e reaplicado.
+    const timeout = setTimeout(apply, 30);
     return () => clearTimeout(timeout);
   }, [announcement, disabled]);
 

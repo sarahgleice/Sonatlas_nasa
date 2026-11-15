@@ -35,8 +35,8 @@ graph TD
     IN --> IN9["Audiodescrição estruturada em linguagem natural"]
     IN --> IN10["Navegação 100% por teclado e região aria-live para leitores"]
     IN --> IN11["Tratamento explícito de dados ausentes (sem imputar zero)"]
+    IN --> IN12["Globo 3D opcional com alternativa 2D Leaflet"]
 
-    OUT --> OUT1["Globo 3D ou WebGL pesado"]
     OUT --> OUT2["Inteligência artificial generativa"]
     OUT --> OUT3["Autenticação e cadastro de usuários"]
     OUT --> OUT4["Banco de dados permanente (SQL/NoSQL)"]

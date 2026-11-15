@@ -4,7 +4,7 @@ import { RegionSelector } from '../src/components/RegionSelector';
 import { findRegionOption } from '../src/services/dataService';
 
 describe('Seleção da Experiência Científica (Região e Série Temporal)', () => {
-  it('oferece somente a Amazônia Central na interface principal', () => {
+  it('oferece a Amazônia Central e a janela candidata de Kisangani', () => {
     const html = renderToStaticMarkup(
       <RegionSelector
         selectedRegionId="amazon_central"
@@ -15,8 +15,8 @@ describe('Seleção da Experiência Científica (Região e Série Temporal)', ()
     );
 
     expect(html).toContain('Amazônia Central (Brasil)');
-    expect(html).not.toContain('Janela de Kisangani');
-    expect(html).not.toContain('congo_basin_kisangani');
+    expect(html).toContain('Bacia do Congo — janela de Kisangani');
+    expect(html).toContain('candidata');
   });
 
   it('oferece séries matutina e vespertina para a Amazônia Central', () => {
@@ -33,7 +33,7 @@ describe('Seleção da Experiência Científica (Região e Série Temporal)', ()
     expect(html).toContain('Tarde · 17:00–19:30 UTC');
   });
 
-  it('mantém a interface na Amazônia mesmo diante de estado de região Congo', () => {
+  it('seleciona a região e mostra o aviso de escopo candidato do Congo', () => {
     const html = renderToStaticMarkup(
       <RegionSelector
         selectedRegionId="congo_basin_kisangani"
@@ -43,8 +43,9 @@ describe('Seleção da Experiência Científica (Região e Série Temporal)', ()
       />
     );
 
-    expect(html).toContain('Amazônia Central (Brasil)');
-    expect(html).not.toContain('Janela de Kisangani');
+    expect(html).toContain('Bacia do Congo — janela de Kisangani');
+    expect(html).toContain('Região candidata sob validação');
+    expect(html).toContain('não toda a bacia');
   });
 
   it('exibe metadados de proveniência NASA GPM IMERG para a região selecionada', () => {
@@ -90,6 +91,7 @@ describe('Seleção da Experiência Científica (Região e Série Temporal)', ()
 
     const congo = findRegionOption('congo_basin_kisangani');
     expect(congo).toBeDefined();
+    expect(congo?.status).toBe('candidate');
     expect(congo?.series).toHaveLength(1);
     expect(congo?.series[0].filePath).toBe('/data/congo/observations.json');
   });

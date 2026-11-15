@@ -32,6 +32,7 @@ interface MapViewProps {
   selectedAvailability?: AvailabilityIndicator | null;
   onRegionSelect?: (regionId: string) => void;
   onMapPoint?: (lat: number, lon: number) => void;
+  isVisible?: boolean;
 }
 
 export const MapView: React.FC<MapViewProps> = ({
@@ -45,7 +46,8 @@ export const MapView: React.FC<MapViewProps> = ({
   selectedTimestamp = null,
   selectedAvailability = null,
   onRegionSelect,
-  onMapPoint
+  onMapPoint,
+  isVisible = true
 }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -190,6 +192,13 @@ export const MapView: React.FC<MapViewProps> = ({
     };
   }, [apiGeometry, boundingBox, onMapPoint, regionId]);
 
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!isVisible || !map) return;
+    const frame = window.requestAnimationFrame(() => map.invalidateSize({ pan: false }));
+    return () => window.cancelAnimationFrame(frame);
+  }, [isVisible]);
+
   // Limpeza
   useEffect(() => {
     return () => {
@@ -201,7 +210,7 @@ export const MapView: React.FC<MapViewProps> = ({
   }, []);
 
   return (
-    <section className="card map-card" aria-labelledby="map-title">
+    <section className="card map-card" aria-labelledby="map-title" hidden={!isVisible}>
       <div className="card-header">
         <MapPin size={20} className="card-icon" aria-hidden="true" />
         <h2 id="map-title" className="card-title">
