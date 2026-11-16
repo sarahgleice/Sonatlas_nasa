@@ -20,6 +20,14 @@ O projeto foi desenvolvido para o desafio **The Earth Information Jukebox**, com
 
 Nossa solução utiliza dados reais da missão GPM da NASA, permitindo explorar a precipitação atmosférica na Amazônia Central e na região de Kisangani, na Bacia do Con
 
+## 🚀 Demonstração Online
+
+O **Sonatlas** está disponível para exploração diretamente pelo navegador.
+
+🌍 **[Acessar Sonatlas — Live Demo](https://SEU-DEPLOY.vercel.app/)**
+
+Explore o mapa interativo, visualize dados científicos da NASA e descubra como transformar informações da Terra em experiências sonoras.
+
 ## Sobre o projeto
 
 O **Sonatlas** é uma aplicação web interativa que permite explorar fenômenos ambientais da Terra por meio de mapas, visualizações científicas e sonificação de dados.
