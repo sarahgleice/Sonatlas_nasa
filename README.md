@@ -24,7 +24,7 @@ Nossa solução utiliza dados reais da missão GPM da NASA, permitindo explorar 
 
 O **Sonatlas** está disponível para exploração diretamente pelo navegador.
 
-🌍 **[Acessar Sonatlas — Live Demo](https://SEU-DEPLOY.vercel.app/)**
+🌍 **[Acessar Sonatlas — Live Demo](https://sonatlas-nasa.vercel.app/)**
 
 Explore o mapa interativo, visualize dados científicos da NASA e descubra como transformar informações da Terra em experiências sonoras.
 
