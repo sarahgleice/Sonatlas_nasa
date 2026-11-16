@@ -20,6 +20,8 @@ O projeto foi desenvolvido para o desafio **The Earth Information Jukebox**, com
 
 Nossa solução utiliza dados reais da missão GPM da NASA, permitindo explorar a precipitação atmosférica na Amazônia Central e na região de Kisangani, na Bacia do Con
 
+<img width="1600" height="900" alt="WhatsApp Image 2026-11-16 at 11 38 05 AM" src="https://github.com/user-attachments/assets/04d8b5c4-ab6a-434e-b33e-185d7fde5933" />
+
 ## 🚀 Demonstração Online
 
 O **Sonatlas** está disponível para exploração diretamente pelo navegador.
