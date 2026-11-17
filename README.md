@@ -18,7 +18,7 @@ O **Sonatlas** é o projeto vencedor do **1º lugar na edição local de Brasíl
 
 O projeto foi desenvolvido para o desafio **The Earth Information Jukebox**, com a proposta de transformar dados científicos de observação da Terra em experiências interativas de visualização e sonificação.
 
-Nossa solução utiliza dados reais da missão GPM da NASA, permitindo explorar a precipitação atmosférica na Amazônia Central e na região de Kisangani, na Bacia do Con
+Nossa solução utiliza dados reais da missão GPM da NASA, permitindo explorar a precipitação atmosférica na Amazônia Central e na região de Kisangani, na Bacia do Congo
 
 <img width="1600" height="900" alt="WhatsApp Image 2026-11-16 at 11 38 05 AM" src="https://github.com/user-attachments/assets/04d8b5c4-ab6a-434e-b33e-185d7fde5933" />
 
@@ -28,7 +28,7 @@ O **Sonatlas** está disponível para exploração diretamente pelo navegador.
 
 🌍 **[Acessar Sonatlas — Live Demo](https://sonatlas-nasa.vercel.app/)**
 
-Explore o mapa interativo, visualize dados científicos da NASA e descubra como transformar informações da Terra em experiências sonoras.
+Explore o mapa interativo, visualize dados científicos da NASA e descubra como transformar informações da Terra em experiências sonoras com acessibilidade.
 
 ## Sobre o projeto
 
@@ -43,6 +43,16 @@ A proposta é simples:
 No Sonatlas, dados ambientais são convertidos em características sonoras, permitindo que usuários explorem variações geográficas e temporais de uma maneira diferente.
 
 O projeto combina ciência de dados, desenvolvimento web, cartografia digital, acessibilidade e processamento de áudio.
+
+Nós não estamos simplesmente adicionando som à ciência. Estamos descobrindo como a ciência pode soar. 
+
+Acreditamos que a ciência pode ser experimentada de diferentes maneiras.
+
+Porque os dados não precisam apenas ser vistos. Eles também podem ser ouvidos.
+
+O planeta sempre esteve falando.
+
+Com o SONATLAS, estamos aprendendo a escutar.
 
 ## Reconhecimento e Conquistas
 
