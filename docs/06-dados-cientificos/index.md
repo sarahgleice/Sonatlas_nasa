@@ -29,7 +29,7 @@ flowchart TD
 - **Repositório GES DISC:** [https://gpm1.gesdisc.eosdis.nasa.gov/data/GPM_L3/GPM_3IMERGHH.07/](https://gpm1.gesdisc.eosdis.nasa.gov/data/GPM_L3/GPM_3IMERGHH.07/)
 
 ### 1.2. Especificações do Produto IMERG V07B
-- **Produtos IMERG V07B:** `GPM_3IMERGHHE` (Early Run, baixa latência) e `GPM_3IMERGHH` (Final Run, com calibração de pluviômetros e apropriado para pesquisa). São execuções distintas; não atribua ao dataset Early as características de calibração do Final.
+- **Produto Primário do Pipeline:** **`NASA GPM IMERG Early Run V07B — GPM_3IMERGHHE.07B`** (Half-Hourly, latência de ~4 horas). O pipeline também suporta a transição para o produto `GPM_3IMERGHH` (Final Run, com calibração pós-evento por pluviômetros do GPCC). São execuções distintas; não atribua ao dataset Early as características de calibração do Final.
 - **Formato Nativo:** HDF5 estruturado sob o grupo `/Grid` (ou NetCDF-4 `.nc4`).
 - **Resolução Espacial:** Grade regular global de $0.1^\circ \times 0.1^\circ$ (aproximadamente $11 \text{ km} \times 11 \text{ km}$ no equador).
 - **Resolução Temporal:** Passo de 30 minutos (*half-hourly*).
@@ -75,13 +75,13 @@ O motor de sonificação traduz primordialmente a **taxa de precipitação insta
 
 ## 4. Delimitação das Regiões de Estudo
 
-### 4.1. Região Nacional: Amazônia Central (Brasil)
-- **Status:** <span class="badge-verified">Verificada Oficialmente com Dados Reais NASA</span>
+### 4.1. Região Nacional Piloto: Amazônia Central (Brasil)
+- **Status:** <span class="badge-verified">Preliminarmente Verificada (preliminary_verified)</span>
 - **Coordenadas de Referência (WGS84):**
   - Latitude: $-4.0^\circ$ a $-1.5^\circ$ Sul (25 células de $0.1^\circ$)
   - Longitude: $-61.5^\circ$ a $-58.5^\circ$ Oeste (30 células de $0.1^\circ$)
   - **Total de Células:** 750 células espaciais.
-- **Série Temporal Real Processada:** Sequência de seis grânulos consecutivos de 30 minutos em 01/01/2024 (00:00:00 UTC a 02:59:59 UTC) extraídos do produto `GPM_3IMERGHHE.07` (Early Run V07B), lidos a partir de `processing/data/raw/*.HDF5`.
+- **Série Temporal Real Processada:** Sequência de doze grânulos de 30 minutos em 01/01/2024 (janelas da madrugada e tarde) extraídos do produto `NASA GPM IMERG Early Run V07B — GPM_3IMERGHHE.07B`, lidos a partir de `processing/data/raw/*.HDF5`.
 - **Dataset Real Oficial:** Publicado em [`frontend/public/data/amazon/observations.json`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/frontend/public/data/amazon/observations.json) (espelhado em [`frontend/public/data/amazon_central_series.json`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/frontend/public/data/amazon_central_series.json)), com `is_sample: false`.
 - **Pipeline Científico de Processamento:** [`processing/scripts/process_amazon_real.py`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/processing/scripts/process_amazon_real.py).
 - **Justificativa Bioclimática:** Região de confluência dos Rios Negro e Solimões/Amazonas, próxima à Reserva ZF2 e à Torre ATTO (*Amazon Tall Tower Observatory*). Apresenta um dos regimes convectivos tropicais mais dinâmicos do planeta.
@@ -91,17 +91,17 @@ O motor de sonificação traduz primordialmente a **taxa de precipitação insta
 - **`processing/scripts/run_pipeline.py --demo`:** Script de demonstração offline para gerar o arquivo sintético de bootstrap [`processing/data/samples/amazon_central_sample.json`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/processing/data/samples/amazon_central_sample.json) (`is_sample: true`).
 - A autenticidade científica dos dados é garantida pela rastreabilidade e proveniência dos grânulos brutos HDF5 arquivados, e não exclusivamente por flags booleanas.
 
-### 4.2. Região Internacional: Bacia do Congo (Janela de Kisangani, RDC)
-- **Status:** <span class="badge-verified">Verificada com Dados Reais NASA IMERG</span>
+### 4.2. Região Internacional Candidata: Bacia do Congo (Janela de Kisangani, RDC)
+- **Status:** <span class="badge-pending">Candidata sob Revisão Técnica (candidate_under_review)</span>
 - **Coordenadas de Referência (WGS84):**
   - Latitude: $-0.8^\circ$ a $+1.7^\circ$ Norte (25 células de $0.1^\circ$)
   - Longitude: $23.7^\circ$ a $26.7^\circ$ Leste (30 células de $0.1^\circ$)
-  - **Total de Células:** 750 células espaciais (simetria dimensional exata 1:1 com a Amazônia Central).
-- **Série Temporal Real Processada:** Sequência de seis grânulos vespertinos em 01/01/2024 (17:00:00 UTC a 19:59:59 UTC) extraídos do produto `GPM_3IMERGHHE.07` (Early Run V07B).
+  - **Total de Células:** 750 células espaciais (simetria dimensional 1:1 com a grade da Amazônia).
+- **Série Temporal Real Processada:** Amostra de seis grânulos vespertinos em 01/01/2024 (17:00:00 UTC a 19:59:59 UTC) extraídos do produto `NASA GPM IMERG Early Run V07B — GPM_3IMERGHHE.07B`.
 - **Dataset Real Oficial:** Publicado em [`frontend/public/data/congo/observations.json`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/frontend/public/data/congo/observations.json) (e [`processing/data/processed/congo_kisangani_real_series.json`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/processing/data/processed/congo_kisangani_real_series.json)), com `is_sample: false`.
 - **Pipeline Científico de Processamento:** [`processing/scripts/process_congo_real.py`](file:///c:/Users/sarah/OneDrive/Desktop/nasa/processing/scripts/process_congo_real.py).
 - **Contexto Bioclimático:** Janela em torno de Kisangani (República Democrática do Congo), na transição equatorial da Bacia do Congo. Na janela UTC adotada (17:00 a 19:30 UTC = 19:00 a 21:30 horário local CAT), registra a evolução da convecção noturna equatorial, atingindo pico máximo pontual de $12.70 \text{ mm/h}$ às 19:30 UTC.
-- **Ressalva Metodológica:** Identificada estritamente como *Janela de Amostragem de Kisangani* para comparação bioclimática controlada, e não como representação integral de toda a extensão hidrográfica da Bacia do Congo.
+- **Ressalva Metodológica de Não-Equivalência:** A janela de Kisangani constitui uma amostra de teste internacional sob avaliação e **não possui equivalência metodológica plena com a Amazônia Central**, que dispõe de cobertura temporal de 12 passos e status de verificação preliminar consolidado.
 
 ---
 

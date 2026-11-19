@@ -48,19 +48,42 @@ A propriedade `polite` garante que o leitor de tela conclua a fala da palavra em
   - Coordenadas delimitadoras da área (*bounding box*).
   - Resumo contextualizado em linguagem natural da evolução da chuva.
 
-### 2.4. Contraste, Ergonomia e Modos de Daltonismo (WCAG 1.4.3, 1.4.6, 1.4.11)
-- **Tema Escuro de Alto Contraste (*Deep Space Theme*):** Cores de fundo em azul profundo (`#090d16` e `#131b2e`) combinadas com texto em branco gelo (`#f1f5f9`), alcançando razão de contraste de **14.2:1** (muito acima do mínimo de 4.5:1 exigido no nível AA e 7:1 no nível AAA).
-- **Modos Especializados de Visão de Cores (Daltonismo):**
-  - **Protanopia:** Paleta remapeada para tons azuis, amarelos e neutros, compensando a insensibilidade a comprimentos de onda longos (vermelhos).
-  - **Deuteranopia:** Ajuste cromático para pessoas com insensibilidade a verdes, garantindo distinção absoluta entre limiares de precipitação.
-  - **Tritanopia:** Paleta otimizada para quem possui insensibilidade a comprimentos de onda curtos (azuis/amarelos).
-  - **Modo Alto Contraste:** Maximização dos contornos de botões, bordas com contraste de 3:1 e brilho ampliado para pessoas com baixa acuidade visual severa.
-  - **Modo Monocromático:** Escala pura de luminância em tons de cinza com hachuras e marcadores textuais, eliminando qualquer dependência da percepção cromática.
-- **Persistência de Preferências:** As escolhas do usuário no diálogo de Acessibilidade são salvas no `localStorage` do navegador e aplicadas automaticamente em sessões futuras.
+### 2.4. Contraste, Ergonomia e Paletas Visuais (WCAG 1.4.3, 1.4.6, 1.4.11)
+
+A arquitetura visual do SONATLAS prioriza a **baixa visão** por meio de um sistema de preferências cromáticas flexível e determinístico, implementado em `frontend/src/accessibility/visualThemes.ts`:
+
+- **Três Paletas Visuais (`Palette`):**
+  1. **Padrão (`default`):** Estética espacial (*Deep Space*) com fundo escuro (`#080E1D` e `#101C30`) e texto em azul claro (`#EAF4FF`), alcançando contraste de **17,3:1** no corpo e **15,3:1** sobre painéis. No portal institucional, o elemento de destaque ciano (`#00f5d4`) atinge contraste de **14,2:1** sobre o fundo espacial, e o texto do corpo alcança **18,9:1**.
+  2. **Daltonismo Seguro (`colorblind`):** Baseada rigorosamente na paleta científica universal de **Okabe-Ito**, que substitui pares cromáticos de alto atrito (verde e vermelho) por tons contrastantes de azul celeste e laranja brilhante. Essa escolha visa melhorar a distinção de dados para diversas deficiências de visão de cores (incluindo protanopia e deuteranopia), sem constituir simulações isoladas ou exigir seletores médicos individuais para cada patologia.
+  3. **Monocromático (`monochrome`):** Mapeamento estrito em escala de cinza e luminância pura, complementado por traços e marcadores que eliminam qualquer dependência de reconhecimento de cor.
+
+- **Dois Níveis de Contraste (`Contrast`):**
+  - **Normal (`normal`):** Garante conformidade com o nível AA da WCAG (mínimo de 4,5:1), mantendo a identidade visual aeroespacial.
+  - **Alto Contraste (`high`):** Fundo preto puro (`#000000`), texto em branco absoluto (`#FFFFFF`), bordas contrastantes de **21,0:1** e anel de foco ampliado para usuários com baixa acuidade visual severa.
+
+- **Persistência de Preferências:** As preferências selecionadas no diálogo de Acessibilidade (`VisualPreferencesControls.tsx`) são persistidas no `localStorage` e integradas com a preferência do sistema operacional (`prefers-contrast: more`).
 
 ---
 
-## 3. Protocolo de Testes de Acessibilidade
+## 3. Matriz de Maturidade de Recursos de Acessibilidade
+
+Para garantir total transparência técnica e clareza no desenvolvimento, os recursos de acessibilidade são categorizados em três estados:
+
+| Recurso / Mecanismo | Escopo | Estado Atual | Evidência Técnica |
+|---|---|---|---|
+| **Operação 100% por Teclado** | Aplicação e Portal | **Implementado** | Atalhos globais (`Espaço`, setas, `M`, `L`, `?`), anel `:focus-visible` de 3px e trapping em diálogos. |
+| **Canais `aria-live` Polite / Assertive** | Aplicação Web | **Implementado** | `AriaLiveAnnouncer.tsx` com anúncios semânticos e política anti-spam ao avançar passos. |
+| **3 Paletas Cromáticas + Alto Contraste** | Aplicação Web | **Implementado** | `visualThemes.ts`, `VisualPreferencesControls.tsx` e 24 testes unitários de contraste. |
+| **Legenda Sonora de Calibração** | Aplicação Web | **Implementado** | Síntese de 3 amostras acústicas no navegador para referência mental prévia do usuário. |
+| **Alternador de Tema Claro/Escuro** | Portal MkDocs | **Implementado** | Paleta `slate` e `default` configurada em `mkdocs.yml` com contraste testado. |
+| **Audiodescrição do Mapa 2D** | Aplicação Web | **Implementado** | Painel textual alternativo com resumo bioclimático e `aria-hidden` no canvas Leaflet. |
+| **Conformidade WCAG 2.1 AA** | Aplicação e Portal | **Implementado e Documentado** | Contraste de texto > 15:1 (excedendo 7:1 do AAA), navegabilidade e foco sem dependência visual. |
+| **Filtros SVG Dedicados por Patologia** | Aplicação Web | **Planejado** | Filtros de matriz cromática específicos para simulação pontual de tritanopia severa. |
+| **Síntese de Voz Nativa Multilíngue** | Aplicação Web | **Planejado** | Suporte ampliado à Web Speech API para leitura assistida em múltiplos idiomas adicionais. |
+
+---
+
+## 4. Protocolo de Testes de Acessibilidade
 
 Para assegurar que a experiência sem visão seja rigorosamente funcional, o time de engenharia executa o seguinte protocolo de testes em cada ciclo de release:
 
@@ -85,7 +108,7 @@ flowchart TD
 
 ---
 
-## 4. Player, Linha do Tempo e Atalhos (implementação)
+## 5. Player, Linha do Tempo e Atalhos (implementação)
 
 ### 4.1. Política de anúncios (`aria-live`)
 Canal único (`AriaLiveAnnouncer`) com dois nós sempre montados: `role="status"` (educado) e `role="alert"` (assertivo, só para dado ausente e erros). A regra anti-spam fica em `frontend/src/utils/announcements.ts`:

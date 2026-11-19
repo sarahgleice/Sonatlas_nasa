@@ -60,20 +60,20 @@ description: Portal institucional e científico oficial do SONATLAS — Explore 
 
   <div class="sonatlas-stat-card">
     <div class="sonatlas-stat-number">WCAG 2.1</div>
-    <div class="sonatlas-stat-label">Nível AA / AAA</div>
-    <div class="sonatlas-stat-desc">Operação 100% autônoma por teclado, leitor de tela e com monitor desligado.</div>
+    <div class="sonatlas-stat-label">Nível AA (com AAA)</div>
+    <div class="sonatlas-stat-desc">Conformidade AA com contraste aprimorado no padrão AAA e operação com tela desligada.</div>
   </div>
 
   <div class="sonatlas-stat-card">
-    <div class="sonatlas-stat-number">0 ms</div>
-    <div class="sonatlas-stat-label">Latência de Rede</div>
-    <div class="sonatlas-stat-desc">Síntese de áudio paramétrica pura em tempo real via Web Audio API.</div>
+    <div class="sonatlas-stat-number">Zero Streaming</div>
+    <div class="sonatlas-stat-label">Síntese Local</div>
+    <div class="sonatlas-stat-desc">Síntese paramétrica pura em tempo real via Web Audio API, sem streaming de arquivos de áudio.</div>
   </div>
 
   <div class="sonatlas-stat-card">
-    <div class="sonatlas-stat-number">375</div>
-    <div class="sonatlas-stat-label">Testes Automatizados</div>
-    <div class="sonatlas-stat-desc">Cobertura total entre frontend (247 testes) e processamento Python (128 testes).</div>
+    <div class="sonatlas-stat-number">2 Regiões</div>
+    <div class="sonatlas-stat-label">Estudo Tropical</div>
+    <div class="sonatlas-stat-desc">Amazônia Central (piloto verificada) e Bacia do Congo (Kisangani, candidata sob revisão).</div>
   </div>
 </div>
 
@@ -136,17 +136,17 @@ flowchart LR
 
   <div class="sonatlas-pillar-card">
     <span class="sonatlas-pillar-icon">:material-human:</span>
-    <h3 class="sonatlas-pillar-title">3. Acessibilidade Universal (WCAG 2.1)</h3>
+    <h3 class="sonatlas-pillar-title">3. Acessibilidade Universal (WCAG 2.1 AA)</h3>
     <p class="sonatlas-pillar-text">
-      Concebida sob o lema <em>"Funciona com a tela desligada"</em>. Suporte a leitores de tela com canal centralizado <code>aria-live</code> polite, navegação 100% por atalhos de teclado, legenda sonora de calibração auditiva e modos de visão de cores adaptados para <strong>Protanopia, Deuteranopia, Tritanopia, Alto Contraste e Monocromático</strong>.
+      Concebida sob o lema <em>"Funciona com a tela desligada"</em>, priorizando pessoas com baixa visão e cegueira. Suporte a leitores de tela com canal centralizado <code>aria-live</code> polite, navegação 100% por atalhos de teclado, legenda sonora de calibração auditiva e <strong>três paletas visuais adaptadas (Padrão, Daltonismo seguro via paleta Okabe-Ito e Monocromático), combináveis com modo de Alto Contraste</strong> (atingindo contraste de até 21:1 na aplicação e 14,2:1 no destaque ciano do portal).
     </p>
   </div>
 
   <div class="sonatlas-pillar-card">
     <span class="sonatlas-pillar-icon">:material-earth:</span>
-    <h3 class="sonatlas-pillar-title">4. Cartografia e Comparação Intercontinental</h3>
+    <h3 class="sonatlas-pillar-title">4. Cartografia e Duas Regiões Tropicais</h3>
     <p class="sonatlas-pillar-text">
-      Exploração de duas regiões tropicais essenciais para o balanço hídrico da biosfera: a <strong>Amazônia Central</strong> (Brasil, confluência dos rios Negro e Solimões) e a <strong>Bacia do Congo</strong> (África Central, janela amostral de Kisangani). Visualização 2D com Leaflet e Globo 3D interativo com textura Blue Marble oficial da NASA.
+      Exploração de duas regiões de alta relevância climática: a <strong>Amazônia Central</strong> (Brasil, região piloto preliminarmente verificada com 12 passos temporais) e a <strong>Bacia do Congo</strong> (janela amostral de Kisangani, em avaliação sob revisão técnica com 6 passos). Visualização 2D com Leaflet e Globo 3D interativo com textura Blue Marble oficial da NASA.
     </p>
   </div>
 </div>
@@ -179,7 +179,7 @@ Explore a documentação técnica, científica e institucional organizada por á
   <a href="08-acessibilidade/" class="sonatlas-card">
     <div class="sonatlas-card-number">Inclusão &bull; 08</div>
     <div class="sonatlas-card-title">Acessibilidade e Baixa Visão</div>
-    <div class="sonatlas-card-text">Diretrizes WCAG 2.1 AA/AAA, canal aria-live, modos visuais de daltonismo, atalhos de teclado e testes sem tela.</div>
+    <div class="sonatlas-card-text">Diretrizes WCAG 2.1 AA (contraste AAA), canal aria-live, paleta Okabe-Ito, atalhos de teclado e testes sem tela.</div>
   </a>
 
   <a href="09-arquitetura/" class="sonatlas-card">
@@ -206,3 +206,6 @@ O **SONATLAS** foi concebido e implementado por uma equipe de estudantes de **En
 * **Repositório de Código Aberto:** [github.com/sarahgleice/Sonatlas_nasa](https://github.com/sarahgleice/Sonatlas_nasa)
 * **Aplicação Pública Oficial:** [sonatlas.vercel.app](https://sonatlas.vercel.app/)
 * **Licença de Uso:** Código aberto sob a [Licença MIT](https://github.com/sarahgleice/Sonatlas_nasa/blob/main/LICENSE)
+
+> :material-information-outline: **Aviso Institucional:**  
+> O SONATLAS é um projeto independente desenvolvido por participantes do NASA Space Apps Challenge, não sendo um produto oficial da NASA ou da UNICEPLAC.
