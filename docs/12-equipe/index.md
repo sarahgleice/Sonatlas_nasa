@@ -1,9 +1,8 @@
 # 12. Equipe e Governança
 
-O SONATLAS é desenvolvido por uma equipe multidisciplinar de cinco desenvolvedores para o **NASA Space Apps Challenge 2026**, no desafio *The Earth Information Jukebox*.
+O **SONATLAS** é desenvolvido pela equipe **UNICEPLAC Software Developers** para o **NASA Space Apps Challenge 2026**, concorrendo no desafio global *The Earth Information Jukebox*.
 
-> :octicons-pencil-16: **NOTA DE EDIÇÃO:**  
-> Os campos abaixo contêm a estrutura de papéis e responsabilidades formalmente atribuídas no projeto, mantendo os nomes e contatos pessoais abertos para preenchimento posterior pelos próprios integrantes.
+A equipe representa formalmente o **Centro Universitário do Planalto Central Apparecido dos Santos (UNICEPLAC)** na etapa presencial de Brasília, Distrito Federal, unindo engenharia de software, sensoriamento remoto espacial, acústica computacional e design universal acessível.
 
 ---
 
@@ -11,52 +10,52 @@ O SONATLAS é desenvolvido por uma equipe multidisciplinar de cinco desenvolvedo
 
 <div class="sonatlas-grid">
   <div class="sonatlas-card">
-    <div class="sonatlas-card-number">Dev 01 &bull; Liderança de Interface</div>
-    <div class="sonatlas-card-title">[Nome do Integrante 1]</div>
+    <div class="sonatlas-card-number">Dev 01 &bull; Liderança de Interface e UX/UI</div>
+    <div class="sonatlas-card-title">Sarah Gleice &bull; Lead Developer</div>
     <div class="sonatlas-card-text">
-      <strong>Papel:</strong> Engenheiro(a) de Frontend Core e UX/UI.<br/>
-      <strong>GitHub:</strong> <code>@username-a-definir</code><br/>
-      <strong>Domínio Principal:</strong> Componentes React, Jukebox Player, navegação e estilos de alto contraste.
+      <strong>Papel:</strong> Engenheira de Frontend Core, Arquitetura e UX/UI Acessível.<br/>
+      <strong>GitHub:</strong> <a href="https://github.com/sarahgleice" target="_blank" rel="noopener">@sarahgleice</a><br/>
+      <strong>Domínio Principal:</strong> Componentes React, Jukebox Player, navegação responsiva, modos de contraste e coordenação geral.
     </div>
   </div>
 
   <div class="sonatlas-card">
     <div class="sonatlas-card-number">Dev 02 &bull; Liderança Geoespacial</div>
-    <div class="sonatlas-card-title">[Nome do Integrante 2]</div>
+    <div class="sonatlas-card-title">Engenharia Geoespacial</div>
     <div class="sonatlas-card-text">
-      <strong>Papel:</strong> Engenheiro(a) Geoespacial e Cartografia 2D.<br/>
-      <strong>GitHub:</strong> <code>@username-a-definir</code><br/>
-      <strong>Domínio Principal:</strong> Integração Leaflet, camadas GeoJSON e sincronização espacial.
+      <strong>Papel:</strong> Engenharia Geoespacial e Cartografia 2D Interativa.<br/>
+      <strong>GitHub:</strong> <code>UNICEPLAC Software Developers</code><br/>
+      <strong>Domínio Principal:</strong> Visualização Leaflet, malhas GeoJSON (750 células 0.1°), reprojeção e alternativas descritivas semânticas.
     </div>
   </div>
 
   <div class="sonatlas-card">
     <div class="sonatlas-card-number">Dev 03 &bull; Liderança de Áudio</div>
-    <div class="sonatlas-card-title">[Nome do Integrante 3]</div>
+    <div class="sonatlas-card-title">Sonificação Científica</div>
     <div class="sonatlas-card-text">
-      <strong>Papel:</strong> Engenheiro(a) de Áudio e Sonificação Científica.<br/>
-      <strong>GitHub:</strong> <code>@username-a-definir</code><br/>
-      <strong>Domínio Principal:</strong> Web Audio API, síntese de osciladores, modulações de ganho e calibração tonal.
+      <strong>Papel:</strong> Engenharia de Áudio e Psicoacústica Computacional.<br/>
+      <strong>GitHub:</strong> <code>UNICEPLAC Software Developers</code><br/>
+      <strong>Domínio Principal:</strong> Web Audio API, síntese subtrativa/FM de osciladores, mapeamento logarítmico (130–880 Hz) e legenda auditiva.
     </div>
   </div>
 
   <div class="sonatlas-card">
     <div class="sonatlas-card-number">Dev 04 &bull; Liderança Científica</div>
-    <div class="sonatlas-card-title">[Nome do Integrante 4]</div>
+    <div class="sonatlas-card-title">Ciência de Dados & Sensoriamento</div>
     <div class="sonatlas-card-text">
-      <strong>Papel:</strong> Engenheiro(a) de Dados e Cientista de Sensoriamento Remoto.<br/>
-      <strong>GitHub:</strong> <code>@username-a-definir</code><br/>
-      <strong>Domínio Principal:</strong> Pipeline Python, ingestão NASA IMERG, cálculo de indicadores e preservação de nulos.
+      <strong>Papel:</strong> Engenharia de Dados e Validação de Satélites.<br/>
+      <strong>GitHub:</strong> <code>UNICEPLAC Software Developers</code><br/>
+      <strong>Domínio Principal:</strong> Pipeline Python, ingestão NASA IMERG V07, ponderação por cosseno da latitude e preservação estrita de nulos.
     </div>
   </div>
 
   <div class="sonatlas-card">
     <div class="sonatlas-card-number">Dev 05 &bull; Liderança de Acessibilidade & QA</div>
-    <div class="sonatlas-card-title">[Nome do Integrante 5]</div>
+    <div class="sonatlas-card-title">Acessibilidade Digital & QA</div>
     <div class="sonatlas-card-text">
-      <strong>Papel:</strong> Especialista em Acessibilidade Digital (WCAG) e QA.<br/>
-      <strong>GitHub:</strong> <code>@username-a-definir</code><br/>
-      <strong>Domínio Principal:</strong> Leitores de tela (NVDA/JAWS), canais aria-live, testes unitários e CI/CD.
+      <strong>Papel:</strong> Especialista em Acessibilidade W3C WCAG 2.1 e Qualidade de Software.<br/>
+      <strong>GitHub:</strong> <code>UNICEPLAC Software Developers</code><br/>
+      <strong>Domínio Principal:</strong> Conformidade WCAG 2.1 AA/AAA, leitores de tela (NVDA/JAWS), canais `aria-live`, suíte de testes automatizados e CI/CD.
     </div>
   </div>
 </div>
@@ -65,18 +64,22 @@ O SONATLAS é desenvolvido por uma equipe multidisciplinar de cinco desenvolvedo
 
 ## 2. Detalhamento de Responsabilidades por Módulo
 
-| Integrante | Módulos Técnicos Sob Custódia | Entregas Principais |
+| Integrante / Domínio | Módulos Técnicos Sob Custódia | Entregas Principais |
 |---|---|---|
-| **Dev 01 (Frontend)** | `frontend/src/components/`, `frontend/src/pages/`, `frontend/src/styles/` | - Layout responsivo da aplicação.<br>- Componentes do Player de áudio e Timeline.<br>- Tema de alto contraste escuro. |
-| **Dev 02 (Geoespacial)** | `frontend/src/maps/`, `processing/geometry/` | - Visualizador cartográfico Leaflet 2D.<br>- Geometrias GeoJSON da Amazônia Central e Bacia do Congo.<br>- Alternativas semânticas de mapa. |
-| **Dev 03 (Áudio)** | `frontend/src/audio/`, `docs/07-sonificacao/` | - Mapeamento paramétrico de taxa para frequência e área para pulsos.<br>- Motor nativo de áudio Web Audio API.<br>- Legenda sonora de calibração auditiva. |
-| **Dev 04 (Dados/Ciência)** | `processing/`, `docs/06-dados-cientificos/` | - Scripts de ingestão NASA Earthdata IMERG.<br>- Algoritmos de média ponderada por cosseno da latitude.<br>- Validador formal de integridade e exportação JSON. |
-| **Dev 05 (Acessibilidade/QA)** | `frontend/src/accessibility/`, `.github/`, `docs/` | - Conformidade W3C WCAG 2.1 AA/AAA.<br>- Comunicação `aria-live` centralizada.<br>- Pipeline de CI/CD e portal de documentação MkDocs. |
+| **Sarah Gleice (Frontend & Lead)** | `frontend/src/components/`, `frontend/src/pages/`, `frontend/src/styles/` | - Layout responsivo da aplicação web.<br>- Componentes do Player de áudio e Timeline.<br>- Modos de alto contraste e filtros daltônicos. |
+| **Engenharia Geoespacial** | `frontend/src/maps/`, `processing/geometry/` | - Visualizador cartográfico Leaflet 2D desacoplado.<br>- Geometrias GeoJSON da Amazônia Central e Bacia do Congo.<br>- Alternativas semânticas de mapa para leitores de tela. |
+| **Sonificação Científica** | `frontend/src/audio/`, `docs/07-sonificacao/` | - Mapeamento paramétrico de taxa para frequência e área para densidade.<br>- Motor nativo de áudio Web Audio API com resiliência a suspensões.<br>- Legenda sonora de calibração auditiva. |
+| **Ciência de Dados & Sensoriamento** | `processing/`, `docs/06-dados-cientificos/` | - Scripts de ingestão NASA Earthdata IMERG V07.<br>- Ponderação de área por $\cos(\text{lat})$ e cálculo de indicadores.<br>- Validador formal de integridade e exportação JSON determinística. |
+| **Acessibilidade Digital & QA** | `frontend/src/accessibility/`, `.github/`, `docs/` | - Conformidade W3C WCAG 2.1 AA/AAA (contraste 14.2:1).<br>- Comunicação `aria-live` reativa centralizada.<br>- Pipeline de CI/CD (GitHub Actions) e portal de documentação MkDocs. |
 
 ---
 
-## 3. Dinâmica de Trabalho e Decisão
+## 3. Dinâmica Institucional e Governança
 
-- **Comunicação Central:** Servidor da equipe no Discord para reuniões síncronas de alinhamento e canais temáticos por frente técnica (`#frontend`, `#audio`, `#dados-ciencia`, `#acessibilidade`).
-- **Gestão de Tarefas:** GitHub Projects com quadro Kanban unificado, vinculando cada tarefa a uma Issue padronizada (`.github/ISSUE_TEMPLATE/`).
+- **Instituição Acadêmica:** Centro Universitário do Planalto Central Apparecido dos Santos (UNICEPLAC) &bull; Faculdade de Engenharia de Software.
+- **Hackathon Global:** NASA Space Apps Challenge 2026 &bull; Polo Brasília, Distrito Federal (Etapa Presencial).
+- **Desafio:** *The Earth Information Jukebox*.
+- **Repositório Oficial:** [github.com/sarahgleice/Sonatlas_nasa](https://github.com/sarahgleice/Sonatlas_nasa)
+- **Portal Institucional de Documentação:** [sarahgleice.github.io/Sonatlas_nasa](https://sarahgleice.github.io/Sonatlas_nasa/)
+- **Aplicação Web (Demonstração):** [sonatlas.vercel.app](https://sonatlas.vercel.app/)
 - **Resolução de Conflitos Técnicos:** Decisões que impactem a integridade científica ou a acessibilidade prioritária têm prevalência sobre escolhas puramente cosméticas.

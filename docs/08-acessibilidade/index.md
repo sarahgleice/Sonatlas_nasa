@@ -48,9 +48,15 @@ A propriedade `polite` garante que o leitor de tela conclua a fala da palavra em
   - Coordenadas delimitadoras da área (*bounding box*).
   - Resumo contextualizado em linguagem natural da evolução da chuva.
 
-### 2.4. Contraste e Ergonomia Visual (WCAG 1.4.3, 1.4.6)
-- **Tema Escuro de Alto Contraste (*Deep Space Theme*):** Cores de fundo em azul profundo (`#090d16` e `#131b2e`) combinadas com texto em branco gelo (`#f1f5f9`), alcançando razão de contraste de **14.2:1** (muito acima do mínimo de 4.5:1 exigido no nível AA).
-- Adequado para pessoas com fotofobia, baixa acuidade visual ou daltonismo.
+### 2.4. Contraste, Ergonomia e Modos de Daltonismo (WCAG 1.4.3, 1.4.6, 1.4.11)
+- **Tema Escuro de Alto Contraste (*Deep Space Theme*):** Cores de fundo em azul profundo (`#090d16` e `#131b2e`) combinadas com texto em branco gelo (`#f1f5f9`), alcançando razão de contraste de **14.2:1** (muito acima do mínimo de 4.5:1 exigido no nível AA e 7:1 no nível AAA).
+- **Modos Especializados de Visão de Cores (Daltonismo):**
+  - **Protanopia:** Paleta remapeada para tons azuis, amarelos e neutros, compensando a insensibilidade a comprimentos de onda longos (vermelhos).
+  - **Deuteranopia:** Ajuste cromático para pessoas com insensibilidade a verdes, garantindo distinção absoluta entre limiares de precipitação.
+  - **Tritanopia:** Paleta otimizada para quem possui insensibilidade a comprimentos de onda curtos (azuis/amarelos).
+  - **Modo Alto Contraste:** Maximização dos contornos de botões, bordas com contraste de 3:1 e brilho ampliado para pessoas com baixa acuidade visual severa.
+  - **Modo Monocromático:** Escala pura de luminância em tons de cinza com hachuras e marcadores textuais, eliminando qualquer dependência da percepção cromática.
+- **Persistência de Preferências:** As escolhas do usuário no diálogo de Acessibilidade são salvas no `localStorage` do navegador e aplicadas automaticamente em sessões futuras.
 
 ---
 

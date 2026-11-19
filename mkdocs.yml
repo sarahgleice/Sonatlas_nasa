@@ -1,14 +1,16 @@
 site_name: SONATLAS
-site_description: "Explore Earth Through Sound — Portal de Documentação Oficial"
-site_author: "Equipe SONATLAS — NASA Space Apps Challenge 2026"
+site_description: "Explore Earth Through Sound — Portal Institucional e Científico Oficial"
+site_author: "UNICEPLAC Software Developers — NASA Space Apps Challenge 2026"
 site_url: "https://sarahgleice.github.io/Sonatlas_nasa/"
 repo_name: "sarahgleice/Sonatlas_nasa"
 repo_url: "https://github.com/sarahgleice/Sonatlas_nasa"
-copyright: "Copyright &copy; 2026 SONATLAS — Licença MIT — Desenvolvido para o NASA Space Apps Challenge 2026"
+copyright: "Copyright &copy; 2026 SONATLAS Team (UNICEPLAC Software Developers) — Licença MIT — NASA Space Apps Challenge 2026"
 
 theme:
   name: material
   language: pt-BR
+  logo: assets/images/favicon.svg
+  favicon: assets/images/favicon.svg
   features:
     - navigation.tabs
     - navigation.sections
@@ -25,14 +27,14 @@ theme:
   palette:
     # Modo Escuro (Default - Estética Espacial e Alta Acessibilidade)
     - scheme: slate
-      primary: blue
+      primary: custom
       accent: light blue
       toggle:
         icon: material/brightness-4
         name: Alternar para Modo Claro
     # Modo Claro
     - scheme: default
-      primary: blue
+      primary: light blue
       accent: light blue
       toggle:
         icon: material/brightness-7
@@ -41,7 +43,6 @@ theme:
     text: Inter
     code: Roboto Mono
   icon:
-    logo: material/ear-hearing
     repo: fontawesome/brands/github
 
 extra_css:
@@ -88,16 +89,22 @@ extra_javascript:
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 
 nav:
-  - "Início": index.md
-  - "01. Visão do Produto": 01-visao-produto/index.md
-  - "02. Personas e Usuários": 02-personas/index.md
-  - "03. Requisitos do Sistema": 03-requisitos/index.md
-  - "04. Histórias de Usuário": 04-historias-usuario/index.md
-  - "05. Metodologia e Planejamento": 05-metodologia/index.md
-  - "06. Dados Científicos": 06-dados-cientificos/index.md
-  - "07. Sonificação": 07-sonificacao/index.md
-  - "08. Acessibilidade": 08-acessibilidade/index.md
-  - "09. Arquitetura e Tecnologias": 09-arquitetura/index.md
-  - "10. Testes e Validação": 10-testes/index.md
-  - "11. Desenvolvimento": 11-desenvolvimento/index.md
-  - "12. Equipe": 12-equipe/index.md
+  - "Institucional":
+      - "Visão Geral": index.md
+      - "Visão do Produto": 01-visao-produto/index.md
+      - "Equipe e Governança": 12-equipe/index.md
+  - "Ciência & Dados":
+      - "Metodologia Científica": 06-dados-cientificos/index.md
+      - "Auditoria de Reprodutibilidade": 06-dados-cientificos/auditoria-reprodutibilidade-imerg.md
+      - "Contrato da Grade Espacial": 06-dados-cientificos/contrato-grade-espacial.md
+      - "Sonificação Psicoacústica": 07-sonificacao/index.md
+  - "Acessibilidade & Design":
+      - "Inclusão & Acessibilidade": 08-acessibilidade/index.md
+      - "Personas e Usuários": 02-personas/index.md
+      - "Histórias de Usuário": 04-historias-usuario/index.md
+  - "Engenharia & Arquitetura":
+      - "Arquitetura do Sistema": 09-arquitetura/index.md
+      - "Requisitos do Sistema": 03-requisitos/index.md
+      - "Testes e Validação": 10-testes/index.md
+      - "Metodologia Ágil": 05-metodologia/index.md
+      - "Guia do Desenvolvedor": 11-desenvolvimento/index.md

@@ -1,137 +1,208 @@
 ---
 title: Início — SONATLAS
-description: Portal oficial de documentação do SONATLAS — Explore Earth Through Sound. NASA Space Apps Challenge 2026.
+description: Portal institucional e científico oficial do SONATLAS — Explore Earth Through Sound. NASA Space Apps Challenge 2026.
 ---
 
+<div class="sonatlas-banner-container">
+  <img src="assets/images/sonatlas-hero-banner.jpg" alt="SONATLAS: Planeta Terra iluminado do espaço, envolto por ondas sonoras orbitais em tons neon ciano e púrpura, com o título 'SONATLAS — Explore Earth Through Sound'" class="sonatlas-banner-img" />
+</div>
+
 <div class="sonatlas-hero">
-  <span class="sonatlas-hero-badge">NASA Space Apps Challenge 2026 &bull; The Earth Information Jukebox</span>
+  <span class="sonatlas-hero-badge">
+    :material-rocket-launch: NASA Space Apps Challenge 2026 &bull; The Earth Information Jukebox
+  </span>
   <h1 class="sonatlas-hero-title">SONATLAS</h1>
   <p class="sonatlas-hero-slogan">Explore Earth Through Sound</p>
   <p class="sonatlas-hero-desc">
-    Uma plataforma web científica e inclusiva que converte dados de satélite da NASA em experiências sonoras dinâmicas. Desenhada com prioridade para pessoas cegas ou com baixa visão, tornando os fenômenos atmosféricos da Terra auditíveis e compreensíveis para todos.
+    Uma plataforma científica e inclusiva que transforma dados de satélite da NASA em experiências auditivas dinâmicas e calibradas. Concebida sob os princípios do <strong>Design Universal</strong>, com foco prioritário em pessoas cegas ou com baixa visão, tornando os fenômenos atmosféricos do planeta perceptíveis, mensuráveis e compreensíveis para todos.
   </p>
   <div class="sonatlas-cta-group">
-    <a href="01-visao-produto/" class="sonatlas-btn-primary">
-      <span>Conhecer a Visão do Produto</span> &rarr;
+    <a href="https://sonatlas.vercel.app/" target="_blank" rel="noopener noreferrer" class="sonatlas-btn-primary">
+      <span>Acessar a Aplicação Web</span> &rarr;
+    </a>
+    <a href="06-dados-cientificos/" class="sonatlas-btn-secondary">
+      <span>Metodologia Científica</span>
     </a>
     <a href="07-sonificacao/" class="sonatlas-btn-secondary">
       <span>Como Funciona a Sonificação</span>
     </a>
-    <a href="11-desenvolvimento/" class="sonatlas-btn-secondary">
-      <span>Executar o Projeto</span>
+    <a href="08-acessibilidade/" class="sonatlas-btn-secondary">
+      <span>Acessibilidade Universal</span>
+    </a>
+    <a href="https://github.com/sarahgleice/Sonatlas_nasa" target="_blank" rel="noopener noreferrer" class="sonatlas-btn-accent">
+      <span>GitHub Oficial</span>
     </a>
   </div>
 </div>
 
 ---
 
-## :material-compass-outline: Visão Rápida do Projeto
+## :material-chart-timeline-variant: O Projeto em Números
 
-O **SONATLAS** nasceu para responder ao desafio global **The Earth Information Jukebox**, no âmbito do **NASA Space Apps Challenge 2026**. A iniciativa parte da constatação de que a divulgação e a exploração de dados científicos da Terra dependem quase exclusivamente de telas, globos 3D coloridos e representações visuais, excluindo pessoas com deficiência visual e subutilizando o potencial analítico da audição humana.
+<div class="sonatlas-stats-grid">
+  <div class="sonatlas-stat-card">
+    <div class="sonatlas-stat-number">750</div>
+    <div class="sonatlas-stat-label">Células Espaciais</div>
+    <div class="sonatlas-stat-desc">Grade regular de 0,1° (~11 km) por recorte geográfico analisado.</div>
+  </div>
 
-Transformamos séries temporais de precipitação da missão **NASA GPM / IMERG** em composições acústicas calibradas perceptivamente, combinadas com navegação cartográfica 2D acessível e audiodescrições detalhadas.
+  <div class="sonatlas-stat-card">
+    <div class="sonatlas-stat-number">30 min</div>
+    <div class="sonatlas-stat-label">Cadência Orbital</div>
+    <div class="sonatlas-stat-desc">Observações temporais de alta resolução do produto NASA GPM IMERG.</div>
+  </div>
+
+  <div class="sonatlas-stat-card">
+    <div class="sonatlas-stat-number">130 a 880 Hz</div>
+    <div class="sonatlas-stat-label">Faixa Psicoacústica</div>
+    <div class="sonatlas-stat-desc">Mapeamento logarítmico não-linear do tom de repouso (C3) a tempestades (A5).</div>
+  </div>
+
+  <div class="sonatlas-stat-card">
+    <div class="sonatlas-stat-number">WCAG 2.1</div>
+    <div class="sonatlas-stat-label">Nível AA / AAA</div>
+    <div class="sonatlas-stat-desc">Operação 100% autônoma por teclado, leitor de tela e com monitor desligado.</div>
+  </div>
+
+  <div class="sonatlas-stat-card">
+    <div class="sonatlas-stat-number">0 ms</div>
+    <div class="sonatlas-stat-label">Latência de Rede</div>
+    <div class="sonatlas-stat-desc">Síntese de áudio paramétrica pura em tempo real via Web Audio API.</div>
+  </div>
+
+  <div class="sonatlas-stat-card">
+    <div class="sonatlas-stat-number">375</div>
+    <div class="sonatlas-stat-label">Testes Automatizados</div>
+    <div class="sonatlas-stat-desc">Cobertura total entre frontend (247 testes) e processamento Python (128 testes).</div>
+  </div>
+</div>
+
+---
+
+## :material-lightbulb-on: Propósito Científico e Inclusivo
+
+O **SONATLAS** nasceu para responder ao desafio global **The Earth Information Jukebox**, no âmbito do **NASA Space Apps Challenge 2026**.
+
+Historicamente, a divulgação e a exploração de dados científicos de observação da Terra dependem quase exclusivamente de telas brilhantes, mapas de calor coloridos (*colormaps*) e globos 3D interativos. Esse paradigma hegemônico cria uma barreira intransponível para mais de **2,2 bilhões de pessoas com deficiência visual** no mundo (OMS), além de subutilizar a excepcional capacidade temporal do cérebro humano para analisar padrões rítmicos através da audição.
+
+Combinamos **satélites meteorológicos da NASA**, **engenharia de software moderna**, **psicoacústica paramétrica** e **design acessível** para transformar dados numéricos de precipitação em uma narrativa multissensorial completa.
 
 ```mermaid
 flowchart LR
-    A["🛰️ NASA Earthdata<br/>GPM / IMERG V07"] --> B["⚙️ Processamento Python<br/>Cálculo de Indicadores Físicos"]
-    B --> C["📄 JSON Padronizado<br/>Dicionário de Dados Estrito"]
-    C --> D["🌐 Frontend Web Acessível<br/>React + Web Audio API + Leaflet"]
-    D --> E["🔊 Sonificação Perceptiva<br/>Pitch (mm/h) + Ritmo (Área %)"]
-    D --> F["♿ Acessibilidade Universal<br/>Leitor de Tela + Navegação por Teclado"]
-    D --> G["🗺️ Cartografia 2D<br/>Limites Regionais em GeoJSON"]
+    subgraph Satelites ["🛰️ Observação da Terra (NASA)"]
+        NASA["NASA GES DISC<br/>GPM IMERG V07B Early Run"]
+    end
+
+    subgraph Processamento ["⚙️ Processamento Científico (Python)"]
+        ENG["Motor Geoespacial Universal<br/>Ponderação cos(lat) + Máscaras"]
+        VAL["Validação de Integridade<br/>Preservação Estrita de Nulos"]
+    end
+
+    subgraph Plataforma ["🌐 Aplicação Web SONATLAS"]
+        MAP2D["Cartografia 2D<br/>Leaflet + Grid"]
+        GLOBE["Globo 3D<br/>NASA Blue Marble"]
+        AUDIO["Motor Web Audio API<br/>Síntese Paramétrica em Tempo Real"]
+        A11Y["Acessibilidade First<br/>ARIA-Live + Modos de Daltonismo"]
+    end
+
+    NASA --> ENG
+    ENG --> VAL
+    VAL --> MAP2D
+    VAL --> GLOBE
+    VAL --> AUDIO
+    VAL --> A11Y
 ```
 
 ---
 
-## :material-target: Pilares Fundamentais
+## :material-shield-star: Os Quatro Pilares do SONATLAS
 
-=== ":material-ear-hearing: Acessibilidade como Princípio Central"
-    Projetado sob as diretrizes **W3C WCAG 2.1 (níveis AA e AAA)**. Toda a experiência de exploração dos dados independe do mapa visual: navegação 100% acionável por teclado, regiões `aria-live` sincronizadas, legendas sonoras de calibração e audiodescrições em linguagem natural.
+<div class="sonatlas-pillars-grid">
+  <div class="sonatlas-pillar-card">
+    <span class="sonatlas-pillar-icon">:material-satellite-variant:</span>
+    <h3 class="sonatlas-pillar-title">1. Dados Científicos Reais da NASA</h3>
+    <p class="sonatlas-pillar-text">
+      Extraídos da missão global <strong>GPM (Global Precipitation Measurement) IMERG V07</strong>. Distinguimos rigorosamente taxa instantânea (mm/h) de precipitação acumulada (mm). Células sem informação observacional são tratadas estritamente como <em>missing data</em> (com tom de alerta próprio), nunca mascaradas artificialmente como chuva zero.
+    </p>
+  </div>
 
-=== ":material-chart-bell-curve: Rigor Científico e Transparência"
-    Não inventamos números nem mascaramos incertezas. Distinguimos rigorosamente **taxa instantânea de precipitação (mm/h)** de **acumulação (mm)**. Dados faltantes (*missing data*) nunca são imputados como precipitação zero, preservando a integridade física dos dados observados.
+  <div class="sonatlas-pillar-card">
+    <span class="sonatlas-pillar-icon">:material-waveform:</span>
+    <h3 class="sonatlas-pillar-title">2. Sonificação Psicoacústica Calibrada</h3>
+    <p class="sonatlas-pillar-text">
+      A taxa média de precipitação determina a <strong>frequência fundamental</strong> (pitch de 130 Hz a 880 Hz em escala logarítmica), enquanto a fração de área chuvosa governa a <strong>densidade rítmica de pulsos</strong> (de 1 a 7 pulsos por janela de 1,5s). O áudio é sintetizado diretamente no navegador, sem arquivos de áudio pré-gravados.
+    </p>
+  </div>
 
-=== ":material-earth: Comparação Bioclimática Global"
-    Comparamos a dinâmica de precipitação de duas áreas tropicais essenciais:
-    - **Região Nacional:** Amazônia Central (Brasil) &mdash; bacia florestal úmida de alta relevância climática planetária.
-    - **Região Internacional:** Bacia do Congo (África Central) &mdash; *área candidata sob validação científica pela equipe*.
+  <div class="sonatlas-pillar-card">
+    <span class="sonatlas-pillar-icon">:material-human:</span>
+    <h3 class="sonatlas-pillar-title">3. Acessibilidade Universal (WCAG 2.1)</h3>
+    <p class="sonatlas-pillar-text">
+      Concebida sob o lema <em>"Funciona com a tela desligada"</em>. Suporte a leitores de tela com canal centralizado <code>aria-live</code> polite, navegação 100% por atalhos de teclado, legenda sonora de calibração auditiva e modos de visão de cores adaptados para <strong>Protanopia, Deuteranopia, Tritanopia, Alto Contraste e Monocromático</strong>.
+    </p>
+  </div>
+
+  <div class="sonatlas-pillar-card">
+    <span class="sonatlas-pillar-icon">:material-earth:</span>
+    <h3 class="sonatlas-pillar-title">4. Cartografia e Comparação Intercontinental</h3>
+    <p class="sonatlas-pillar-text">
+      Exploração de duas regiões tropicais essenciais para o balanço hídrico da biosfera: a <strong>Amazônia Central</strong> (Brasil, confluência dos rios Negro e Solimões) e a <strong>Bacia do Congo</strong> (África Central, janela amostral de Kisangani). Visualização 2D com Leaflet e Globo 3D interativo com textura Blue Marble oficial da NASA.
+    </p>
+  </div>
+</div>
 
 ---
 
-## :material-grid-large: Navegação Rápida pelo Portal
+## :material-compass: Trilhas de Navegação no Portal
 
-Explore as seções da documentação oficial do SONATLAS:
+Explore a documentação técnica, científica e institucional organizada por áreas de interesse:
 
 <div class="sonatlas-grid">
   <a href="01-visao-produto/" class="sonatlas-card">
-    <div class="sonatlas-card-number">Seção 01</div>
+    <div class="sonatlas-card-number">Institucional &bull; 01</div>
     <div class="sonatlas-card-title">Visão do Produto</div>
-    <div class="sonatlas-card-text">Problema, oportunidade, objetivos geral e específicos, escopo do MVP e limites da solução.</div>
-  </a>
-
-  <a href="02-personas/" class="sonatlas-card">
-    <div class="sonatlas-card-number">Seção 02</div>
-    <div class="sonatlas-card-title">Personas e Usuários</div>
-    <div class="sonatlas-card-text">Perfis representativos hipotéticos: pessoa cega, estudante, educador e pesquisador científico.</div>
-  </a>
-
-  <a href="03-requisitos/" class="sonatlas-card">
-    <div class="sonatlas-card-number">Seção 03</div>
-    <div class="sonatlas-card-title">Requisitos do Sistema</div>
-    <div class="sonatlas-card-text">Requisitos funcionais (RF), não-funcionais (RNF), regras de negócio e matriz de prioridades.</div>
-  </a>
-
-  <a href="04-historias-usuario/" class="sonatlas-card">
-    <div class="sonatlas-card-number">Seção 04</div>
-    <div class="sonatlas-card-title">Histórias de Usuário</div>
-    <div class="sonatlas-card-text">Histórias ágeis divididas por épicos, com critérios de aceitação testáveis e rastreabilidade.</div>
-  </a>
-
-  <a href="05-metodologia/" class="sonatlas-card">
-    <div class="sonatlas-card-number">Seção 05</div>
-    <div class="sonatlas-card-title">Metodologia e Planejamento</div>
-    <div class="sonatlas-card-text">Contexto do Space Apps 2026, cronograma de sprints, marcos do MVP e responsabilidades da equipe.</div>
+    <div class="sonatlas-card-text">Origem, desafio Space Apps, público-alvo, objetivos estratégicos, escopo do produto e proposta de valor.</div>
   </a>
 
   <a href="06-dados-cientificos/" class="sonatlas-card">
-    <div class="sonatlas-card-number">Seção 06</div>
-    <div class="sonatlas-card-title">Dados Científicos</div>
-    <div class="sonatlas-card-text">NASA GPM IMERG V07, tratamento de grandezas físicas, ponderação cosseno e ressalvas do EIC.</div>
+    <div class="sonatlas-card-number">Ciência &bull; 06</div>
+    <div class="sonatlas-card-title">Dados Científicos NASA</div>
+    <div class="sonatlas-card-text">Metodologia GPM IMERG, resolução temporal de 30 min, ponderação geodésica cos(lat) e integridade de nulos.</div>
   </a>
 
   <a href="07-sonificacao/" class="sonatlas-card">
-    <div class="sonatlas-card-number">Seção 07</div>
-    <div class="sonatlas-card-title">Sonificação</div>
-    <div class="sonatlas-card-text">Mapeamento psicoacústico: frequência tonal (mm/h), densidade rítmica (% de área) e legenda sonora.</div>
+    <div class="sonatlas-card-number">Ciência &bull; 07</div>
+    <div class="sonatlas-card-title">Metodologia de Sonificação</div>
+    <div class="sonatlas-card-text">Modelo matemático de conversão física em acústica, escala psicoacústica e tom de advertência de nulos.</div>
   </a>
 
   <a href="08-acessibilidade/" class="sonatlas-card">
-    <div class="sonatlas-card-number">Seção 08</div>
-    <div class="sonatlas-card-title">Acessibilidade</div>
-    <div class="sonatlas-card-text">Conformidade WCAG 2.1 AA/AAA, leitor de tela, foco de teclado e testes com tela desligada.</div>
+    <div class="sonatlas-card-number">Inclusão &bull; 08</div>
+    <div class="sonatlas-card-title">Acessibilidade e Baixa Visão</div>
+    <div class="sonatlas-card-text">Diretrizes WCAG 2.1 AA/AAA, canal aria-live, modos visuais de daltonismo, atalhos de teclado e testes sem tela.</div>
   </a>
 
   <a href="09-arquitetura/" class="sonatlas-card">
-    <div class="sonatlas-card-number">Seção 09</div>
-    <div class="sonatlas-card-title">Arquitetura e Tecnologias</div>
-    <div class="sonatlas-card-text">Arquitetura desacoplada estática, stack tecnológica (React, Vite, Python) e fluxo de dados.</div>
-  </a>
-
-  <a href="10-testes/" class="sonatlas-card">
-    <div class="sonatlas-card-number">Seção 10</div>
-    <div class="sonatlas-card-title">Testes e Validação</div>
-    <div class="sonatlas-card-text">Estratégia de testes unitários, validações científicas, testes de acessibilidade e status atual.</div>
-  </a>
-
-  <a href="11-desenvolvimento/" class="sonatlas-card">
-    <div class="sonatlas-card-number">Seção 11</div>
-    <div class="sonatlas-card-title">Desenvolvimento</div>
-    <div class="sonatlas-card-text">Guia passo a passo de setup local, padrões de commit, branches e automação de CI/CD.</div>
+    <div class="sonatlas-card-number">Engenharia &bull; 09</div>
+    <div class="sonatlas-card-title">Arquitetura de Software</div>
+    <div class="sonatlas-card-text">Estrutura desacoplada, Web Audio API, React 18, Leaflet, Three.js, pipeline Python e segurança de dados.</div>
   </a>
 
   <a href="12-equipe/" class="sonatlas-card">
-    <div class="sonatlas-card-number">Seção 12</div>
-    <div class="sonatlas-card-title">Equipe e Governança</div>
-    <div class="sonatlas-card-text">Composição dos 5 desenvolvedores, matriz RACI de responsabilidades e rituais de colaboração.</div>
+    <div class="sonatlas-card-number">Governança &bull; 12</div>
+    <div class="sonatlas-card-title">Equipe e Reconhecimento</div>
+    <div class="sonatlas-card-text">Conheça o time de desenvolvedores de software da UNICEPLAC e a trajetória no NASA Space Apps Challenge.</div>
   </a>
 </div>
+
+---
+
+## :material-school: Reconhecimento e Equipe
+
+O **SONATLAS** foi concebido e implementado por uma equipe de estudantes de **Engenharia de Software** representando o **Centro Universitário UNICEPLAC** na etapa presencial de Brasília do **NASA Space Apps Challenge 2026**.
+
+* **Equipe de Desenvolvimento:** UNICEPLAC Software Developers (SONATLAS Team)
+* **Desafio Global:** *The Earth Information Jukebox*
+* **Repositório de Código Aberto:** [github.com/sarahgleice/Sonatlas_nasa](https://github.com/sarahgleice/Sonatlas_nasa)
+* **Aplicação Pública Oficial:** [sonatlas.vercel.app](https://sonatlas.vercel.app/)
+* **Licença de Uso:** Código aberto sob a [Licença MIT](https://github.com/sarahgleice/Sonatlas_nasa/blob/main/LICENSE)
